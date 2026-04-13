@@ -5,30 +5,44 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.WillNotificationListenerService
 import tech.benedicta.will.task.RoomTaskRepository
+import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.WillDatabase
 import tech.benedicta.will.ui.AppGrid
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.TaskFeed
 import tech.benedicta.will.ui.theme.WillTheme
+
+private const val SWIPE_THRESHOLD = 100f
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,30 +86,55 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun WillScreen(
-    apps: List<tech.benedicta.will.launcher.LauncherApp>,
-    tasks: List<tech.benedicta.will.task.Task>,
+    apps: List<LauncherApp>,
+    tasks: List<Task>,
     notificationPermissionGranted: Boolean,
     onGrantPermission: () -> Unit
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    var appDrawerOpen by remember { mutableStateOf(false) }
+    var dragDelta by remember { mutableFloatStateOf(0f) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        TabRow(selectedTabIndex = selectedTab) {
-            Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }) {
-                Text("Tasks")
+    BackHandler(enabled = appDrawerOpen) { appDrawerOpen = false }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(appDrawerOpen) {
+                detectVerticalDragGestures(
+                    onDragEnd = {
+                        if (!appDrawerOpen && dragDelta < -SWIPE_THRESHOLD) appDrawerOpen = true
+                        if (appDrawerOpen && dragDelta > SWIPE_THRESHOLD) appDrawerOpen = false
+                        dragDelta = 0f
+                    },
+                    onDragCancel = { dragDelta = 0f },
+                    onVerticalDrag = { _, delta -> dragDelta += delta }
+                )
             }
-            Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }) {
-                Text("Apps")
-            }
+    ) {
+        TaskFeed(tasks = tasks, modifier = Modifier.fillMaxSize())
+
+        if (!notificationPermissionGranted) {
+            NotificationPermissionPrompt(
+                onGrantPermission = onGrantPermission,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            )
         }
-        when (selectedTab) {
-            0 -> {
-                if (!notificationPermissionGranted) {
-                    NotificationPermissionPrompt(onGrantPermission = onGrantPermission)
-                }
-                TaskFeed(tasks = tasks, modifier = Modifier.weight(1f))
-            }
-            1 -> AppGrid(apps = apps, modifier = Modifier.weight(1f))
+
+        AnimatedVisibility(
+            visible = appDrawerOpen,
+            enter = slideInVertically(initialOffsetY = { it }),
+            exit = slideOutVertically(targetOffsetY = { it }),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            AppGrid(
+                apps = apps,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            )
         }
     }
 }

@@ -16,9 +16,10 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | item | status | notes |
 |-|-|-|
 | PT-01: Project Setup | ✅ done | minSdk 24, Compose, Room, KSP configured |
-| PT-02: Core Architecture | ⬜ not started | Task model + Room needed before US-02 |
+| PT-02: Core Architecture | ✅ done | Task model (Room entity), TaskDao, RoomTaskRepository, TaskViewModel |
 | US-01: Basic Launcher | ✅ done | app grid + launch works; recent apps deferred (API restricted) |
-| US-02+ | ⬜ not started | |
+| US-02: Notification Capture | ✅ done | NotificationListenerService → Task → Room; task feed with permission prompt; deferred: PendingIntent fire, notification removal/update, per-app filter |
+| US-03+ | ⬜ not started | |
 
 ## Key Files
 
@@ -30,8 +31,20 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | `app/src/main/java/.../launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
 | `app/src/main/java/.../launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher |
 | `app/src/main/java/.../ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch |
-| `app/src/main/java/.../MainActivity.kt` | wires ViewModel factory + AppGrid |
+| `app/src/main/java/.../MainActivity.kt` | wires LauncherViewModel + TaskViewModel; tabs: Tasks / Apps |
+| `app/src/main/java/.../task/Task.kt` | Room entity with createdAt, startedAt, completedAt, contextSwitchCount |
+| `app/src/main/java/.../task/TaskDao.kt` | Room DAO — insert, getAll (Flow), update, delete |
+| `app/src/main/java/.../task/WillDatabase.kt` | singleton RoomDatabase |
+| `app/src/main/java/.../task/TaskViewModel.kt` | StateFlow<List<Task>>, addTask, deleteTask |
+| `app/src/main/java/.../notification/NotificationProcessor.kt` | pure logic: notification data → Task (or null) |
+| `app/src/main/java/.../notification/WillNotificationListenerService.kt` | intercepts notifications, inserts Tasks via Room |
+| `app/src/main/java/.../ui/TaskFeed.kt` | LazyColumn of TaskCards; tap opens source app |
+| `app/src/main/java/.../ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `app/src/test/.../launcher/LauncherViewModelTest.kt` | unit tests with FakeAppRepository |
+| `app/src/test/.../task/TaskTest.kt` | Task model field tests |
+| `app/src/test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests |
+| `app/src/test/.../task/TaskViewModelTest.kt` | TaskViewModel state tests |
+| `app/src/test/.../notification/NotificationProcessorTest.kt` | processor mapping + edge case tests |
 | `gradle/libs.versions.toml` | dependency catalog |
 | `app/build.gradle.kts` | app-level build config |
 
@@ -41,6 +54,9 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 - `CoroutineDispatcher` injected into ViewModel for testability
 - App icon loaded in composable (not in ViewModel) to keep model Android-framework-free
 - `getRecentTasks()` deferred — restricted API on Android 5+
+- `Task.pendingIntent` not persisted — Room can't store PendingIntent; tapping task opens source app as fallback
+- `WillNotificationListenerService` uses its own `CoroutineScope(Dispatchers.IO + SupervisorJob)` — not tied to Activity lifecycle
+- `WillDatabase` is a singleton created in Activity/Service via `WillDatabase.getInstance(context)`
 
 ## Development workflow
 

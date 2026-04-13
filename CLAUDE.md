@@ -67,6 +67,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - `Task.pendingIntent` not persisted — Room can't store PendingIntent; tapping task opens source app as fallback
 - `WillNotificationListenerService` uses its own `CoroutineScope(Dispatchers.IO + SupervisorJob)` — not tied to Activity lifecycle
 - `WillDatabase` is a singleton created in Activity/Service via `WillDatabase.getInstance(context)`
+- Swipe-up to open app drawer uses `nestedScroll` — `pointerInput` on an outer `Box` doesn't work because `LazyColumn` consumes all vertical drag events first. `nestedScroll.onPostScroll` intercepts the leftover scroll that the list couldn't consume.
 
 ## Development workflow
 

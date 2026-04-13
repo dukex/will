@@ -48,6 +48,16 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | `gradle/libs.versions.toml` | dependency catalog |
 | `app/build.gradle.kts` | app-level build config |
 
+## Launcher UX Constraints
+
+Will is a **launcher**, not a regular app. These rules apply to every layout decision:
+
+- **No app chrome** — no TabRow, no TopAppBar, no bottom navigation bar. These are app patterns, not home screen patterns.
+- **Task feed is the home screen** — full screen, edge-to-edge, status bar overlays content.
+- **App grid is secondary** — accessible via gesture (swipe up) or overlay, never a tab.
+- **No decorative containers** around the main content — the screen IS the launcher.
+- **Permission prompts** = small non-intrusive banners (bottom of screen), never full-screen dialogs that block the home screen.
+
 ## Architecture Decisions
 
 - No Hilt — manual `ViewModelProvider.Factory` for DI

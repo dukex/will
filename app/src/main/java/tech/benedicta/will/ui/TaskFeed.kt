@@ -1,6 +1,7 @@
 package tech.benedicta.will.ui
 
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import tech.benedicta.will.notification.NotificationActionStore
 import tech.benedicta.will.task.Task
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -57,10 +59,15 @@ private fun TaskCard(task: Task) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                if (launchIntent != null) {
-                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(launchIntent)
+                val action = NotificationActionStore.get(task.id)
+                if (action != null) {
+                    runCatching { action.execute() }
+                } else {
+                    val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(launchIntent)
+                    }
                 }
             }
     ) {

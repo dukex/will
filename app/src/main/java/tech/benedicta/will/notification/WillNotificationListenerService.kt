@@ -26,9 +26,15 @@ class WillNotificationListenerService : NotificationListenerService() {
         val sourcePackage = sbn.packageName
         val timestamp = sbn.postTime
 
+        val pendingIntent = sbn.notification.contentIntent
         val task = processor.process(title, text, sourcePackage, timestamp) ?: return
 
-        scope.launch { repository.insertTask(task) }
+        scope.launch {
+            val taskId = repository.insertTask(task)
+            if (pendingIntent != null) {
+                NotificationActionStore.put(taskId, NotificationAction { pendingIntent.send() })
+            }
+        }
     }
 
     override fun onDestroy() {

@@ -15,6 +15,7 @@ class SystemAppRepository(private val packageManager: PackageManager) : AppRepos
         }
         return activities
             .map { LauncherApp(it.activityInfo.packageName, it.loadLabel(packageManager).toString()) }
+            .distinctBy { it.packageName }
             .sortedBy { it.name }
     }
 }

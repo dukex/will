@@ -3,11 +3,11 @@
 ## Prerequisite Tasks (Must be completed before any User Story)
 
 ### PT-01: Project Setup
-- [ ] Create Android Studio project with minimum SDK 21
-- [ ] Configure basic app structure with MainActivity
-- [ ] Set up AndroidManifest.xml with launcher category
-- [ ] Implement basic UI with Compose or XML layout
-- [ ] Configure Gradle dependencies for core AndroidX libraries
+- [x] Create Android Studio project with minimum SDK 21
+- [x] Configure basic app structure with MainActivity
+- [x] Set up AndroidManifest.xml with launcher category
+- [x] Implement basic UI with Compose or XML layout
+- [x] Configure Gradle dependencies for core AndroidX libraries
 
 ### PT-02: Core Architecture Foundation
 - [ ] Design and implement Task data model

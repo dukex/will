@@ -22,15 +22,15 @@
 **As a user, I want Will to function as a basic Android launcher so I can access my apps and return to home screen reliably.**
 
 Subtasks:
-- [ ] Implement proper manifest configuration (launchMode, taskAffinity, etc.)
-- [ ] Handle HOME and DEFAULT intent categories
-- [ ] Implement singleTask behavior to prevent multiple instances
-- [ ] Ensure clearTaskOnLaunch functionality works
-- [ ] Handle configuration changes without activity destruction
-- [ ] Display app icons and names in a scrollable grid
-- [ ] Allow launching apps by tapping icons
-- [ ] Implement back button behavior to return to launcher
-- [ ] Show recent apps when long-pressing home button
+- [x] Implement proper manifest configuration (launchMode, taskAffinity, etc.)
+- [x] Handle HOME and DEFAULT intent categories
+- [x] Implement singleTask behavior to prevent multiple instances
+- [x] Ensure clearTaskOnLaunch functionality works
+- [x] Handle configuration changes without activity destruction
+- [x] Display app icons and names in a scrollable grid
+- [x] Allow launching apps by tapping icons
+- [x] Implement back button behavior to return to launcher (handled by singleTask + clearTaskOnLaunch at system level)
+- [ ] Show recent apps when long-pressing home button (system-level API restricted on Android 5+, deferred)
 
 ### US-02: Notification Capture and Task Creation
 **As a user, I want notifications to automatically become actionable tasks in Will so I don't miss important alerts.**

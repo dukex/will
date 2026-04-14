@@ -44,9 +44,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
@@ -201,19 +198,7 @@ private fun WillScreen(
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     var showThemeIndicator by remember { mutableStateOf(false) }
-    var pendingTask by remember { mutableStateOf<Task?>(null) }
-    var resumedWithPending by remember { mutableStateOf(false) }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && pendingTask != null) {
-                resumedWithPending = true
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    var activeTask by remember { mutableStateOf<Task?>(null) }
 
     LaunchedEffect(showThemeIndicator) {
         if (showThemeIndicator) {
@@ -250,7 +235,18 @@ private fun WillScreen(
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            HomeTopBar()
+            HomeTopBar(
+                activeTask = activeTask,
+                onTaskDone = {
+                    activeTask?.let { taskVm.markDone(it) }
+                    activeTask = null
+                },
+                onTaskLater = { activeTask = null },
+                onTaskDelete = {
+                    activeTask?.let { taskVm.deleteTask(it) }
+                    activeTask = null
+                }
+            )
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -274,8 +270,7 @@ private fun WillScreen(
                 TaskFeed(
                     tasks = tasks,
                     onTap = { task ->
-                        pendingTask = task
-                        resumedWithPending = false
+                        activeTask = task
                         val action = NotificationActionStore.get(task.id)
                         if (action != null) {
                             runCatching { action.execute() }
@@ -289,30 +284,6 @@ private fun WillScreen(
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-
-                if (resumedWithPending && pendingTask != null) {
-                    TaskActionSheet(
-                        task = pendingTask!!,
-                        onDone = {
-                            taskVm.markDone(pendingTask!!)
-                            pendingTask = null
-                            resumedWithPending = false
-                        },
-                        onLater = {
-                            pendingTask = null
-                            resumedWithPending = false
-                        },
-                        onDelete = {
-                            taskVm.deleteTask(pendingTask!!)
-                            pendingTask = null
-                            resumedWithPending = false
-                        },
-                        onDismiss = {
-                            pendingTask = null
-                            resumedWithPending = false
-                        }
-                    )
-                }
 
                 if (!notificationPermissionGranted) {
                     NotificationPermissionPrompt(

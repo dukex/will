@@ -11,6 +11,7 @@ class NotificationProcessor {
         timestamp: Long
     ): Task? {
         if (sourcePackage.isBlank()) return null
+        if (sourcePackage in IGNORED_PACKAGES) return null
 
         val resolvedTitle = when {
             !title.isNullOrBlank() -> title
@@ -24,6 +25,12 @@ class NotificationProcessor {
             text = resolvedText,
             sourcePackage = sourcePackage,
             createdAt = timestamp
+        )
+    }
+
+    companion object {
+        val IGNORED_PACKAGES: Set<String> = setOf(
+            "com.google.android.apps.wellbeing",  // Digital Wellbeing
         )
     }
 }

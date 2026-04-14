@@ -44,7 +44,7 @@ fun TaskActionSheet(
                 .padding(bottom = 16.dp)
         ) {
             Text(
-                text = task.title,
+                text = task.text,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,

@@ -32,20 +32,20 @@ Subtasks:
 - [x] Implement back button behavior to return to launcher (handled by singleTask + clearTaskOnLaunch at system level)
 - [ ] Show recent apps when long-pressing home button (system-level API restricted on Android 5+, deferred)
 
-### US-02: Notification Capture and Task Creation
+### US-02: Notification Capture and Task Creation ✅
 **As a user, I want notifications to automatically become actionable tasks in Will so I don't miss important alerts.**
 
 Subtasks:
-- [ ] Request NotificationListenerService permission
-- [ ] Implement NotificationListenerService to intercept notifications
-- [ ] Extract notification metadata (title, text, package, timestamp)
-- [ ] Associate PendingIntents with notifications for direct action
-- [ ] Create Task objects from notifications with createdAt timestamp
-- [ ] Store notification-based Tasks in Room database
-- [ ] Display notification tasks in the main feed
-- [ ] Allow tapping notification tasks to trigger their PendingIntent
-- [ ] Handle notification removal/updates from system
-- [ ] Provide settings to filter notifications by app or priority
+- [x] Request NotificationListenerService permission
+- [x] Implement NotificationListenerService to intercept notifications
+- [x] Extract notification metadata (title, text, package, timestamp)
+- [x] Associate PendingIntents with notifications for direct action
+- [x] Create Task objects from notifications with createdAt timestamp
+- [x] Store notification-based Tasks in Room database
+- [x] Display notification tasks in the main feed
+- [x] Allow tapping notification tasks to trigger their PendingIntent
+- [x] Handle notification removal/updates from system
+- [ ] Provide settings to filter notifications by app or priority → moved to US-08
 
 ### US-03: Active Intent Processing via Voice/Text Input
 **As a user, I want to create tasks by speaking or typing commands so I can quickly capture intentions without navigating apps.**
@@ -123,6 +123,15 @@ Subtasks:
 - [ ] Ensure accessibility service data is not logged or transmitted
 - [ ] Provide clear explanation of required permissions and why
 - [ ] Implement regular local backups option (to device storage only)
+
+### US-08: Notification Filter Settings
+**As a user, I want to control which apps can create tasks from notifications so my feed stays relevant.**
+
+Subtasks:
+- [ ] Create settings screen accessible from the task feed
+- [ ] List all apps that have sent notifications, with enable/disable toggle
+- [ ] Persist filter preferences in Room or SharedPreferences
+- [ ] Apply filter in WillNotificationListenerService before creating tasks
 
 ## Technical Debt and Improvement Tasks
 

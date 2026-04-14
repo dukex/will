@@ -18,7 +18,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | PT-01: Project Setup | ✅ done | minSdk 24, Compose, Room, KSP configured |
 | PT-02: Core Architecture | ✅ done | Task model (Room entity), TaskDao, RoomTaskRepository, TaskViewModel |
 | US-01: Basic Launcher | ✅ done | app grid + launch works; recent apps deferred (API restricted) |
-| US-02: Notification Capture | ✅ done | NotificationListenerService → Task → Room; task feed with permission prompt; deferred: PendingIntent fire, notification removal/update, per-app filter |
+| US-02: Notification Capture | ✅ done | NotificationListenerService → Task → Room; PendingIntent fired on tap; removal synced via NotificationKeyTracker; per-app filter moved to US-08 |
 | US-03+ | ⬜ not started | |
 
 ## Key Files

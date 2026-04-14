@@ -149,7 +149,10 @@ private fun WillScreen(
         }
     }
 
-    BackHandler(enabled = appDrawerOpen) { appDrawerOpen = false }
+    BackHandler(enabled = true) {
+        if (appDrawerOpen) appDrawerOpen = false
+        // else: home screen — back does nothing, launcher never exits
+    }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {

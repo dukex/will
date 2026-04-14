@@ -2,6 +2,7 @@ package tech.benedicta.will
 
 import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -54,10 +55,10 @@ import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.WillDatabase
 import tech.benedicta.will.notification.NotificationActionStore
+import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.ui.AppGrid
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.NotificationPermissionPrompt
-import tech.benedicta.will.ui.TaskActionSheet
 import tech.benedicta.will.ui.TaskFeed
 import tech.benedicta.will.ui.ThemeMode
 import tech.benedicta.will.ui.loadThemeMode
@@ -67,6 +68,9 @@ import tech.benedicta.will.ui.theme.WillTheme
 private const val SWIPE_THRESHOLD = 100f
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var taskVm: TaskViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -86,16 +90,17 @@ class MainActivity : ComponentActivity() {
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )
-                val taskVm: TaskViewModel = viewModel(
-                    factory = TaskViewModel.Factory(taskRepository)
-                )
+                taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
+
                 val apps by launcherVm.apps.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
+                val activeTask by taskVm.activeTask.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
                 WillScreen(
                     apps = apps,
                     tasks = tasks,
+                    activeTask = activeTask,
                     taskVm = taskVm,
                     themeMode = themeMode,
                     notificationPermissionGranted = notificationPermissionGranted,
@@ -107,6 +112,27 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val task = if (::taskVm.isInitialized) taskVm.activeTask.value else null
+        task ?: return
+        if (Settings.canDrawOverlays(this)) {
+            ActiveTaskOverlayService.show(this, task.title)
+        } else {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+            )
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ActiveTaskOverlayService.hide(this)
     }
 
     private fun isNotificationListenerEnabled(): Boolean {
@@ -145,7 +171,6 @@ private fun ThemeIndicator(visible: Boolean, themeMode: ThemeMode, modifier: Mod
 @Composable
 private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismiss: () -> Unit) {
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
-
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPostScroll(
@@ -188,6 +213,7 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismis
 private fun WillScreen(
     apps: List<LauncherApp>,
     tasks: List<Task>,
+    activeTask: Task?,
     taskVm: TaskViewModel,
     themeMode: ThemeMode,
     notificationPermissionGranted: Boolean,
@@ -198,7 +224,6 @@ private fun WillScreen(
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     var showThemeIndicator by remember { mutableStateOf(false) }
-    var activeTask by remember { mutableStateOf<Task?>(null) }
 
     LaunchedEffect(showThemeIndicator) {
         if (showThemeIndicator) {
@@ -239,12 +264,12 @@ private fun WillScreen(
                 activeTask = activeTask,
                 onTaskDone = {
                     activeTask?.let { taskVm.markDone(it) }
-                    activeTask = null
+                    taskVm.clearActiveTask()
                 },
-                onTaskLater = { activeTask = null },
+                onTaskLater = { taskVm.clearActiveTask() },
                 onTaskDelete = {
                     activeTask?.let { taskVm.deleteTask(it) }
-                    activeTask = null
+                    taskVm.clearActiveTask()
                 }
             )
             Box(
@@ -270,7 +295,7 @@ private fun WillScreen(
                 TaskFeed(
                     tasks = tasks,
                     onTap = { task ->
-                        activeTask = task
+                        taskVm.setActiveTask(task)
                         val action = NotificationActionStore.get(task.id)
                         if (action != null) {
                             runCatching { action.execute() }

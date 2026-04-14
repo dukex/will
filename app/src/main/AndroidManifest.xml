@@ -7,6 +7,8 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -36,6 +38,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".overlay.ActiveTaskOverlayService"
+            android:exported="false" />
         <service
             android:name=".notification.WillNotificationListenerService"
             android:exported="true"

@@ -64,6 +64,10 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - `CoroutineDispatcher` injected into ViewModel for testability
 - App icon loaded in composable (not in ViewModel) to keep model Android-framework-free
 - `getRecentTasks()` deferred — restricted API on Android 5+
+- `excludeFromRecents=true` — launcher must never appear in the recents screen
+- `stateNotNeeded=true` — launcher doesn't need onSaveInstanceState
+- `screenOrientation=portrait` — portrait only, matches minimal launcher convention
+- `windowSoftInputMode=stateAlwaysHidden` — keyboard must never auto-pop on home screen
 - `Task.pendingIntent` not persisted — Room can't store PendingIntent; tapping task opens source app as fallback
 - `WillNotificationListenerService` uses its own `CoroutineScope(Dispatchers.IO + SupervisorJob)` — not tied to Activity lifecycle
 - `WillDatabase` is a singleton created in Activity/Service via `WillDatabase.getInstance(context)`

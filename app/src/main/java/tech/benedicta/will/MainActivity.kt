@@ -1,8 +1,12 @@
 package tech.benedicta.will
 
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -71,6 +75,20 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var taskVm: TaskViewModel
 
+    private val taskActionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val taskId = intent.getLongExtra(ActiveTaskOverlayService.EXTRA_TASK_ID, -1L)
+            if (taskId == -1L || !::taskVm.isInitialized) return
+            val task = taskVm.tasks.value.find { it.id == taskId } ?: return
+            when (intent.action) {
+                ActiveTaskOverlayService.ACTION_DONE -> taskVm.markDone(task)
+                ActiveTaskOverlayService.ACTION_DELETE -> taskVm.deleteTask(task)
+                ActiveTaskOverlayService.ACTION_LATER -> Unit
+            }
+            taskVm.clearActiveTask()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -117,22 +135,34 @@ class MainActivity : ComponentActivity() {
     override fun onPause() {
         super.onPause()
         val task = if (::taskVm.isInitialized) taskVm.activeTask.value else null
-        task ?: return
-        if (Settings.canDrawOverlays(this)) {
-            ActiveTaskOverlayService.show(this, task.title)
-        } else {
-            startActivity(
-                Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
+        if (task != null) {
+            if (Settings.canDrawOverlays(this)) {
+                ActiveTaskOverlayService.show(this, task.id, task.title, task.text)
+            } else {
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        Uri.parse("package:$packageName")
+                    )
                 )
-            )
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(ActiveTaskOverlayService.ACTION_DONE)
+            addAction(ActiveTaskOverlayService.ACTION_LATER)
+            addAction(ActiveTaskOverlayService.ACTION_DELETE)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(taskActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(taskActionReceiver, filter)
         }
     }
 
     override fun onResume() {
         super.onResume()
         ActiveTaskOverlayService.hide(this)
+        runCatching { unregisterReceiver(taskActionReceiver) }
     }
 
     private fun isNotificationListenerEnabled(): Boolean {

@@ -88,4 +88,8 @@ private class FakeTaskRepository : TaskRepository {
     override suspend fun deleteTask(task: Task) {
         tasks.removeAll { it.id == task.id }
     }
+
+    override suspend fun deleteTaskById(taskId: Long) {
+        tasks.removeAll { it.id == taskId }
+    }
 }

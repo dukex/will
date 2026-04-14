@@ -90,4 +90,8 @@ private class FakeViewModelTaskRepository : TaskRepository {
     override suspend fun deleteTask(task: Task) {
         _tasks.value = _tasks.value.filter { it.id != task.id }
     }
+
+    override suspend fun deleteTaskById(taskId: Long) {
+        _tasks.value = _tasks.value.filter { it.id != taskId }
+    }
 }

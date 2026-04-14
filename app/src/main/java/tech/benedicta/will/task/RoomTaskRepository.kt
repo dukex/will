@@ -7,4 +7,5 @@ class RoomTaskRepository(private val dao: TaskDao) : TaskRepository {
     override fun getAllTasks(): Flow<List<Task>> = dao.getAll()
     override suspend fun updateTask(task: Task) = dao.update(task)
     override suspend fun deleteTask(task: Task) = dao.delete(task)
+    override suspend fun deleteTaskById(taskId: Long) = dao.deleteById(taskId)
 }

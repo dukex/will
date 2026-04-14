@@ -72,6 +72,7 @@ private fun AppItem(app: LauncherApp) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
+                // TODO: create a task and associate with the app or choose a already task
                 val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName)
                 if (launchIntent != null) {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

@@ -14,6 +14,7 @@ class WillNotificationListenerService : NotificationListenerService() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private val processor = NotificationProcessor()
+    private val keyTracker = NotificationKeyTracker()
 
     private val repository by lazy {
         RoomTaskRepository(WillDatabase.getInstance(applicationContext).taskDao())
@@ -23,18 +24,23 @@ class WillNotificationListenerService : NotificationListenerService() {
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()
-        val sourcePackage = sbn.packageName
-        val timestamp = sbn.postTime
-
         val pendingIntent = sbn.notification.contentIntent
-        val task = processor.process(title, text, sourcePackage, timestamp) ?: return
+        val task = processor.process(title, text, sbn.packageName, sbn.postTime) ?: return
 
         scope.launch {
             val taskId = repository.insertTask(task)
+            keyTracker.track(sbn.key, taskId)
             if (pendingIntent != null) {
                 NotificationActionStore.put(taskId, NotificationAction { pendingIntent.send() })
             }
         }
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification) {
+        val taskId = keyTracker.resolve(sbn.key) ?: return
+        keyTracker.forget(sbn.key)
+        NotificationActionStore.remove(taskId)
+        scope.launch { repository.deleteTaskById(taskId) }
     }
 
     override fun onDestroy() {

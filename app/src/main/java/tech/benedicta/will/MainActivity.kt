@@ -14,8 +14,11 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,6 +54,9 @@ import tech.benedicta.will.ui.AppGrid
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.TaskFeed
+import tech.benedicta.will.ui.ThemeMode
+import tech.benedicta.will.ui.loadThemeMode
+import tech.benedicta.will.ui.saveThemeMode
 import tech.benedicta.will.ui.theme.WillTheme
 
 private const val SWIPE_THRESHOLD = 100f
@@ -69,7 +75,9 @@ class MainActivity : ComponentActivity() {
         val taskRepository = RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
 
         setContent {
-            WillTheme {
+            var themeMode by remember { mutableStateOf(loadThemeMode(this)) }
+
+            WillTheme(themeMode = themeMode) {
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )
@@ -84,7 +92,11 @@ class MainActivity : ComponentActivity() {
                     apps = apps,
                     tasks = tasks,
                     notificationPermissionGranted = notificationPermissionGranted,
-                    onGrantPermission = { openNotificationListenerSettings() }
+                    onGrantPermission = { openNotificationListenerSettings() },
+                    onToggleTheme = {
+                        themeMode = themeMode.next()
+                        saveThemeMode(this@MainActivity, themeMode)
+                    }
                 )
             }
         }
@@ -142,12 +154,14 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismis
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
     tasks: List<Task>,
     notificationPermissionGranted: Boolean,
-    onGrantPermission: () -> Unit
+    onGrantPermission: () -> Unit,
+    onToggleTheme: () -> Unit
 ) {
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
@@ -186,6 +200,12 @@ private fun WillScreen(
                     .weight(1f)
                     .fillMaxWidth()
                     .nestedScroll(nestedScrollConnection)
+                    .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                        onLongClick = onToggleTheme
+                    )
                     .pointerInput(appDrawerOpen) {
                         detectVerticalDragGestures { _, dragAmount ->
                             if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true

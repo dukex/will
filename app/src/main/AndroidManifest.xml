@@ -24,7 +24,11 @@
             android:launchMode="singleTask"
             android:taskAffinity=""
             android:clearTaskOnLaunch="true"
-            android:configChanges="orientation|screenSize">
+            android:stateNotNeeded="true"
+            android:screenOrientation="portrait"
+            android:excludeFromRecents="true"
+            android:windowSoftInputMode="stateAlwaysHidden"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|locale">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

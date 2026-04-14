@@ -29,12 +29,20 @@ fun AppGrid(apps: List<LauncherApp>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            top = insets.calculateTopPadding() + 16.dp,
+            top = insets.calculateTopPadding() + 8.dp,
             bottom = insets.calculateBottomPadding() + 16.dp,
             start = insets.calculateStartPadding(layoutDirection) + 24.dp,
             end = insets.calculateEndPadding(layoutDirection) + 24.dp,
         )
     ) {
+        item {
+            Text(
+                text = "Apps",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
         items(apps, key = { it.packageName }) { app ->
             AppItem(app)
         }

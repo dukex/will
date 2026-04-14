@@ -62,18 +62,43 @@ class TaskViewModelTest {
     @Test
     fun `deleteTask removes task from repository`() = runTest {
         val repo = FakeViewModelTaskRepository()
-        val id = repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
+        repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
         val viewModel = TaskViewModel(repo, testDispatcher)
 
         viewModel.deleteTask(viewModel.tasks.value[0])
 
         assertTrue(viewModel.tasks.value.isEmpty())
     }
+
+    @Test
+    fun `markDone sets completedAt and removes task from active feed`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+
+        viewModel.markDone(viewModel.tasks.value[0])
+
+        assertTrue(viewModel.tasks.value.isEmpty())
+    }
+
+    @Test
+    fun `markDone persists completedAt timestamp`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        val before = System.currentTimeMillis()
+
+        viewModel.markDone(viewModel.tasks.value[0])
+
+        val completed = repo.lastUpdated
+        assertTrue(completed != null && completed >= before)
+    }
 }
 
 private class FakeViewModelTaskRepository : TaskRepository {
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     private var nextId = 1L
+    var lastUpdated: Long? = null
 
     override suspend fun insertTask(task: Task): Long {
         val id = nextId++
@@ -84,6 +109,7 @@ private class FakeViewModelTaskRepository : TaskRepository {
     override fun getAllTasks(): Flow<List<Task>> = _tasks.asStateFlow()
 
     override suspend fun updateTask(task: Task) {
+        lastUpdated = task.completedAt
         _tasks.value = _tasks.value.map { if (it.id == task.id) task else it }
     }
 

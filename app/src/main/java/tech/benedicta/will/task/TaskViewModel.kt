@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -16,6 +17,7 @@ class TaskViewModel(
 ) : ViewModel() {
 
     val tasks: StateFlow<List<Task>> = repository.getAllTasks()
+        .map { list -> list.filter { it.completedAt == null } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun addTask(task: Task) {
@@ -24,6 +26,12 @@ class TaskViewModel(
 
     fun deleteTask(task: Task) {
         viewModelScope.launch(dispatcher) { repository.deleteTask(task) }
+    }
+
+    fun markDone(task: Task) {
+        viewModelScope.launch(dispatcher) {
+            repository.updateTask(task.copy(completedAt = System.currentTimeMillis()))
+        }
     }
 
     class Factory(private val repository: TaskRepository) : ViewModelProvider.Factory {

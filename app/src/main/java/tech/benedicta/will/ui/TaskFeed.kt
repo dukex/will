@@ -1,6 +1,5 @@
 package tech.benedicta.will.ui
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,32 +30,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import tech.benedicta.will.notification.NotificationActionStore
 import tech.benedicta.will.task.Task
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun TaskFeed(tasks: List<Task>, modifier: Modifier = Modifier) {
+fun TaskFeed(tasks: List<Task>, onTap: (Task) -> Unit = {}, modifier: Modifier = Modifier) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
     val layoutDirection = LocalLayoutDirection.current
 
+    val horizontalPadding = insets.calculateStartPadding(layoutDirection) + 24.dp
+
     if (tasks.isEmpty()) {
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "No tasks yet",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+        Column(modifier = modifier.fillMaxSize()) {
+            Text(
+                text = "Tasks",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(
+                    start = horizontalPadding,
+                    top = insets.calculateTopPadding() + 16.dp,
+                    bottom = 8.dp
                 )
-                Text(
-                    text = "Swipe up for apps",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
+            )
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "No tasks yet",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Swipe up for apps",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
             }
         }
         return
@@ -71,15 +83,23 @@ fun TaskFeed(tasks: List<Task>, modifier: Modifier = Modifier) {
             end = insets.calculateEndPadding(layoutDirection) + 24.dp,
         )
     ) {
+        item {
+            Text(
+                text = "Tasks",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
         items(tasks, key = { it.id }) { task ->
-            TaskItem(task)
+            TaskItem(task, onTap)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
         }
     }
 }
 
 @Composable
-private fun TaskItem(task: Task) {
+private fun TaskItem(task: Task, onTap: (Task) -> Unit) {
     val context = LocalContext.current
     val appName = remember(task.sourcePackage) {
         runCatching {
@@ -91,18 +111,7 @@ private fun TaskItem(task: Task) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                val action = NotificationActionStore.get(task.id)
-                if (action != null) {
-                    runCatching { action.execute() }
-                } else {
-                    val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(launchIntent)
-                    }
-                }
-            }
+            .clickable { onTap(task) }
             .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

@@ -44,6 +44,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
@@ -53,9 +56,11 @@ import tech.benedicta.will.task.RoomTaskRepository
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.WillDatabase
+import tech.benedicta.will.notification.NotificationActionStore
 import tech.benedicta.will.ui.AppGrid
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.NotificationPermissionPrompt
+import tech.benedicta.will.ui.TaskActionSheet
 import tech.benedicta.will.ui.TaskFeed
 import tech.benedicta.will.ui.ThemeMode
 import tech.benedicta.will.ui.loadThemeMode
@@ -94,6 +99,7 @@ class MainActivity : ComponentActivity() {
                 WillScreen(
                     apps = apps,
                     tasks = tasks,
+                    taskVm = taskVm,
                     themeMode = themeMode,
                     notificationPermissionGranted = notificationPermissionGranted,
                     onGrantPermission = { openNotificationListenerSettings() },
@@ -185,14 +191,29 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismis
 private fun WillScreen(
     apps: List<LauncherApp>,
     tasks: List<Task>,
+    taskVm: TaskViewModel,
     themeMode: ThemeMode,
     notificationPermissionGranted: Boolean,
     onGrantPermission: () -> Unit,
     onToggleTheme: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     var showThemeIndicator by remember { mutableStateOf(false) }
+    var pendingTask by remember { mutableStateOf<Task?>(null) }
+    var resumedWithPending by remember { mutableStateOf(false) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME && pendingTask != null) {
+                resumedWithPending = true
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(showThemeIndicator) {
         if (showThemeIndicator) {
@@ -250,7 +271,48 @@ private fun WillScreen(
                         }
                     }
             ) {
-                TaskFeed(tasks = tasks, modifier = Modifier.fillMaxSize())
+                TaskFeed(
+                    tasks = tasks,
+                    onTap = { task ->
+                        pendingTask = task
+                        resumedWithPending = false
+                        val action = NotificationActionStore.get(task.id)
+                        if (action != null) {
+                            runCatching { action.execute() }
+                        } else {
+                            val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                            if (launchIntent != null) {
+                                launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(launchIntent)
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                if (resumedWithPending && pendingTask != null) {
+                    TaskActionSheet(
+                        task = pendingTask!!,
+                        onDone = {
+                            taskVm.markDone(pendingTask!!)
+                            pendingTask = null
+                            resumedWithPending = false
+                        },
+                        onLater = {
+                            pendingTask = null
+                            resumedWithPending = false
+                        },
+                        onDelete = {
+                            taskVm.deleteTask(pendingTask!!)
+                            pendingTask = null
+                            resumedWithPending = false
+                        },
+                        onDismiss = {
+                            pendingTask = null
+                            resumedWithPending = false
+                        }
+                    )
+                }
 
                 if (!notificationPermissionGranted) {
                     NotificationPermissionPrompt(

@@ -92,4 +92,12 @@ private class FakeTaskRepository : TaskRepository {
     override suspend fun deleteTaskById(taskId: Long) {
         tasks.removeAll { it.id == taskId }
     }
+    override suspend fun setActiveTask(taskId: Long) {
+        val updated = tasks.map { it.copy(isActive = it.id == taskId) }
+        tasks.clear(); tasks.addAll(updated)
+    }
+    override suspend fun clearActiveTask() {
+        val updated = tasks.map { it.copy(isActive = false) }
+        tasks.clear(); tasks.addAll(updated)
+    }
 }

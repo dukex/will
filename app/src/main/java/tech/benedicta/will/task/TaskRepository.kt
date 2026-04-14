@@ -8,4 +8,6 @@ interface TaskRepository {
     suspend fun updateTask(task: Task)
     suspend fun deleteTask(task: Task)
     suspend fun deleteTaskById(taskId: Long)
+    suspend fun setActiveTask(taskId: Long)
+    suspend fun clearActiveTask()
 }

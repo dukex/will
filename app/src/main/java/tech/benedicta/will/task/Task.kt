@@ -12,5 +12,6 @@ data class Task(
     val createdAt: Long,
     val startedAt: Long? = null,
     val completedAt: Long? = null,
-    val contextSwitchCount: Int = 0
+    val contextSwitchCount: Int = 0,
+    val isActive: Boolean = false
 )

@@ -7,15 +7,18 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +32,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.LauncherApp
@@ -49,6 +53,7 @@ private const val SWIPE_THRESHOLD = 100f
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         val appRepository = SystemAppRepository(packageManager)
         val taskRepository = RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
@@ -119,10 +124,16 @@ private fun WillScreen(
 
     BackHandler(enabled = appDrawerOpen) { appDrawerOpen = false }
 
+    Surface(modifier = Modifier.fillMaxSize()) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(nestedScrollConnection)
+            .pointerInput(appDrawerOpen) {
+                detectVerticalDragGestures { _, dragAmount ->
+                    if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
+                }
+            }
     ) {
         TaskFeed(tasks = tasks, modifier = Modifier.fillMaxSize())
 
@@ -149,5 +160,6 @@ private fun WillScreen(
                     .background(MaterialTheme.colorScheme.background)
             )
         }
+    }
     }
 }

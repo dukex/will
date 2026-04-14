@@ -97,4 +97,22 @@ class NotificationProcessorTest {
 
         assertNull(result)
     }
+
+    @Test
+    fun `returns null for ignored packages`() {
+        NotificationProcessor.IGNORED_PACKAGES.forEach { pkg ->
+            val result = processor.process(
+                title = "Some notification",
+                text = "body",
+                sourcePackage = pkg,
+                timestamp = 0L
+            )
+            assertNull("Expected null for ignored package: $pkg", result)
+        }
+    }
+
+    @Test
+    fun `Digital Wellbeing is in the ignored packages list`() {
+        assert("com.google.android.apps.wellbeing" in NotificationProcessor.IGNORED_PACKAGES)
+    }
 }

@@ -12,6 +12,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -29,6 +31,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,6 +94,7 @@ class MainActivity : ComponentActivity() {
                 WillScreen(
                     apps = apps,
                     tasks = tasks,
+                    themeMode = themeMode,
                     notificationPermissionGranted = notificationPermissionGranted,
                     onGrantPermission = { openNotificationListenerSettings() },
                     onToggleTheme = {
@@ -110,6 +114,28 @@ class MainActivity : ComponentActivity() {
 
     private fun openNotificationListenerSettings() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+    }
+}
+
+@Composable
+private fun ThemeIndicator(visible: Boolean, themeMode: ThemeMode, modifier: Modifier = Modifier) {
+    AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
+        androidx.compose.material3.Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.85f),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            androidx.compose.material3.Text(
+                text = when (themeMode) {
+                    ThemeMode.SYSTEM -> "System theme"
+                    ThemeMode.DARK -> "Dark"
+                    ThemeMode.LIGHT -> "Light"
+                },
+                color = MaterialTheme.colorScheme.inverseOnSurface,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+            )
+        }
     }
 }
 
@@ -159,12 +185,21 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismis
 private fun WillScreen(
     apps: List<LauncherApp>,
     tasks: List<Task>,
+    themeMode: ThemeMode,
     notificationPermissionGranted: Boolean,
     onGrantPermission: () -> Unit,
     onToggleTheme: () -> Unit
 ) {
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
+    var showThemeIndicator by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showThemeIndicator) {
+        if (showThemeIndicator) {
+            kotlinx.coroutines.delay(1500)
+            showThemeIndicator = false
+        }
+    }
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -204,7 +239,10 @@ private fun WillScreen(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                         onClick = {},
-                        onLongClick = onToggleTheme
+                        onLongClick = {
+                            onToggleTheme()
+                            showThemeIndicator = true
+                        }
                     )
                     .pointerInput(appDrawerOpen) {
                         detectVerticalDragGestures { _, dragAmount ->
@@ -225,6 +263,8 @@ private fun WillScreen(
                 }
 
                 AppDrawerOverlay(visible = appDrawerOpen, apps = apps, onDismiss = { appDrawerOpen = false })
+
+                ThemeIndicator(visible = showThemeIndicator, themeMode = themeMode, modifier = Modifier.align(Alignment.Center))
             }
         }
     }

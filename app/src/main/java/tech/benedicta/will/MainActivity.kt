@@ -8,12 +8,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -44,6 +48,7 @@ import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.WillDatabase
 import tech.benedicta.will.ui.AppGrid
+import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.TaskFeed
 import tech.benedicta.will.ui.theme.WillTheme
@@ -54,6 +59,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowInsetsControllerCompat(window, window.decorView).apply {
+            hide(WindowInsetsCompat.Type.statusBars())
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
 
         val appRepository = SystemAppRepository(packageManager)
         val taskRepository = RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
@@ -92,6 +102,23 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInVertically(initialOffsetY = { it }),
+        exit = slideOutVertically(targetOffsetY = { it }),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        AppGrid(
+            apps = apps,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        )
+    }
+}
+
+@Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
     tasks: List<Task>,
@@ -125,41 +152,33 @@ private fun WillScreen(
     BackHandler(enabled = appDrawerOpen) { appDrawerOpen = false }
 
     Surface(modifier = Modifier.fillMaxSize()) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(nestedScrollConnection)
-            .pointerInput(appDrawerOpen) {
-                detectVerticalDragGestures { _, dragAmount ->
-                    if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
-                }
-            }
-    ) {
-        TaskFeed(tasks = tasks, modifier = Modifier.fillMaxSize())
-
-        if (!notificationPermissionGranted) {
-            NotificationPermissionPrompt(
-                onGrantPermission = onGrantPermission,
+        Column(modifier = Modifier.fillMaxSize()) {
+            HomeTopBar()
+            Box(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
+                    .weight(1f)
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
-        }
+                    .nestedScroll(nestedScrollConnection)
+                    .pointerInput(appDrawerOpen) {
+                        detectVerticalDragGestures { _, dragAmount ->
+                            if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
+                        }
+                    }
+            ) {
+                TaskFeed(tasks = tasks, modifier = Modifier.fillMaxSize())
 
-        AnimatedVisibility(
-            visible = appDrawerOpen,
-            enter = slideInVertically(initialOffsetY = { it }),
-            exit = slideOutVertically(targetOffsetY = { it }),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            AppGrid(
-                apps = apps,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-            )
+                if (!notificationPermissionGranted) {
+                    NotificationPermissionPrompt(
+                        onGrantPermission = onGrantPermission,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                }
+
+                AppDrawerOverlay(visible = appDrawerOpen, apps = apps)
+            }
         }
-    }
     }
 }

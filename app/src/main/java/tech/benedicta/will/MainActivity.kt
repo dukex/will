@@ -102,7 +102,30 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>) {
+private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismiss: () -> Unit) {
+    var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                if (available.y > 0f) {
+                    overscrollAccumulator += available.y
+                    if (overscrollAccumulator > SWIPE_THRESHOLD) {
+                        onDismiss()
+                        overscrollAccumulator = 0f
+                    }
+                } else {
+                    overscrollAccumulator = 0f
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(initialOffsetY = { it }),
@@ -114,6 +137,7 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .nestedScroll(nestedScrollConnection)
         )
     }
 }
@@ -180,7 +204,7 @@ private fun WillScreen(
                     )
                 }
 
-                AppDrawerOverlay(visible = appDrawerOpen, apps = apps)
+                AppDrawerOverlay(visible = appDrawerOpen, apps = apps, onDismiss = { appDrawerOpen = false })
             }
         }
     }

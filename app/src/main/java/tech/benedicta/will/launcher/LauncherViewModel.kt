@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class LauncherViewModel(
@@ -17,6 +20,15 @@ class LauncherViewModel(
 
     private val _apps = MutableStateFlow<List<LauncherApp>>(emptyList())
     val apps: StateFlow<List<LauncherApp>> = _apps.asStateFlow()
+
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
+
+    val filteredApps: StateFlow<List<LauncherApp>> = _apps.combine(_query) { list, q ->
+        if (q.isBlank()) list else list.filter { it.name.contains(q, ignoreCase = true) }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun setQuery(query: String) { _query.value = query }
 
     init {
         viewModelScope.launch(ioDispatcher) {

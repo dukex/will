@@ -51,6 +51,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
@@ -101,6 +102,7 @@ class MainActivity : ComponentActivity() {
 
         val appRepository = SystemAppRepository(packageManager)
         val taskRepository = RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
+        val memoryTaskRepository = MemoryTaskRepository()
 
         setContent {
             var themeMode by remember { mutableStateOf(loadThemeMode(this)) }
@@ -109,15 +111,18 @@ class MainActivity : ComponentActivity() {
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )
-                taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
+                taskVm = viewModel(factory = TaskViewModel.Factory(memoryTaskRepository))
 
-                val apps by launcherVm.apps.collectAsState()
+                val filteredApps by launcherVm.filteredApps.collectAsState()
+                val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
                 val activeTask by taskVm.activeTask.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
                 WillScreen(
-                    apps = apps,
+                    apps = filteredApps,
+                    appSearchQuery = appSearchQuery,
+                    onAppSearchQueryChange = launcherVm::setQuery,
                     tasks = tasks,
                     activeTask = activeTask,
                     taskVm = taskVm,
@@ -200,7 +205,13 @@ private fun ThemeIndicator(visible: Boolean, themeMode: ThemeMode, modifier: Mod
 }
 
 @Composable
-private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismiss: () -> Unit) {
+private fun AppDrawerOverlay(
+    visible: Boolean,
+    apps: List<LauncherApp>,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -231,6 +242,8 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismis
     ) {
         AppGrid(
             apps = apps,
+            query = query,
+            onQueryChange = onQueryChange,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -243,6 +256,8 @@ private fun AppDrawerOverlay(visible: Boolean, apps: List<LauncherApp>, onDismis
 @Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
+    appSearchQuery: String,
+    onAppSearchQueryChange: (String) -> Unit,
     tasks: List<Task>,
     activeTask: Task?,
     taskVm: TaskViewModel,
@@ -351,7 +366,13 @@ private fun WillScreen(
                     )
                 }
 
-                AppDrawerOverlay(visible = appDrawerOpen, apps = apps, onDismiss = { appDrawerOpen = false })
+                AppDrawerOverlay(
+                    visible = appDrawerOpen,
+                    apps = apps,
+                    query = appSearchQuery,
+                    onQueryChange = onAppSearchQueryChange,
+                    onDismiss = { appDrawerOpen = false }
+                )
 
                 ThemeIndicator(visible = showThemeIndicator, themeMode = themeMode, modifier = Modifier.align(Alignment.Center))
             }

@@ -40,7 +40,7 @@ class WillNotificationListenerService : NotificationListenerService() {
             keyTracker.track(sbn.key, taskId)
             if (conversationKey != null) keyTracker.trackConversation(conversationKey, taskId)
             if (pendingIntent != null) {
-                NotificationActionStore.put(taskId, NotificationAction { pendingIntent.send() })
+                NotificationActionStore.put(taskId, pendingIntent)
             }
         }
     }

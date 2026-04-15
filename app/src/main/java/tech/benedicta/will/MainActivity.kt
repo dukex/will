@@ -338,30 +338,17 @@ private fun WillScreen(
                     tasks = tasks,
                     onTap = { task ->
                         taskVm.setActiveTask(task)
-                        val storeAction = NotificationActionStore.get(task.id)
-                        val serviceInstance = WillNotificationListenerService.instance
-                        val activeIntent = serviceInstance?.getPendingIntentForTask(task.id)
-                        android.util.Log.d("WillTap", "task.id=${task.id} storeAction=$storeAction serviceInstance=$serviceInstance activeIntent=$activeIntent")
-                        when {
-                            storeAction != null -> {
-                                android.util.Log.d("WillTap", "path=store")
-                                runCatching { storeAction.execute() }
-                                    .onSuccess { android.util.Log.d("WillTap", "store execute success") }
-                                    .onFailure { android.util.Log.e("WillTap", "store execute failed", it) }
-                            }
-                            activeIntent != null -> {
-                                android.util.Log.d("WillTap", "path=activeNotification")
-                                runCatching { activeIntent.send() }
-                                    .onSuccess { android.util.Log.d("WillTap", "activeIntent send success") }
-                                    .onFailure { android.util.Log.e("WillTap", "activeIntent send failed", it) }
-                            }
-                            else -> {
-                                android.util.Log.d("WillTap", "path=fallback pkg=${task.sourcePackage}")
-                                val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                                if (launchIntent != null) {
-                                    launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(launchIntent)
-                                }
+                        val storedIntent = NotificationActionStore.get(task.id)
+                        val activeIntent = WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
+                        val pendingIntent = storedIntent ?: activeIntent
+                        if (pendingIntent != null) {
+                            runCatching { pendingIntent.send(context, 0, null) }
+                                .onFailure { android.util.Log.e("WillTap", "send failed", it) }
+                        } else {
+                            val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                            if (launchIntent != null) {
+                                launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                context.startActivity(launchIntent)
                             }
                         }
                     },

@@ -1,19 +1,17 @@
 package tech.benedicta.will.notification
 
-object NotificationActionStore {
-    private val actions = mutableMapOf<Long, NotificationAction>()
+import android.app.PendingIntent
 
-    fun put(taskId: Long, action: NotificationAction) {
-        actions[taskId] = action
+object NotificationActionStore {
+    private val intents = mutableMapOf<Long, PendingIntent>()
+
+    fun put(taskId: Long, intent: PendingIntent) {
+        intents[taskId] = intent
     }
 
-    fun get(taskId: Long): NotificationAction? = actions[taskId]
+    fun get(taskId: Long): PendingIntent? = intents[taskId]
 
     fun remove(taskId: Long) {
-        actions.remove(taskId)
-    }
-
-    fun clear() {
-        actions.clear()
+        intents.remove(taskId)
     }
 }

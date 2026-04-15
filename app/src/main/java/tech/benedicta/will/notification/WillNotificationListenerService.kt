@@ -6,8 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import tech.benedicta.will.infrastructure.room.RoomTaskRepository
-import tech.benedicta.will.infrastructure.room.WillDatabase
+import tech.benedicta.will.WillApplication
 
 class WillNotificationListenerService : NotificationListenerService() {
 
@@ -17,7 +16,7 @@ class WillNotificationListenerService : NotificationListenerService() {
     private val keyTracker = NotificationKeyTracker()
 
     private val repository by lazy {
-        RoomTaskRepository(WillDatabase.getInstance(applicationContext).taskDao())
+        (application as WillApplication).taskRepository
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {

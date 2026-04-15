@@ -60,7 +60,7 @@ fun AppGrid(
             )
         }
         items(apps, key = { it.packageName }) { app ->
-            AppItem(app)
+            AppItem(app, onLaunch = { onQueryChange("") })
         }
     }
 }
@@ -95,7 +95,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier
 }
 
 @Composable
-private fun AppItem(app: LauncherApp) {
+private fun AppItem(app: LauncherApp, onLaunch: () -> Unit) {
     val context = LocalContext.current
     Text(
         text = app.name,
@@ -108,6 +108,7 @@ private fun AppItem(app: LauncherApp) {
                     launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(launchIntent)
                 }
+                onLaunch()
             }
             .padding(vertical = 12.dp)
     )

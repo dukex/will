@@ -2,16 +2,21 @@ package tech.benedicta.will.notification
 
 class NotificationKeyTracker {
     private val keyToTaskId = mutableMapOf<String, Long>()
+    private val taskIdToKey = mutableMapOf<Long, String>()
     private val conversationToTaskId = mutableMapOf<String, Long>()
 
     fun track(notificationKey: String, taskId: Long) {
         keyToTaskId[notificationKey] = taskId
+        taskIdToKey[taskId] = notificationKey
     }
 
     fun resolve(notificationKey: String): Long? = keyToTaskId[notificationKey]
 
+    fun notificationKeyForTask(taskId: Long): String? = taskIdToKey[taskId]
+
     fun forget(notificationKey: String) {
-        keyToTaskId.remove(notificationKey)
+        val taskId = keyToTaskId.remove(notificationKey)
+        if (taskId != null) taskIdToKey.remove(taskId)
     }
 
     fun trackConversation(conversationKey: String, taskId: Long) {

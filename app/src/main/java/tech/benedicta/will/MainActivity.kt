@@ -338,14 +338,17 @@ private fun WillScreen(
                     tasks = tasks,
                     onTap = { task ->
                         taskVm.setActiveTask(task)
-                        val action = NotificationActionStore.get(task.id)
-                        if (action != null) {
-                            runCatching { action.execute() }
-                        } else {
-                            val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                            if (launchIntent != null) {
-                                launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(launchIntent)
+                        val storeAction = NotificationActionStore.get(task.id)
+                        val activeIntent = WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
+                        when {
+                            storeAction != null -> runCatching { storeAction.execute() }
+                            activeIntent != null -> runCatching { activeIntent.send() }
+                            else -> {
+                                val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                                if (launchIntent != null) {
+                                    launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(launchIntent)
+                                }
                             }
                         }
                     },

@@ -1,5 +1,6 @@
 package tech.benedicta.will.notification
 
+import android.app.PendingIntent
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -59,8 +60,22 @@ class WillNotificationListenerService : NotificationListenerService() {
         return if (shortcutId != null) "${sbn.packageName}:$shortcutId" else null
     }
 
+    override fun onListenerConnected() {
+        instance = this
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        instance = null
         job.cancel()
+    }
+
+    fun getPendingIntentForTask(taskId: Long): PendingIntent? {
+        val key = keyTracker.notificationKeyForTask(taskId) ?: return null
+        return activeNotifications?.firstOrNull { it.key == key }?.notification?.contentIntent
+    }
+
+    companion object {
+        @Volatile var instance: WillNotificationListenerService? = null
     }
 }

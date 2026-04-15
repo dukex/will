@@ -21,6 +21,8 @@ class WillNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (keyTracker.resolve(sbn.key) != null) return  // already tracked — this is an update, not a new notification
+
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()

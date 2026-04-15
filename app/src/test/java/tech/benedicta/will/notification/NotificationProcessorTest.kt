@@ -135,6 +135,12 @@ class NotificationProcessorTest {
     }
 
     @Test
+    fun `shouldIgnoreFlags returns true for ONGOING_EVENT flag`() {
+        val ongoingEventFlag = 0x00000002
+        assert(processor.shouldIgnoreFlags(ongoingEventFlag))
+    }
+
+    @Test
     fun `shouldIgnoreFlags returns false for zero flags`() {
         assert(!processor.shouldIgnoreFlags(0))
     }

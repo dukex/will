@@ -1,5 +1,6 @@
 package tech.benedicta.will
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -54,10 +55,10 @@ import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.WillNotificationListenerService
-import tech.benedicta.will.task.RoomTaskRepository
+import tech.benedicta.will.infrastructure.room.RoomTaskRepository
+import tech.benedicta.will.infrastructure.room.WillDatabase
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
-import tech.benedicta.will.task.WillDatabase
 import tech.benedicta.will.notification.NotificationActionStore
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.ui.AppGrid

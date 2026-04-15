@@ -1,4 +1,4 @@
-package tech.benedicta.will.task
+package tech.benedicta.will.infrastructure.room
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -10,16 +10,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TaskDao {
     @Insert
-    suspend fun insert(task: Task): Long
+    suspend fun insert(task: TaskEntity): Long
 
     @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
-    fun getAll(): Flow<List<Task>>
+    fun getAll(): Flow<List<TaskEntity>>
 
     @Update
-    suspend fun update(task: Task)
+    suspend fun update(task: TaskEntity)
 
     @Delete
-    suspend fun delete(task: Task)
+    suspend fun delete(task: TaskEntity)
 
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteById(taskId: Long)

@@ -51,13 +51,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.WillNotificationListenerService
-import tech.benedicta.will.infrastructure.room.RoomTaskRepository
-import tech.benedicta.will.infrastructure.room.WillDatabase
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.notification.NotificationActionStore
@@ -101,8 +98,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val appRepository = SystemAppRepository(packageManager)
-        val taskRepository = RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
-        val memoryTaskRepository = MemoryTaskRepository()
+        val taskRepository = (application as WillApplication).taskRepository
 
         setContent {
             var themeMode by remember { mutableStateOf(loadThemeMode(this)) }
@@ -111,7 +107,7 @@ class MainActivity : ComponentActivity() {
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )
-                taskVm = viewModel(factory = TaskViewModel.Factory(memoryTaskRepository))
+                taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
 
                 val filteredApps by launcherVm.filteredApps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()

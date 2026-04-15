@@ -71,7 +71,10 @@ class WillNotificationListenerService : NotificationListenerService() {
     }
 
     fun getPendingIntentForTask(taskId: Long): PendingIntent? {
-        val key = keyTracker.notificationKeyForTask(taskId) ?: return null
+        val key = keyTracker.notificationKeyForTask(taskId)
+        val activeKeys = activeNotifications?.map { it.key }
+        android.util.Log.d("WillTap", "getPendingIntent taskId=$taskId key=$key activeKeys=$activeKeys")
+        if (key == null) return null
         return activeNotifications?.firstOrNull { it.key == key }?.notification?.contentIntent
     }
 

@@ -339,11 +339,22 @@ private fun WillScreen(
                     onTap = { task ->
                         taskVm.setActiveTask(task)
                         val storeAction = NotificationActionStore.get(task.id)
-                        val activeIntent = WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
+                        val serviceInstance = WillNotificationListenerService.instance
+                        val activeIntent = serviceInstance?.getPendingIntentForTask(task.id)
+                        android.util.Log.d("WillTap", "task.id=${task.id} storeAction=$storeAction serviceInstance=$serviceInstance activeIntent=$activeIntent")
                         when {
-                            storeAction != null -> runCatching { storeAction.execute() }
-                            activeIntent != null -> runCatching { activeIntent.send() }
+                            storeAction != null -> {
+                                android.util.Log.d("WillTap", "path=store")
+                                runCatching { storeAction.execute() }
+                                    .onFailure { android.util.Log.e("WillTap", "store execute failed", it) }
+                            }
+                            activeIntent != null -> {
+                                android.util.Log.d("WillTap", "path=activeNotification")
+                                runCatching { activeIntent.send() }
+                                    .onFailure { android.util.Log.e("WillTap", "activeIntent send failed", it) }
+                            }
                             else -> {
+                                android.util.Log.d("WillTap", "path=fallback pkg=${task.sourcePackage}")
                                 val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
                                 if (launchIntent != null) {
                                     launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)

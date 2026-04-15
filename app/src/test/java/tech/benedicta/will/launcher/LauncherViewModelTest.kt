@@ -39,8 +39,62 @@ class LauncherViewModelTest {
             LauncherApp("com.test", "Test App")
         )
         val viewModel = LauncherViewModel(FakeAppRepository(expectedApps), testDispatcher)
-        // Fails: ViewModel stub does not load apps from repository
         assertEquals(expectedApps, viewModel.apps.value)
+    }
+
+    @Test
+    fun `given empty query, filteredApps returns all apps`() = runTest {
+        val apps = listOf(
+            LauncherApp("com.a", "WhatsApp"),
+            LauncherApp("com.b", "Telegram")
+        )
+        val viewModel = LauncherViewModel(FakeAppRepository(apps), testDispatcher)
+
+        assertEquals(apps, viewModel.filteredApps.value)
+    }
+
+    @Test
+    fun `given query matching app name, filteredApps returns only matching apps`() = runTest {
+        val whatsapp = LauncherApp("com.a", "WhatsApp")
+        val telegram = LauncherApp("com.b", "Telegram")
+        val viewModel = LauncherViewModel(FakeAppRepository(listOf(whatsapp, telegram)), testDispatcher)
+
+        viewModel.setQuery("What")
+
+        assertEquals(listOf(whatsapp), viewModel.filteredApps.value)
+    }
+
+    @Test
+    fun `search is case insensitive`() = runTest {
+        val whatsapp = LauncherApp("com.a", "WhatsApp")
+        val viewModel = LauncherViewModel(FakeAppRepository(listOf(whatsapp)), testDispatcher)
+
+        viewModel.setQuery("whatsapp")
+
+        assertEquals(listOf(whatsapp), viewModel.filteredApps.value)
+    }
+
+    @Test
+    fun `given query not matching any app, filteredApps returns empty list`() = runTest {
+        val apps = listOf(LauncherApp("com.a", "WhatsApp"))
+        val viewModel = LauncherViewModel(FakeAppRepository(apps), testDispatcher)
+
+        viewModel.setQuery("zzz")
+
+        assertEquals(emptyList<LauncherApp>(), viewModel.filteredApps.value)
+    }
+
+    @Test
+    fun `clearing query after search restores all apps`() = runTest {
+        val apps = listOf(
+            LauncherApp("com.a", "WhatsApp"),
+            LauncherApp("com.b", "Telegram")
+        )
+        val viewModel = LauncherViewModel(FakeAppRepository(apps), testDispatcher)
+        viewModel.setQuery("What")
+        viewModel.setQuery("")
+
+        assertEquals(apps, viewModel.filteredApps.value)
     }
 }
 

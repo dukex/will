@@ -345,11 +345,13 @@ private fun WillScreen(
                         when {
                             storeAction != null -> {
                                 android.util.Log.d("WillTap", "path=store")
+                                serviceInstance?.cancelNotificationForTask(task.id)
                                 runCatching { storeAction.execute() }
                                     .onFailure { android.util.Log.e("WillTap", "store execute failed", it) }
                             }
                             activeIntent != null -> {
                                 android.util.Log.d("WillTap", "path=activeNotification")
+                                serviceInstance?.cancelNotificationForTask(task.id)
                                 runCatching { activeIntent.send() }
                                     .onFailure { android.util.Log.e("WillTap", "activeIntent send failed", it) }
                             }

@@ -78,6 +78,12 @@ class WillNotificationListenerService : NotificationListenerService() {
         return activeNotifications?.firstOrNull { it.key == key }?.notification?.contentIntent
     }
 
+    fun cancelNotificationForTask(taskId: Long) {
+        val key = keyTracker.notificationKeyForTask(taskId) ?: return
+        android.util.Log.d("WillTap", "cancelling notification key=$key")
+        cancelNotification(key)
+    }
+
     companion object {
         @Volatile var instance: WillNotificationListenerService? = null
     }

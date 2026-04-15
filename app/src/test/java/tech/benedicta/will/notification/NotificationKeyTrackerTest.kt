@@ -40,4 +40,24 @@ class NotificationKeyTrackerTest {
     fun `forget on unknown key does not throw`() {
         tracker.forget("nonexistent")
     }
+
+    @Test
+    fun `resolveConversation returns taskId for tracked conversation`() {
+        tracker.trackConversation("com.whatsapp:chat123", 7L)
+
+        assertEquals(7L, tracker.resolveConversation("com.whatsapp:chat123"))
+    }
+
+    @Test
+    fun `resolveConversation returns null for unknown conversation`() {
+        assertNull(tracker.resolveConversation("com.whatsapp:unknown"))
+    }
+
+    @Test
+    fun `forgetConversation removes the conversation entry`() {
+        tracker.trackConversation("com.whatsapp:chat123", 7L)
+        tracker.forgetConversation("com.whatsapp:chat123")
+
+        assertNull(tracker.resolveConversation("com.whatsapp:chat123"))
+    }
 }

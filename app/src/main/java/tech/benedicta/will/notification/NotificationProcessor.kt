@@ -28,7 +28,13 @@ class NotificationProcessor {
         )
     }
 
+    fun shouldIgnoreFlags(flags: Int): Boolean =
+        flags and FLAG_GROUP_SUMMARY != 0 || flags and FLAG_FOREGROUND_SERVICE != 0
+
     companion object {
+        private const val FLAG_GROUP_SUMMARY = 0x00000200
+        private const val FLAG_FOREGROUND_SERVICE = 0x00000040
+
         val IGNORED_PACKAGES: Set<String> = setOf(
             "com.google.android.apps.wellbeing",  // Digital Wellbeing
         )

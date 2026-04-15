@@ -115,4 +115,27 @@ class NotificationProcessorTest {
     fun `Digital Wellbeing is in the ignored packages list`() {
         assert("com.google.android.apps.wellbeing" in NotificationProcessor.IGNORED_PACKAGES)
     }
+
+    @Test
+    fun `shouldIgnoreFlags returns true for GROUP_SUMMARY flag`() {
+        val groupSummaryFlag = 0x00000200
+        assert(processor.shouldIgnoreFlags(groupSummaryFlag))
+    }
+
+    @Test
+    fun `shouldIgnoreFlags returns true for FOREGROUND_SERVICE flag`() {
+        val foregroundServiceFlag = 0x00000040
+        assert(processor.shouldIgnoreFlags(foregroundServiceFlag))
+    }
+
+    @Test
+    fun `shouldIgnoreFlags returns false for normal notification flags`() {
+        val onlyAlertOnceFlag = 0x00000008
+        assert(!processor.shouldIgnoreFlags(onlyAlertOnceFlag))
+    }
+
+    @Test
+    fun `shouldIgnoreFlags returns false for zero flags`() {
+        assert(!processor.shouldIgnoreFlags(0))
+    }
 }

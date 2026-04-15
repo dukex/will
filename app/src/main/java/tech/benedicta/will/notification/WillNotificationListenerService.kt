@@ -1,5 +1,6 @@
 package tech.benedicta.will.notification
 
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +21,12 @@ class WillNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (keyTracker.resolve(sbn.key) != null) return  // already tracked — this is an update, not a new notification
+        if (processor.shouldIgnoreFlags(sbn.notification.flags)) return
+
+        val conversationKey = conversationKeyFor(sbn)
+        if (conversationKey != null && keyTracker.resolveConversation(conversationKey) != null) return
+
+        if (keyTracker.resolve(sbn.key) != null) return
 
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
@@ -31,6 +37,7 @@ class WillNotificationListenerService : NotificationListenerService() {
         scope.launch {
             val taskId = repository.insertTask(task)
             keyTracker.track(sbn.key, taskId)
+            if (conversationKey != null) keyTracker.trackConversation(conversationKey, taskId)
             if (pendingIntent != null) {
                 NotificationActionStore.put(taskId, NotificationAction { pendingIntent.send() })
             }
@@ -40,8 +47,16 @@ class WillNotificationListenerService : NotificationListenerService() {
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
         val taskId = keyTracker.resolve(sbn.key) ?: return
         keyTracker.forget(sbn.key)
+        conversationKeyFor(sbn)?.let { keyTracker.forgetConversation(it) }
         NotificationActionStore.remove(taskId)
         scope.launch { repository.deleteTaskById(taskId) }
+    }
+
+    private fun conversationKeyFor(sbn: StatusBarNotification): String? {
+        val shortcutId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            sbn.notification.shortcutId
+        } else null
+        return if (shortcutId != null) "${sbn.packageName}:$shortcutId" else null
     }
 
     override fun onDestroy() {

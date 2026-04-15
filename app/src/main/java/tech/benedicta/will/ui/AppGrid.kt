@@ -19,8 +19,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -63,6 +67,9 @@ fun AppGrid(
 
 @Composable
 private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
     Box(modifier = modifier) {
         if (query.isEmpty()) {
             Text(
@@ -80,7 +87,9 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
         )
     }
 }

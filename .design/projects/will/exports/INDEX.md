@@ -56,3 +56,10 @@
 | Accessibility Audit | [accessibility-audit.md](../critique/accessibility-audit.md) |
 | Accessibility Fixes | [accessibility-fixes.md](../critique/accessibility-fixes.md) |
 <!-- END:critique -->
+
+<!-- BEGIN:review -->
+| Section | File |
+|---------|------|
+| Acceptance Report | [acceptance-report.md](../review/acceptance-report.md) |
+| Issues | [issues.md](../review/issues.md) |
+<!-- END:review -->

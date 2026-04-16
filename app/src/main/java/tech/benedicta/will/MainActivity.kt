@@ -110,6 +110,16 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val filter = IntentFilter().apply {
+            addAction(ActiveTaskOverlayService.ACTION_DONE)
+            addAction(ActiveTaskOverlayService.ACTION_LATER)
+            addAction(ActiveTaskOverlayService.ACTION_DELETE)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(taskActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(taskActionReceiver, filter)
+        }
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
@@ -171,22 +181,16 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
-        val filter = IntentFilter().apply {
-            addAction(ActiveTaskOverlayService.ACTION_DONE)
-            addAction(ActiveTaskOverlayService.ACTION_LATER)
-            addAction(ActiveTaskOverlayService.ACTION_DELETE)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(taskActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(taskActionReceiver, filter)
-        }
     }
 
     override fun onResume() {
         super.onResume()
         pendingActiveTask = null
         ActiveTaskOverlayService.hide(this)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         runCatching { unregisterReceiver(taskActionReceiver) }
     }
 

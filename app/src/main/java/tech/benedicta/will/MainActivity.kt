@@ -86,6 +86,7 @@ private enum class Screen {
 class MainActivity : ComponentActivity() {
 
     private lateinit var taskVm: TaskViewModel
+    private var pendingActiveTask: Task? = null
 
     private val taskActionReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -147,7 +148,8 @@ class MainActivity : ComponentActivity() {
                     taskVm = taskVm,
                     appFilterVm = appFilterVm,
                     notificationPermissionGranted = notificationPermissionGranted,
-                    onGrantPermission = { openNotificationListenerSettings() }
+                    onGrantPermission = { openNotificationListenerSettings() },
+                    onSetPendingActiveTask = { task -> pendingActiveTask = task }
                 )
             }
         }
@@ -155,7 +157,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onPause() {
         super.onPause()
-        val task = if (::taskVm.isInitialized) taskVm.activeTask.value else null
+        val task = pendingActiveTask
+            ?: if (::taskVm.isInitialized) taskVm.activeTask.value else null
         if (task != null) {
             if (Settings.canDrawOverlays(this)) {
                 ActiveTaskOverlayService.show(this, task.id, task.title, task.text)
@@ -182,6 +185,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        pendingActiveTask = null
         ActiveTaskOverlayService.hide(this)
         runCatching { unregisterReceiver(taskActionReceiver) }
     }
@@ -255,7 +259,8 @@ private fun WillScreen(
     taskVm: TaskViewModel,
     appFilterVm: AppFilterViewModel,
     notificationPermissionGranted: Boolean,
-    onGrantPermission: () -> Unit
+    onGrantPermission: () -> Unit,
+    onSetPendingActiveTask: (Task) -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     var currentScreen by remember { mutableStateOf(Screen.Home) }
@@ -350,6 +355,7 @@ private fun WillScreen(
                     TaskFeed(
                         tasks = tasks,
                         onTap = { task ->
+                            onSetPendingActiveTask(task)
                             taskVm.setActiveTask(task)
                             val pendingIntent = NotificationActionStore.get(task.id)
                                 ?: WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)

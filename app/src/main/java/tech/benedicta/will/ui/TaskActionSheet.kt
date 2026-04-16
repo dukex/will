@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import tech.benedicta.will.task.Task
 
@@ -44,9 +43,8 @@ fun TaskActionSheet(
                 .padding(bottom = 16.dp)
         ) {
             Text(
-                text = task.text,
+                text = task.title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )

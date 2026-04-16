@@ -1,12 +1,8 @@
 package tech.benedicta.will
 
-import android.content.BroadcastReceiver
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
@@ -16,6 +12,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -50,7 +48,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
@@ -88,29 +85,16 @@ class MainActivity : ComponentActivity() {
     private lateinit var taskVm: TaskViewModel
     private var pendingActiveTask: Task? = null
 
-    private val taskActionReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            val taskId = intent.getLongExtra(ActiveTaskOverlayService.EXTRA_TASK_ID, -1L)
-            if (taskId == -1L || !::taskVm.isInitialized) return
-            val action = intent.action ?: return
-            if (action == TaskViewModel.ACTION_DONE || action == TaskViewModel.ACTION_DELETE) {
-                WillNotificationListenerService.instance?.clearConversationForTask(taskId)
-            }
-            taskVm.handleOverlayAction(action, taskId)
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val filter = IntentFilter().apply {
-            addAction(ActiveTaskOverlayService.ACTION_DONE)
-            addAction(ActiveTaskOverlayService.ACTION_LATER)
-            addAction(ActiveTaskOverlayService.ACTION_DELETE)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(taskActionReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(taskActionReceiver, filter)
+        lifecycleScope.launch {
+            (application as WillApplication).overlayEvents.collect { event ->
+                if (!::taskVm.isInitialized) return@collect
+                if (event.action == TaskViewModel.ACTION_DONE || event.action == TaskViewModel.ACTION_DELETE) {
+                    WillNotificationListenerService.instance?.clearConversationForTask(event.taskId)
+                }
+                taskVm.handleOverlayAction(event.action, event.taskId)
+            }
         }
         enableEdgeToEdge()
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -179,11 +163,6 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         pendingActiveTask = null
         ActiveTaskOverlayService.hide(this)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        runCatching { unregisterReceiver(taskActionReceiver) }
     }
 
     private fun isNotificationListenerEnabled(): Boolean {

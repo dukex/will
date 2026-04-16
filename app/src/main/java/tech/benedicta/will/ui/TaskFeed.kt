@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
@@ -253,6 +254,8 @@ private fun SwipeBackground(dismissState: androidx.compose.material3.SwipeToDism
         else -> Color.Transparent
     }
 
+    val labelAlpha = ((progress - 0.25f) / 0.15f).coerceIn(0f, 1f)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -263,7 +266,10 @@ private fun SwipeBackground(dismissState: androidx.compose.material3.SwipeToDism
     ) {
         when (direction) {
             SwipeToDismissBoxValue.StartToEnd -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.alpha(labelAlpha)
+                ) {
                     Text(
                         "done",
                         style = MaterialTheme.typography.labelSmall,
@@ -279,7 +285,10 @@ private fun SwipeBackground(dismissState: androidx.compose.material3.SwipeToDism
                 }
             }
             SwipeToDismissBoxValue.EndToStart -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.alpha(labelAlpha)
+                ) {
                     Icon(
                         Icons.Outlined.Delete,
                         contentDescription = null,

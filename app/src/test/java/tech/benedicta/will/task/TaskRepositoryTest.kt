@@ -100,4 +100,5 @@ private class FakeTaskRepository : TaskRepository {
         val updated = tasks.map { it.copy(isActive = false) }
         tasks.clear(); tasks.addAll(updated)
     }
+    override suspend fun deleteAllTasks() { tasks.clear() }
 }

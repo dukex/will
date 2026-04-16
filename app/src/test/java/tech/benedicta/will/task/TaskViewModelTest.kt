@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -71,14 +73,82 @@ class TaskViewModelTest {
     }
 
     @Test
-    fun `markDone sets completedAt and removes task from active feed`() = runTest {
+    fun `markDone sets completedAt on the task`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
         val viewModel = TaskViewModel(repo, testDispatcher)
 
         viewModel.markDone(viewModel.tasks.value[0])
 
-        assertTrue(viewModel.tasks.value.isEmpty())
+        val updated = viewModel.tasks.value.find { it.title == "A" }
+        assertNotNull("task should still exist in repo", updated)
+        assertNotNull("completedAt should be set", updated?.completedAt)
+    }
+
+    // --- handleOverlayAction regression tests ---
+
+    @Test
+    fun `handleOverlayAction ACTION_DONE marks task as done`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        val taskId = viewModel.tasks.value[0].id
+
+        viewModel.handleOverlayAction("tech.benedicta.will.TASK_DONE", taskId)
+
+        val updated = repo.all.find { it.id == taskId }
+        assertNotNull("task should still exist", updated)
+        assertNotNull("completedAt should be set", updated?.completedAt)
+    }
+
+    @Test
+    fun `handleOverlayAction ACTION_DELETE removes task`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        val taskId = viewModel.tasks.value[0].id
+
+        viewModel.handleOverlayAction("tech.benedicta.will.TASK_DELETE", taskId)
+
+        assertTrue("task should be deleted", repo.all.none { it.id == taskId })
+    }
+
+    @Test
+    fun `handleOverlayAction ACTION_LATER leaves task unchanged`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        val taskId = viewModel.tasks.value[0].id
+
+        viewModel.handleOverlayAction("tech.benedicta.will.TASK_LATER", taskId)
+
+        val task = repo.all.find { it.id == taskId }
+        assertNotNull("task should still exist", task)
+        assertNull("completedAt should remain null", task?.completedAt)
+    }
+
+    @Test
+    fun `handleOverlayAction with unknown taskId is a no-op`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+
+        viewModel.handleOverlayAction("tech.benedicta.will.TASK_DONE", taskId = 999L)
+
+        assertEquals(1, repo.all.size)
+    }
+
+    @Test
+    fun `handleOverlayAction clears active task state`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        viewModel.setActiveTask(viewModel.tasks.value[0])
+        val taskId = viewModel.tasks.value[0].id
+
+        viewModel.handleOverlayAction("tech.benedicta.will.TASK_DONE", taskId)
+
+        assertNull("active task should be cleared", viewModel.activeTask.value)
     }
 
     @Test
@@ -99,6 +169,7 @@ private class FakeViewModelTaskRepository : TaskRepository {
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     private var nextId = 1L
     var lastUpdated: Long? = null
+    val all: List<Task> get() = _tasks.value
 
     override suspend fun insertTask(task: Task): Long {
         val id = nextId++
@@ -126,4 +197,5 @@ private class FakeViewModelTaskRepository : TaskRepository {
     override suspend fun clearActiveTask() {
         _tasks.value = _tasks.value.map { it.copy(isActive = false) }
     }
+    override suspend fun deleteAllTasks() { _tasks.value = emptyList() }
 }

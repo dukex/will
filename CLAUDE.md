@@ -107,6 +107,17 @@ Will has a complete brand identity at `.design/branding/will/patterns/`. **Alway
 | `.design/branding/will/BRIEF.md` | **Persona: Lucas** (developer 25–35, primary user) — always use Lucas, never invent personas |
 | `.design/system/CONCERNS.md` | Known design debt to fix when touching affected components |
 
+### Design project exports
+
+Full screen specs, research, and critique at `.design/projects/will/exports/INDEX.md`.
+
+| section | what's inside |
+|-|-|
+| Brief | scope, target adaptations, gap analysis, file references |
+| Research | UX patterns, competitor UX, technical research, accessibility, content strategy, recommendations |
+| Design | screen specs (HomeScreen, TaskActionSheet, IntentInputSheet, NotificationFilterSettings, FocusDashboard, PrivacySettings), personas, IA, navigation, micro-interactions, component plan |
+| Critique | critique, prioritized fixes, alternative directions, strengths, accessibility audit & fixes |
+
 ### Non-negotiable rules (enforced in codebase)
 - `background = Color(0xFF000000)` — OLED true black, never dark gray
 - Accent `#4F6EF7` on **interactive elements only** — `primary` in M3 leaks to Snackbar/Checkbox/Switch/CircularProgressIndicator/Chip; audit and override explicitly

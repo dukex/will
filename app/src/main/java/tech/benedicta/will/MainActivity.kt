@@ -48,7 +48,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
@@ -115,10 +114,10 @@ class MainActivity : ComponentActivity() {
                 )
                 taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
 
-                val context = androidx.compose.ui.platform.LocalContext.current
-                val appFilterRepository = remember { SharedPrefsAppFilterRepository(context) }
                 val appFilterVm: AppFilterViewModel = viewModel(
-                    factory = AppFilterViewModel.Factory(appFilterRepository)
+                    factory = AppFilterViewModel.Factory(
+                        (application as WillApplication).appFilterRepository
+                    )
                 )
 
                 val filteredApps by launcherVm.filteredApps.collectAsState()

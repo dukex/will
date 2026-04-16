@@ -3,7 +3,7 @@
 ## Project: Will
 **Brand:** will
 **Started:** 2026-04-16
-**Current Phase:** 4 (Critique)
+**Current Phase:** 5 (Build)
 **Prettiness Level:** 0%
 
 ---
@@ -16,7 +16,7 @@
 | 2 | Research | complete | 2026-04-16 | 2026-04-16 |
 | 3 | Design | complete | 2026-04-16 | 2026-04-16 |
 | 4 | Critique | complete | 2026-04-16 | 2026-04-16 |
-| 5 | Build | pending | — | — |
+| 5 | Build | complete | 2026-04-16 | 2026-04-16 |
 | 6 | Review | pending | — | — |
 
 ## Git
@@ -31,12 +31,12 @@
 
 | # | Screen | Build Status | Review Status |
 |---|--------|-------------|---------------|
-| 01 | HomeScreen | pending | pending |
-| 02 | TaskActionSheet | pending | pending |
-| 03 | IntentInputSheet | pending | pending |
-| 04 | NotificationFilterSettings | pending | pending |
-| 05 | FocusDashboard | pending | pending |
-| 06 | PrivacySettings | pending | pending |
+| 01 | HomeScreen | complete | pending |
+| 02 | TaskActionSheet | complete | pending |
+| 03 | IntentInputSheet | complete | pending |
+| 04 | NotificationFilterSettings | complete | pending |
+| 05 | FocusDashboard | complete | pending |
+| 06 | PrivacySettings | complete | pending |
 
 ## Review Loops
 

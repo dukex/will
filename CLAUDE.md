@@ -104,6 +104,7 @@ Will has a complete brand identity at `.design/branding/will/patterns/`. **Alway
 | `.design/branding/will/patterns/STYLE.md` | Agent contract — implementation rules, bold bets, constraints |
 | `.design/branding/will/patterns/components/token-mapping.md` | Compose M3 mapping — ColorScheme, Typography, Shapes, Spacing |
 | `.design/branding/will/patterns/guidelines.html` | Visual reference — open in browser |
+| `.design/branding/will/BRIEF.md` | **Persona: Lucas** (developer 25–35, primary user) — always use Lucas, never invent personas |
 | `.design/system/CONCERNS.md` | Known design debt to fix when touching affected components |
 
 ### Non-negotiable rules (enforced in codebase)

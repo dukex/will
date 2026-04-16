@@ -1,6 +1,5 @@
 package tech.benedicta.will
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -18,29 +17,29 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,24 +50,38 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
+import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
+import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.NotificationActionStore
 import tech.benedicta.will.notification.WillNotificationListenerService
+import tech.benedicta.will.overlay.ActiveTaskOverlayService
+import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
-import tech.benedicta.will.notification.NotificationActionStore
-import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.ui.AppGrid
+import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
+import tech.benedicta.will.ui.IntentInputSheet
+import tech.benedicta.will.ui.NotificationFilterSettings
 import tech.benedicta.will.ui.NotificationPermissionPrompt
+import tech.benedicta.will.ui.PrivacySettings
+import tech.benedicta.will.ui.TaskActionSheet
 import tech.benedicta.will.ui.TaskFeed
-import tech.benedicta.will.ui.ThemeMode
 import tech.benedicta.will.ui.loadThemeMode
-import tech.benedicta.will.ui.saveThemeMode
 import tech.benedicta.will.ui.theme.WillTheme
 
 private const val SWIPE_THRESHOLD = 100f
+
+private enum class Screen {
+    Home,
+    NotificationFilter,
+    FocusDashboard,
+    PrivacySettings
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -109,10 +122,15 @@ class MainActivity : ComponentActivity() {
                 )
                 taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
 
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val appFilterRepository = remember { SharedPrefsAppFilterRepository(context) }
+                val appFilterVm: AppFilterViewModel = viewModel(
+                    factory = AppFilterViewModel.Factory(appFilterRepository)
+                )
+
                 val filteredApps by launcherVm.filteredApps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
-                val activeTask by taskVm.activeTask.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
                 WillScreen(
@@ -120,15 +138,10 @@ class MainActivity : ComponentActivity() {
                     appSearchQuery = appSearchQuery,
                     onAppSearchQueryChange = launcherVm::setQuery,
                     tasks = tasks,
-                    activeTask = activeTask,
                     taskVm = taskVm,
-                    themeMode = themeMode,
+                    appFilterVm = appFilterVm,
                     notificationPermissionGranted = notificationPermissionGranted,
-                    onGrantPermission = { openNotificationListenerSettings() },
-                    onToggleTheme = {
-                        themeMode = themeMode.next()
-                        saveThemeMode(this@MainActivity, themeMode)
-                    }
+                    onGrantPermission = { openNotificationListenerSettings() }
                 )
             }
         }
@@ -175,28 +188,6 @@ class MainActivity : ComponentActivity() {
 
     private fun openNotificationListenerSettings() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-    }
-}
-
-@Composable
-private fun ThemeIndicator(visible: Boolean, themeMode: ThemeMode, modifier: Modifier = Modifier) {
-    AnimatedVisibility(visible = visible, enter = fadeIn(), exit = fadeOut(), modifier = modifier) {
-        androidx.compose.material3.Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.85f),
-            modifier = Modifier.padding(16.dp)
-        ) {
-            androidx.compose.material3.Text(
-                text = when (themeMode) {
-                    ThemeMode.SYSTEM -> "System theme"
-                    ThemeMode.DARK -> "Dark"
-                    ThemeMode.LIGHT -> "Light"
-                },
-                color = MaterialTheme.colorScheme.inverseOnSurface,
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
-            )
-        }
     }
 }
 
@@ -248,31 +239,28 @@ private fun AppDrawerOverlay(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
     appSearchQuery: String,
     onAppSearchQueryChange: (String) -> Unit,
     tasks: List<Task>,
-    activeTask: Task?,
     taskVm: TaskViewModel,
-    themeMode: ThemeMode,
+    appFilterVm: AppFilterViewModel,
     notificationPermissionGranted: Boolean,
-    onGrantPermission: () -> Unit,
-    onToggleTheme: () -> Unit
+    onGrantPermission: () -> Unit
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
-    var showThemeIndicator by remember { mutableStateOf(false) }
+    var selectedTask by remember { mutableStateOf<Task?>(null) }
+    var showActionSheet by remember { mutableStateOf(false) }
+    var showIntentInputSheet by remember { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<Task?>(null) }
 
-    LaunchedEffect(showThemeIndicator) {
-        if (showThemeIndicator) {
-            kotlinx.coroutines.delay(1500)
-            showThemeIndicator = false
-        }
-    }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -296,85 +284,153 @@ private fun WillScreen(
     }
 
     BackHandler(enabled = true) {
-        if (appDrawerOpen) appDrawerOpen = false
-        // else: home screen — back does nothing, launcher never exits
+        when {
+            currentScreen == Screen.PrivacySettings -> currentScreen = Screen.NotificationFilter
+            currentScreen != Screen.Home -> currentScreen = Screen.Home
+            appDrawerOpen -> appDrawerOpen = false
+        }
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            HomeTopBar(
-                activeTask = activeTask,
-                onTaskDone = {
-                    activeTask?.let { taskVm.markDone(it) }
-                    taskVm.clearActiveTask()
-                },
-                onTaskLater = { taskVm.clearActiveTask() },
-                onTaskDelete = {
-                    activeTask?.let { taskVm.deleteTask(it) }
-                    taskVm.clearActiveTask()
-                }
+    when (currentScreen) {
+        Screen.NotificationFilter -> {
+            NotificationFilterSettings(
+                onBack = { currentScreen = Screen.Home },
+                onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
+                viewModel = appFilterVm
             )
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .nestedScroll(nestedScrollConnection)
-                    .combinedClickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {},
-                        onLongClick = {
-                            onToggleTheme()
-                            showThemeIndicator = true
-                        }
-                    )
-                    .pointerInput(appDrawerOpen) {
-                        detectVerticalDragGestures { _, dragAmount ->
-                            if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
-                        }
-                    }
-            ) {
-                TaskFeed(
-                    tasks = tasks,
-                    onTap = { task ->
-                        taskVm.setActiveTask(task)
-                        val storedIntent = NotificationActionStore.get(task.id)
-                        val activeIntent = WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
-                        val pendingIntent = storedIntent ?: activeIntent
-                        if (pendingIntent != null) {
-                            runCatching { pendingIntent.send(context, 0, null) }
-                                .onFailure { android.util.Log.e("WillTap", "send failed", it) }
-                        } else {
-                            val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                            if (launchIntent != null) {
-                                launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                context.startActivity(launchIntent)
+            return
+        }
+        Screen.FocusDashboard -> {
+            val allTasks by taskVm.tasks.collectAsState()
+            FocusDashboard(
+                viewModel = remember(allTasks) { FocusDashboardViewModel(allTasks) },
+                onBack = { currentScreen = Screen.Home }
+            )
+            return
+        }
+        Screen.PrivacySettings -> {
+            PrivacySettings(
+                onBack = { currentScreen = Screen.NotificationFilter },
+                onDeleteAllTasks = { taskVm.deleteAllTasks() }
+            )
+            return
+        }
+        Screen.Home -> Unit
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { innerPadding ->
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                HomeTopBar(
+                    onAddTask = { showIntentInputSheet = true },
+                    onOpenFilter = { currentScreen = Screen.NotificationFilter },
+                    onOpenDashboard = { currentScreen = Screen.FocusDashboard }
+                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .nestedScroll(nestedScrollConnection)
+                        .pointerInput(appDrawerOpen) {
+                            detectVerticalDragGestures { _, dragAmount ->
+                                if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
                             }
                         }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
+                ) {
+                    TaskFeed(
+                        tasks = tasks,
+                        onTap = { task ->
+                            taskVm.setActiveTask(task)
+                            val storedIntent = NotificationActionStore.get(task.id)
+                            val activeIntent = WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
+                            val pendingIntent = storedIntent ?: activeIntent
+                            if (pendingIntent != null) {
+                                runCatching { pendingIntent.send(context, 0, null) }
+                                    .onFailure { android.util.Log.e("WillTap", "send failed", it) }
+                            } else {
+                                val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                                if (launchIntent != null) {
+                                    launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(launchIntent)
+                                }
+                            }
+                        },
+                        onLongPress = { task ->
+                            selectedTask = task
+                            showActionSheet = true
+                        },
+                        onSwipeDone = { task ->
+                            taskVm.markDone(task)
+                        },
+                        onSwipeDelete = { task ->
+                            pendingDelete = task
+                            taskVm.deleteTask(task)
+                            coroutineScope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "task deleted",
+                                    actionLabel = "undo",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    pendingDelete?.let { taskVm.addTask(it) }
+                                }
+                                pendingDelete = null
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
 
-                if (!notificationPermissionGranted) {
-                    NotificationPermissionPrompt(
-                        onGrantPermission = onGrantPermission,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
+                    if (!notificationPermissionGranted) {
+                        NotificationPermissionPrompt(
+                            onGrantPermission = onGrantPermission,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        )
+                    }
+
+                    AppDrawerOverlay(
+                        visible = appDrawerOpen,
+                        apps = apps,
+                        query = appSearchQuery,
+                        onQueryChange = onAppSearchQueryChange,
+                        onDismiss = { appDrawerOpen = false }
                     )
                 }
-
-                AppDrawerOverlay(
-                    visible = appDrawerOpen,
-                    apps = apps,
-                    query = appSearchQuery,
-                    onQueryChange = onAppSearchQueryChange,
-                    onDismiss = { appDrawerOpen = false }
-                )
-
-                ThemeIndicator(visible = showThemeIndicator, themeMode = themeMode, modifier = Modifier.align(Alignment.Center))
             }
+        }
+
+        if (showActionSheet && selectedTask != null) {
+            TaskActionSheet(
+                task = selectedTask!!,
+                onDismiss = { showActionSheet = false; selectedTask = null },
+                onMarkDone = { taskVm.markDone(selectedTask!!); showActionSheet = false; selectedTask = null },
+                onStart = { taskVm.startTask(selectedTask!!); showActionSheet = false; selectedTask = null },
+                onPause = { taskVm.pauseTask(selectedTask!!); showActionSheet = false; selectedTask = null },
+                onReopen = { taskVm.reopenTask(selectedTask!!); showActionSheet = false; selectedTask = null },
+                onDelete = { taskVm.deleteTask(selectedTask!!); showActionSheet = false; selectedTask = null }
+            )
+        }
+
+        if (showIntentInputSheet) {
+            IntentInputSheet(
+                onDismiss = { showIntentInputSheet = false },
+                onAddTask = { title ->
+                    taskVm.addTask(
+                        Task(
+                            title = title,
+                            text = "",
+                            sourcePackage = "manual",
+                            createdAt = System.currentTimeMillis()
+                        )
+                    )
+                    showIntentInputSheet = false
+                }
+            )
         }
     }
 }

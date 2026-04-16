@@ -46,6 +46,7 @@ class WillNotificationListenerService : NotificationListenerService() {
 
         scope.launch {
             appFilterRepository.addApp(sbn.packageName, appName)
+            if (!appFilterRepository.isEnabled(sbn.packageName)) return@launch
             val taskId = repository.insertTask(task)
             keyTracker.track(sbn.key, taskId)
             if (conversationKey != null) keyTracker.trackConversation(conversationKey, taskId)

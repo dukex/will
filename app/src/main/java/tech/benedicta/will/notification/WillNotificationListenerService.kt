@@ -28,14 +28,22 @@ class WillNotificationListenerService : NotificationListenerService() {
         if (processor.shouldIgnoreFlags(sbn.notification.flags)) return
 
         val conversationKey = conversationKeyFor(sbn)
-        if (conversationKey != null && keyTracker.resolveConversation(conversationKey) != null) return
+        val pendingIntent = sbn.notification.contentIntent
+
+        // Conversation update: an existing task already covers this conversation.
+        // Update the stored PendingIntent and key mapping — don't create a duplicate task.
+        val existingConvTaskId = if (conversationKey != null) keyTracker.resolveConversation(conversationKey) else null
+        if (existingConvTaskId != null) {
+            keyTracker.track(sbn.key, existingConvTaskId)
+            if (pendingIntent != null) NotificationActionStore.put(existingConvTaskId, pendingIntent)
+            return
+        }
 
         if (keyTracker.resolve(sbn.key) != null) return
 
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()
-        val pendingIntent = sbn.notification.contentIntent
         val task = processor.process(title, text, sbn.packageName, sbn.postTime) ?: return
 
         val appName = runCatching {
@@ -50,18 +58,26 @@ class WillNotificationListenerService : NotificationListenerService() {
             val taskId = repository.insertTask(task)
             keyTracker.track(sbn.key, taskId)
             if (conversationKey != null) keyTracker.trackConversation(conversationKey, taskId)
-            if (pendingIntent != null) {
-                NotificationActionStore.put(taskId, pendingIntent)
-            }
+            if (pendingIntent != null) NotificationActionStore.put(taskId, pendingIntent)
         }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
+        // Only clean up the stale key→task mapping for dedup purposes.
+        // Task lifecycle is user-controlled — don't delete tasks here.
+        // Conversation tracking is preserved so future notifications don't create duplicates
+        // until the user explicitly handles the task (calls clearConversationForTask).
+        // PendingIntent is preserved so the tap still works after the notification is dismissed.
         val taskId = keyTracker.resolve(sbn.key) ?: return
         keyTracker.forget(sbn.key)
-        conversationKeyFor(sbn)?.let { keyTracker.forgetConversation(it) }
+        android.util.Log.d("Will", "notification removed, task $taskId preserved")
+    }
+
+    /** Call when the user handles a task (done, delete) so the next notification
+     *  for that conversation creates a fresh task instead of being deduplicated away. */
+    fun clearConversationForTask(taskId: Long) {
+        keyTracker.forgetConversationForTask(taskId)
         NotificationActionStore.remove(taskId)
-        scope.launch { repository.deleteTaskById(taskId) }
     }
 
     private fun conversationKeyFor(sbn: StatusBarNotification): String? {
@@ -82,16 +98,12 @@ class WillNotificationListenerService : NotificationListenerService() {
     }
 
     fun getPendingIntentForTask(taskId: Long): PendingIntent? {
-        val key = keyTracker.notificationKeyForTask(taskId)
-        val activeKeys = activeNotifications?.map { it.key }
-        android.util.Log.d("WillTap", "getPendingIntent taskId=$taskId key=$key activeKeys=$activeKeys")
-        if (key == null) return null
+        val key = keyTracker.notificationKeyForTask(taskId) ?: return null
         return activeNotifications?.firstOrNull { it.key == key }?.notification?.contentIntent
     }
 
     fun cancelNotificationForTask(taskId: Long) {
         val key = keyTracker.notificationKeyForTask(taskId) ?: return
-        android.util.Log.d("WillTap", "cancelling notification key=$key")
         cancelNotification(key)
     }
 

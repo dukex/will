@@ -182,8 +182,15 @@ class ActiveTaskOverlayService : Service() {
         }
         setOnClickListener {
             sendBroadcast(Intent(action).putExtra(EXTRA_TASK_ID, taskId))
+            returnToLauncher()
             stopSelf()
         }
+    }
+
+    private fun returnToLauncher() {
+        packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        }?.also { startActivity(it) }
     }
 
     private fun addBackdrop() {

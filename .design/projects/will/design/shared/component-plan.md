@@ -22,9 +22,9 @@
 | Component | File | Changes |
 |-----------|------|---------|
 | `TaskItem` (inside `TaskFeed.kt`) | `ui/TaskFeed.kt` | Wrap with `SwipeToDismissBox`; add `TaskStatusIndicator`; add `animateItem()` modifier; ensure `heightIn(min = 48.dp)` |
-| `TaskFeed` | `ui/TaskFeed.kt` | Add priority sections (active/pending/done); section headers; hide empty sections; `key = { it.id }` on items |
+| `TaskFeed` | `ui/TaskFeed.kt` | Add priority sections (active/pending/done); section headers; hide empty sections; `key = { it.id }` on items; **add `SnackbarHost` for delete-undo** (C-02 fix) |
 | `TaskActionSheet` | `ui/TaskActionSheet.kt` | Add lifecycle context line (timestamp + state label); add confirm-delete pattern |
-| `HomeTopBar` | `ui/HomeTopBar.kt` | Wrap Done/Later/Delete in 48dp `Box`; add filter icon → NotificationFilterSettings; add chart icon → FocusDashboard; add semantics `role = Role.Button` |
+| `HomeTopBar` | `ui/HomeTopBar.kt` | Wrap Done/Later/Delete in 48dp `Box`; **add `+` add icon → IntentInputSheet** (C-01 fix); add filter icon → NotificationFilterSettings; add chart icon → FocusDashboard; add semantics `role = Role.Button` |
 | `WillTheme` | `ui/theme/Theme.kt` | Add `WillSuccess`, `WillTextTertiary` token usages; ensure `WillSpacing.touchTarget` constant exists |
 
 ---
@@ -59,7 +59,8 @@
 | `IntentInputViewModel` | `task/IntentInputViewModel.kt` | Voice state, NLP state, addTask delegation |
 | `NlpPipeline` | `task/NlpPipeline.kt` | Regex intent extraction from transcript |
 | `FilterSettingsViewModel` | `notification/FilterSettingsViewModel.kt` | App list + per-app enabled state (Room or SharedPrefs) |
-| `FocusDashboardViewModel` | `task/FocusDashboardViewModel.kt` | Compute focus score, time-on-task, context switch count |
+| `FocusDashboardViewModel` | `task/FocusDashboardViewModel.kt` | Compute focus score, context switch count |
+| `TaskViewModel` (extend) | `task/TaskViewModel.kt` | **Add `totalFocusTimeToday: StateFlow<String>`** derived from completed tasks — used by HomeScreen "all clear" empty state (I-03 fix). Do NOT read from FocusDashboardViewModel in HomeScreen. |
 | `AppNotificationFilter` | `notification/AppNotificationFilter.kt` | Domain model: packageName + isEnabled |
 
 ---

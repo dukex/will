@@ -22,7 +22,7 @@ Entry point. All other screens branch from here. Returns here on back press and 
 ┌──────────────────────────────────────────┐
 │  [WindowInsets.safeDrawing.top padding]  │
 │                                          │
-│  Thu, Apr 16          [≡ filter] [⊟ dash]│  ← HomeTopBar (48dp rows)
+│  Thu, Apr 16       [+ add] [≡ filter] [⊟]│  ← HomeTopBar (48dp rows)
 │                                          │
 ├──────────────────────────────────────────┤  ← 1dp #2A2A2A divider
 │                                          │
@@ -54,7 +54,10 @@ Entry point. All other screens branch from here. Returns here on back press and 
 
 **Screen padding:** 0dp sides — task cards extend edge to edge. Cards provide internal `16dp` horizontal padding.
 
-**HomeTopBar:** 24dp horizontal padding, space-between layout. Left: date string (bodyMedium, WillTextSecondary). Right: two IconButtons (filter + dashboard), each 48dp touch target.
+**HomeTopBar:** 24dp horizontal padding, space-between layout. Left: date string (bodyMedium, WillTextSecondary). Right: **three** IconButtons (add · filter · dashboard), each 48dp touch target.
+- Add: `Icons.Outlined.Add`, `contentDescription = "add task"` → opens `IntentInputSheet`
+- Filter: `Icons.Outlined.FilterList` → `NotificationFilterSettings`
+- Dashboard: `Icons.Outlined.BarChart` → `FocusDashboard`
 
 ---
 
@@ -67,6 +70,7 @@ Entry point. All other screens branch from here. Returns here on back press and 
 - `SectionHeader` (new — labelSmall text)
 - `HorizontalDivider(color = WillBorder, thickness = 1.dp)` between items
 - `NotificationPermissionPrompt` (existing — conditional banner at bottom)
+- `SnackbarHost` + `SnackbarHostState` — delete undo only. Snackbar: background `WillSurface2`, text `"task deleted"` (bodyMedium, WillTextPrimary), action `"undo"` (labelMedium, WillAccent). **⚠ Accent on "undo" is correct — it is an interactive action.** Hold deleted task in `TaskViewModel.pendingDelete` for 5s; restore on undo tap.
 
 ---
 
@@ -131,7 +135,7 @@ No illustration, no CTA button — the absence is the state.
 ```
 Full screen, centered vertically:
   "clear"                  (bodyLarge, WillTextSecondary)
-  "04:12 focused today"    (labelSmall, GeistMono, WillTextTertiary — time from dashboard)
+  "04:12 focused today"    (labelSmall, GeistMono, WillTextTertiary)
 ```
 
 ### Loading — initial Room query
@@ -151,9 +155,10 @@ If Room throws (should not happen in practice): log to Logcat, show nothing. Do 
 | Tap TaskItem | `flat-press` (opacity 0.65, 100ms) → fire PendingIntent |
 | Long-press TaskItem | `TaskActionSheet` opens |
 | Swipe right on TaskItem | Lerp background WillSuccess; on 40% → `markDone()` |
-| Swipe left on TaskItem | Lerp background WillDestructive; on 40% → `deleteTask()` |
+| Swipe left on TaskItem | Lerp background WillDestructive; on 40% → `deleteTask()` + show Snackbar "task deleted" / action "undo" (5s). On undo tap → restore task to Room. |
 | Task inserted | `animateItem()` slide from top |
 | Task removed | `animateItem()` fade + shrink |
+| Tap add icon | Open `IntentInputSheet` (US-03 entry point) |
 | Tap filter icon | Navigate to NotificationFilterSettings |
 | Tap chart icon | Navigate to FocusDashboard |
 | Swipe up | AppGrid opens |
@@ -191,7 +196,8 @@ Modifier.semantics { invisibleToUser() }
 No images. STYLE.md: "the UI is the imagery." Section headers are text. Empty states are text. No icons beyond system Material Symbols.
 
 **Icons used:**
-- Filter icon: `Icons.Outlined.FilterList` or `Icons.Outlined.Tune` (24dp, WillTextSecondary)
+- Add icon: `Icons.Outlined.Add` (24dp, WillTextSecondary) — entry point for IntentInputSheet
+- Filter icon: `Icons.Outlined.FilterList` (24dp, WillTextSecondary)
 - Dashboard icon: `Icons.Outlined.BarChart` (24dp, WillTextSecondary)
 - Done indicator: `Icons.Outlined.Check` (24dp, WillTextPrimary) in swipe background
 - Delete indicator: `Icons.Outlined.Delete` (24dp, WillTextPrimary) in swipe background

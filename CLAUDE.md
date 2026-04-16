@@ -94,6 +94,28 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `gradle/libs.versions.toml` | dependency catalog |
 | `app/build.gradle.kts` | app-level build config |
 
+## Design System
+
+Will has a complete brand identity at `.design/branding/will/patterns/`. **Always follow this when implementing UI.**
+
+| file | purpose |
+|-|-|
+| `.design/branding/will/patterns/will.yml` | Single source of truth — all brand tokens |
+| `.design/branding/will/patterns/STYLE.md` | Agent contract — implementation rules, bold bets, constraints |
+| `.design/branding/will/patterns/components/token-mapping.md` | Compose M3 mapping — ColorScheme, Typography, Shapes, Spacing |
+| `.design/branding/will/patterns/guidelines.html` | Visual reference — open in browser |
+| `.design/system/CONCERNS.md` | Known design debt to fix when touching affected components |
+
+### Non-negotiable rules (enforced in codebase)
+- `background = Color(0xFF000000)` — OLED true black, never dark gray
+- Accent `#4F6EF7` on **interactive elements only** — `primary` in M3 leaks to Snackbar/Checkbox/Switch/CircularProgressIndicator/Chip; audit and override explicitly
+- `FontWeight.Normal` (400) for content, `FontWeight.Medium` (500) for section headers — **never SemiBold (600) or Bold (700)**
+- `MaterialTheme.typography.labelSmall` uses Geist Mono — timestamps and source labels only, not titles
+- `extraSmall = RoundedCornerShape(0.dp)` — task cards always 0dp radius, override M3 defaults explicitly
+- No shadows, no gradients, no elevation values
+- 48dp minimum touch targets (`Spacing.touchTarget`)
+- `Spacing` object in `ui/theme/Theme.kt` — use `Spacing.lg` (16dp), `Spacing.xl` (24dp), etc. instead of hardcoded dp
+
 ## Launcher UX Constraints
 
 Will is a **launcher**, not a regular app. These rules apply to every layout decision:

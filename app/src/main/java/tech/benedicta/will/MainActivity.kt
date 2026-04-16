@@ -93,8 +93,14 @@ class MainActivity : ComponentActivity() {
             if (taskId == -1L || !::taskVm.isInitialized) return
             val task = taskVm.tasks.value.find { it.id == taskId } ?: return
             when (intent.action) {
-                ActiveTaskOverlayService.ACTION_DONE -> taskVm.markDone(task)
-                ActiveTaskOverlayService.ACTION_DELETE -> taskVm.deleteTask(task)
+                ActiveTaskOverlayService.ACTION_DONE -> {
+                    taskVm.markDone(task)
+                    WillNotificationListenerService.instance?.clearConversationForTask(task.id)
+                }
+                ActiveTaskOverlayService.ACTION_DELETE -> {
+                    taskVm.deleteTask(task)
+                    WillNotificationListenerService.instance?.clearConversationForTask(task.id)
+                }
                 ActiveTaskOverlayService.ACTION_LATER -> Unit
             }
             taskVm.clearActiveTask()
@@ -345,18 +351,23 @@ private fun WillScreen(
                         tasks = tasks,
                         onTap = { task ->
                             taskVm.setActiveTask(task)
-                            val storedIntent = NotificationActionStore.get(task.id)
-                            val activeIntent = WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
-                            val pendingIntent = storedIntent ?: activeIntent
+                            val pendingIntent = NotificationActionStore.get(task.id)
+                                ?: WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
                             if (pendingIntent != null) {
+                                // Cancel the source notification before firing the PI —
+                                // mirrors what the Android system does on notification tap,
+                                // ensuring apps like WhatsApp navigate to the specific conversation.
+                                WillNotificationListenerService.instance?.cancelNotificationForTask(task.id)
                                 runCatching { pendingIntent.send(context, 0, null) }
-                                    .onFailure { android.util.Log.e("WillTap", "send failed", it) }
+                                    .onFailure {
+                                        context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                                            ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            ?.let { context.startActivity(it) }
+                                    }
                             } else {
-                                val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                                if (launchIntent != null) {
-                                    launchIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    context.startActivity(launchIntent)
-                                }
+                                context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                                    ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    ?.let { context.startActivity(it) }
                             }
                         },
                         onLongPress = { task ->
@@ -365,10 +376,12 @@ private fun WillScreen(
                         },
                         onSwipeDone = { task ->
                             taskVm.markDone(task)
+                            WillNotificationListenerService.instance?.clearConversationForTask(task.id)
                         },
                         onSwipeDelete = { task ->
                             pendingDelete = task
                             taskVm.deleteTask(task)
+                            WillNotificationListenerService.instance?.clearConversationForTask(task.id)
                             coroutineScope.launch {
                                 val result = snackbarHostState.showSnackbar(
                                     message = "task deleted",
@@ -409,11 +422,19 @@ private fun WillScreen(
             TaskActionSheet(
                 task = selectedTask!!,
                 onDismiss = { showActionSheet = false; selectedTask = null },
-                onMarkDone = { taskVm.markDone(selectedTask!!); showActionSheet = false; selectedTask = null },
+                onMarkDone = {
+                    taskVm.markDone(selectedTask!!)
+                    WillNotificationListenerService.instance?.clearConversationForTask(selectedTask!!.id)
+                    showActionSheet = false; selectedTask = null
+                },
                 onStart = { taskVm.startTask(selectedTask!!); showActionSheet = false; selectedTask = null },
                 onPause = { taskVm.pauseTask(selectedTask!!); showActionSheet = false; selectedTask = null },
                 onReopen = { taskVm.reopenTask(selectedTask!!); showActionSheet = false; selectedTask = null },
-                onDelete = { taskVm.deleteTask(selectedTask!!); showActionSheet = false; selectedTask = null }
+                onDelete = {
+                    taskVm.deleteTask(selectedTask!!)
+                    WillNotificationListenerService.instance?.clearConversationForTask(selectedTask!!.id)
+                    showActionSheet = false; selectedTask = null
+                }
             )
         }
 

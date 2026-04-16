@@ -20,6 +20,9 @@ class WillNotificationListenerService : NotificationListenerService() {
     private val repository by lazy {
         (application as WillApplication).taskRepository
     }
+    private val appFilterRepository by lazy {
+        (application as WillApplication).appFilterRepository
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (processor.shouldIgnoreFlags(sbn.notification.flags)) return
@@ -35,7 +38,14 @@ class WillNotificationListenerService : NotificationListenerService() {
         val pendingIntent = sbn.notification.contentIntent
         val task = processor.process(title, text, sbn.packageName, sbn.postTime) ?: return
 
+        val appName = runCatching {
+            packageManager.getApplicationLabel(
+                packageManager.getApplicationInfo(sbn.packageName, 0)
+            ).toString()
+        }.getOrDefault(sbn.packageName)
+
         scope.launch {
+            appFilterRepository.addApp(sbn.packageName, appName)
             val taskId = repository.insertTask(task)
             keyTracker.track(sbn.key, taskId)
             if (conversationKey != null) keyTracker.trackConversation(conversationKey, taskId)

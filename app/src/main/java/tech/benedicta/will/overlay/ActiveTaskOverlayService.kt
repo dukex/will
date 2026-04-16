@@ -38,8 +38,13 @@ class ActiveTaskOverlayService : Service() {
         return START_STICKY
     }
 
-    private fun dp(v: Int): Int {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
+    private fun dp(v: Int): Int =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
+
+    private fun containerDrawable(): GradientDrawable = GradientDrawable().apply {
+        setColor(Color.parseColor("#161616"))
+        setStroke(dp(1), Color.parseColor("#2A2A2A"))
+        cornerRadius = dp(8).toFloat()
     }
 
     private fun bubbleParams() = WindowManager.LayoutParams(
@@ -62,24 +67,20 @@ class ActiveTaskOverlayService : Service() {
         var touchX = 0f; var touchY = 0f
         var moved = false
 
-        val bg = GradientDrawable().apply {
-            setColor(Color.parseColor("#E6000000"))
-            cornerRadius = dp(24).toFloat()
-        }
-
         val bubble = TextView(this).apply {
-            setText(taskTitle)
-            setTextColor(Color.WHITE)
+            text = taskTitle
+            setTextColor(Color.parseColor("#F0F0F0"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             maxLines = 1
             ellipsize = TextUtils.TruncateAt.END
             setPadding(dp(16), dp(10), dp(16), dp(10))
-            background = bg
+            background = containerDrawable()
             maxWidth = dp(200)
 
-            setOnTouchListener { _, event ->
+            setOnTouchListener { view, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
+                        view.alpha = 0.65f
                         initialX = params.x; initialY = params.y
                         touchX = event.rawX; touchY = event.rawY
                         moved = false; true
@@ -94,8 +95,12 @@ class ActiveTaskOverlayService : Service() {
                         true
                     }
                     MotionEvent.ACTION_UP -> {
+                        view.alpha = 1f
                         if (!moved) showPanel()
                         true
+                    }
+                    MotionEvent.ACTION_CANCEL -> {
+                        view.alpha = 1f; true
                     }
                     else -> false
                 }
@@ -110,22 +115,16 @@ class ActiveTaskOverlayService : Service() {
         removeOverlay()
         addBackdrop()
 
-        val panelBg = GradientDrawable().apply {
-            setColor(Color.parseColor("#F0000000"))
-            cornerRadius = dp(16).toFloat()
-        }
-
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(16), dp(20), dp(16))
-            background = panelBg
+            background = containerDrawable()
         }
 
         container.addView(TextView(this).apply {
-            setText(taskTitle)
-            setTextColor(Color.WHITE)
+            text = taskTitle
+            setTextColor(Color.parseColor("#F0F0F0"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
             maxLines = 2
             ellipsize = TextUtils.TruncateAt.END
             layoutParams = LinearLayout.LayoutParams(dp(220), LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -133,8 +132,8 @@ class ActiveTaskOverlayService : Service() {
 
         if (taskText.isNotBlank()) {
             container.addView(TextView(this).apply {
-                setText(taskText)
-                setTextColor(Color.parseColor("#AAFFFFFF"))
+                text = taskText
+                setTextColor(Color.parseColor("#888888"))
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
                 maxLines = 2
                 ellipsize = TextUtils.TruncateAt.END
@@ -144,26 +143,15 @@ class ActiveTaskOverlayService : Service() {
         }
 
         container.addView(View(this).apply {
-            setBackgroundColor(Color.parseColor("#33FFFFFF"))
+            setBackgroundColor(Color.parseColor("#2A2A2A"))
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, dp(1)
             ).also { it.topMargin = dp(12); it.bottomMargin = dp(4) }
         })
 
-        fun actionRow(label: String, color: String, action: String) = TextView(this).apply {
-            setText(label)
-            setTextColor(Color.parseColor(color))
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-            setPadding(0, dp(8), 0, dp(4))
-            setOnClickListener {
-                sendBroadcast(Intent(action).putExtra(EXTRA_TASK_ID, taskId))
-                stopSelf()
-            }
-        }
-
-        container.addView(actionRow("Mark as done", "#4CAF50", ACTION_DONE))
-        container.addView(actionRow("Remind me later", "#AAFFFFFF", ACTION_LATER))
-        container.addView(actionRow("Delete", "#F44336", ACTION_DELETE))
+        container.addView(actionRow("mark done", "#F0F0F0", ACTION_DONE))
+        container.addView(actionRow("later", "#888888", ACTION_LATER))
+        container.addView(actionRow("delete", "#E05252", ACTION_DELETE))
 
         val panelParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -178,6 +166,24 @@ class ActiveTaskOverlayService : Service() {
 
         windowManager?.addView(container, panelParams)
         overlayView = container
+    }
+
+    private fun actionRow(label: String, colorHex: String, action: String) = TextView(this).apply {
+        text = label
+        setTextColor(Color.parseColor(colorHex))
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        setPadding(0, dp(10), 0, dp(6))
+        setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> { view.alpha = 0.65f; false }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> { view.alpha = 1f; false }
+                else -> false
+            }
+        }
+        setOnClickListener {
+            sendBroadcast(Intent(action).putExtra(EXTRA_TASK_ID, taskId))
+            stopSelf()
+        }
     }
 
     private fun addBackdrop() {

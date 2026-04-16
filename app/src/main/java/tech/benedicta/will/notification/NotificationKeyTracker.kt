@@ -28,4 +28,11 @@ class NotificationKeyTracker {
     fun forgetConversation(conversationKey: String) {
         conversationToTaskId.remove(conversationKey)
     }
+
+    /** Clears conversation dedup for a given task — call when the user handles the task
+     *  so the next notification for that conversation creates a fresh task. */
+    fun forgetConversationForTask(taskId: Long) {
+        val entry = conversationToTaskId.entries.firstOrNull { it.value == taskId } ?: return
+        conversationToTaskId.remove(entry.key)
+    }
 }

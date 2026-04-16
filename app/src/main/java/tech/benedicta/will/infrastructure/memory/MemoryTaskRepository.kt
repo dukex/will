@@ -36,4 +36,8 @@ class MemoryTaskRepository : TaskRepository {
     override suspend fun clearActiveTask() {
         _tasks.update { list -> list.map { it.copy(isActive = false) } }
     }
+
+    override suspend fun deleteAllTasks() {
+        _tasks.value = emptyList()
+    }
 }

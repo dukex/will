@@ -17,7 +17,6 @@ class TaskViewModel(
 ) : ViewModel() {
 
     val tasks: StateFlow<List<Task>> = repository.getAllTasks()
-        .map { list -> list.filter { it.completedAt == null && !it.isActive } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val activeTask: StateFlow<Task?> = repository.getAllTasks()
@@ -42,8 +41,34 @@ class TaskViewModel(
 
     fun markDone(task: Task) {
         viewModelScope.launch(dispatcher) {
-            repository.updateTask(task.copy(completedAt = System.currentTimeMillis(), isActive = false))
+            repository.updateTask(
+                task.copy(completedAt = System.currentTimeMillis(), isActive = false)
+            )
         }
+    }
+
+    fun startTask(task: Task) {
+        viewModelScope.launch(dispatcher) {
+            repository.updateTask(
+                task.copy(isActive = true, startedAt = task.startedAt ?: System.currentTimeMillis())
+            )
+        }
+    }
+
+    fun pauseTask(task: Task) {
+        viewModelScope.launch(dispatcher) {
+            repository.updateTask(task.copy(isActive = false))
+        }
+    }
+
+    fun reopenTask(task: Task) {
+        viewModelScope.launch(dispatcher) {
+            repository.updateTask(task.copy(completedAt = null, isActive = false))
+        }
+    }
+
+    fun deleteAllTasks() {
+        viewModelScope.launch(dispatcher) { repository.deleteAllTasks() }
     }
 
     class Factory(private val repository: TaskRepository) : ViewModelProvider.Factory {

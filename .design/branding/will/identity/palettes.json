@@ -1,0 +1,73 @@
+{
+  "generated": "2026-04-15",
+  "brand": "will",
+  "format": "oklch",
+  "palettes": {
+    "accent": {
+      "name": "Cold Indigo",
+      "hex_base": "#4F6EF7",
+      "stops": {
+        "50":  { "oklch": "oklch(0.958 0.019 279.58)", "hex": "#EEF0FE" },
+        "100": { "oklch": "oklch(0.916 0.038 280.79)", "hex": "#DCE1FD" },
+        "200": { "oklch": "oklch(0.840 0.076 278.88)", "hex": "#B8C3FB" },
+        "300": { "oklch": "oklch(0.756 0.120 277.36)", "hex": "#92A4F9" },
+        "400": { "oklch": "oklch(0.673 0.163 273.84)", "hex": "#6F86F8" },
+        "500": { "oklch": "oklch(0.593 0.207 269.41)", "hex": "#4F6EF7" },
+        "600": { "oklch": "oklch(0.506 0.230 264.35)", "hex": "#3451D1" },
+        "700": { "oklch": "oklch(0.418 0.189 264.33)", "hex": "#2538A3" },
+        "800": { "oklch": "oklch(0.330 0.149 264.22)", "hex": "#182474" },
+        "900": { "oklch": "oklch(0.231 0.104 264.30)", "hex": "#0D154A" },
+        "950": { "oklch": "oklch(0.184 0.082 264.26)", "hex": "#090E33" }
+      }
+    },
+    "destructive": {
+      "name": "Muted Red",
+      "hex_base": "#E05252",
+      "stops": {
+        "50":  { "oklch": "oklch(0.959 0.013 17.52)", "hex": "#FDF0F0" },
+        "100": { "oklch": "oklch(0.925 0.024 17.67)", "hex": "#FAE0E0" },
+        "200": { "oklch": "oklch(0.851 0.053 18.27)", "hex": "#F4BFBF" },
+        "300": { "oklch": "oklch(0.779 0.086 19.21)", "hex": "#ED9B9B" },
+        "400": { "oklch": "oklch(0.706 0.126 20.76)", "hex": "#E87575" },
+        "500": { "oklch": "oklch(0.629 0.178 23.73)", "hex": "#E05252" },
+        "600": { "oklch": "oklch(0.537 0.161 24.36)", "hex": "#C23333" },
+        "700": { "oklch": "oklch(0.437 0.132 24.39)", "hex": "#972222" },
+        "800": { "oklch": "oklch(0.340 0.101 24.29)", "hex": "#6D1414" },
+        "900": { "oklch": "oklch(0.241 0.073 24.39)", "hex": "#440B0B" },
+        "950": { "oklch": "oklch(0.184 0.055 24.33)", "hex": "#2E0707" }
+      }
+    },
+    "success": {
+      "name": "Muted Green",
+      "hex_base": "#4CAF74",
+      "stops": {
+        "50":  { "oklch": "oklch(0.959 0.050 155.02)", "hex": "#EEF9F3" },
+        "100": { "oklch": "oklch(0.929 0.095 154.78)", "hex": "#D5F0E1" },
+        "200": { "oklch": "oklch(0.861 0.162 154.77)", "hex": "#A3DFC0" },
+        "300": { "oklch": "oklch(0.801 0.150 154.76)", "hex": "#7CCFA3" },
+        "400": { "oklch": "oklch(0.742 0.140 154.56)", "hex": "#5FBF8B" },
+        "500": { "oklch": "oklch(0.679 0.128 154.69)", "hex": "#4CAF74" },
+        "600": { "oklch": "oklch(0.574 0.108 154.54)", "hex": "#38895A" },
+        "700": { "oklch": "oklch(0.463 0.087 154.96)", "hex": "#286843" },
+        "800": { "oklch": "oklch(0.355 0.067 154.90)", "hex": "#1A4A2D" },
+        "900": { "oklch": "oklch(0.246 0.047 154.18)", "hex": "#0E2E1A" },
+        "950": { "oklch": "oklch(0.184 0.035 153.46)", "hex": "#091E10" }
+      }
+    }
+  },
+  "surfaces": {
+    "background": { "hex": "#000000", "oklch": "oklch(0 0 0)" },
+    "surface-1":  { "hex": "#0D0D0D", "oklch": "oklch(0.108 0 0)" },
+    "surface-2":  { "hex": "#161616", "oklch": "oklch(0.148 0 0)" },
+    "surface-3":  { "hex": "#202020", "oklch": "oklch(0.192 0 0)" }
+  },
+  "text": {
+    "primary":   { "hex": "#F0F0F0", "oklch": "oklch(0.949 0 0)" },
+    "secondary": { "hex": "#888888", "oklch": "oklch(0.590 0 0)" },
+    "tertiary":  { "hex": "#505050", "oklch": "oklch(0.380 0 0)" }
+  },
+  "borders": {
+    "default": { "hex": "#2A2A2A", "oklch": "oklch(0.232 0 0)" },
+    "active":  { "hex": "#404040", "oklch": "oklch(0.317 0 0)" }
+  }
+}

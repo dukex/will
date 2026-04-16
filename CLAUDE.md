@@ -1,8 +1,35 @@
-# Claude
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## FIRST RULE: Let's discovery the project together.
 
 Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to documentation at `./docs/` the documentation should be good or to Agents or to Humans.
+
+## Build & Test Commands
+
+```bash
+# Build debug APK
+./gradlew assembleDebug
+
+# Run all unit tests
+./gradlew test
+
+# Run a single test class
+./gradlew test --tests "tech.benedicta.will.task.TaskViewModelTest"
+
+# Run a single test method
+./gradlew test --tests "tech.benedicta.will.task.TaskViewModelTest.someTestMethod"
+
+# Type-check (Kotlin compile without APK)
+./gradlew compileDebugKotlin
+
+# Lint
+./gradlew lint
+
+# Install on connected device
+./gradlew installDebug
+```
 
 ## Index
 
@@ -23,28 +50,47 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 
 ## Key Files
 
+All source under `app/src/main/java/tech/benedicta/will/`.
+
 | file | purpose |
 |-|-|
-| `app/src/main/AndroidManifest.xml` | launcher intent filters, singleTask, clearTaskOnLaunch |
-| `app/src/main/java/.../launcher/LauncherApp.kt` | app data model (packageName, name) |
-| `app/src/main/java/.../launcher/AppRepository.kt` | interface for app list source |
-| `app/src/main/java/.../launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
-| `app/src/main/java/.../launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher |
-| `app/src/main/java/.../ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch |
-| `app/src/main/java/.../MainActivity.kt` | wires LauncherViewModel + TaskViewModel; tabs: Tasks / Apps |
-| `app/src/main/java/.../task/Task.kt` | Room entity with createdAt, startedAt, completedAt, contextSwitchCount |
-| `app/src/main/java/.../task/TaskDao.kt` | Room DAO — insert, getAll (Flow), update, delete |
-| `app/src/main/java/.../task/WillDatabase.kt` | singleton RoomDatabase |
-| `app/src/main/java/.../task/TaskViewModel.kt` | StateFlow<List<Task>>, addTask, deleteTask |
-| `app/src/main/java/.../notification/NotificationProcessor.kt` | pure logic: notification data → Task (or null) |
-| `app/src/main/java/.../notification/WillNotificationListenerService.kt` | intercepts notifications, inserts Tasks via Room |
-| `app/src/main/java/.../ui/TaskFeed.kt` | LazyColumn of TaskCards; tap opens source app |
-| `app/src/main/java/.../ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
-| `app/src/test/.../launcher/LauncherViewModelTest.kt` | unit tests with FakeAppRepository |
-| `app/src/test/.../task/TaskTest.kt` | Task model field tests |
-| `app/src/test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests |
-| `app/src/test/.../task/TaskViewModelTest.kt` | TaskViewModel state tests |
-| `app/src/test/.../notification/NotificationProcessorTest.kt` | processor mapping + edge case tests |
+| `AndroidManifest.xml` | launcher intent filters, singleTask, clearTaskOnLaunch, overlay/notification permissions |
+| `WillApplication.kt` | Application class; singleton entry point |
+| `MainActivity.kt` | wires ViewModels; swipe-up to app drawer; broadcasts for overlay actions |
+| **Launcher** | |
+| `launcher/LauncherApp.kt` | app data model (packageName, name) |
+| `launcher/AppRepository.kt` | interface for app list source |
+| `launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
+| `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher |
+| **Task domain** | |
+| `task/Task.kt` | pure domain model — no Android/Room deps |
+| `task/TaskRepository.kt` | repository interface (domain layer) |
+| `task/TaskViewModel.kt` | StateFlow<List<Task>>, addTask, deleteTask, markActive |
+| **Infrastructure** | |
+| `infrastructure/room/TaskEntity.kt` | Room @Entity; `toTask()` / `Task.toEntity()` mappers |
+| `infrastructure/room/TaskDao.kt` | Room DAO — insert, getAll (Flow), update, delete |
+| `infrastructure/room/WillDatabase.kt` | singleton RoomDatabase |
+| `infrastructure/room/RoomTaskRepository.kt` | TaskRepository impl backed by Room |
+| `infrastructure/memory/MemoryTaskRepository.kt` | in-memory TaskRepository (used in tests) |
+| **Notification** | |
+| `notification/NotificationProcessor.kt` | pure logic: notification data → Task (or null) |
+| `notification/NotificationActionStore.kt` | holds PendingIntents keyed by notification key (in-memory) |
+| `notification/NotificationKeyTracker.kt` | tracks active notification keys for removal sync |
+| `notification/WillNotificationListenerService.kt` | intercepts notifications; inserts Tasks; fires PendingIntent on tap |
+| **Overlay** | |
+| `overlay/ActiveTaskOverlayService.kt` | TYPE_APPLICATION_OVERLAY bubble; draggable; expands to panel with done/later/delete |
+| **UI** | |
+| `ui/TaskFeed.kt` | LazyColumn of TaskCards; tap opens source app; long-press activates overlay |
+| `ui/TaskActionSheet.kt` | bottom sheet for task actions |
+| `ui/HomeTopBar.kt` | minimal top bar with date/time |
+| `ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch |
+| `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
+| `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
+| **Tests** | |
+| `test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests against MemoryTaskRepository |
+| `test/.../notification/NotificationProcessorTest.kt` | processor mapping + edge cases |
+| `test/.../notification/NotificationActionStoreTest.kt` | store keying + eviction |
+| `test/.../notification/NotificationKeyTrackerTest.kt` | key tracking + removal |
 | `gradle/libs.versions.toml` | dependency catalog |
 | `app/build.gradle.kts` | app-level build config |
 
@@ -60,6 +106,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 
 ## Architecture Decisions
 
+- **Domain/Infrastructure separation** — `task/Task.kt` is a pure Kotlin data class with zero Android deps. `infrastructure/room/TaskEntity.kt` mirrors it with Room annotations and provides `toTask()` / `Task.toEntity()` mappers. Never add Android/Room imports to domain classes.
 - No Hilt — manual `ViewModelProvider.Factory` for DI
 - `CoroutineDispatcher` injected into ViewModel for testability
 - App icon loaded in composable (not in ViewModel) to keep model Android-framework-free
@@ -68,10 +115,11 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - `stateNotNeeded=true` — launcher doesn't need onSaveInstanceState
 - `screenOrientation=portrait` — portrait only, matches minimal launcher convention
 - `windowSoftInputMode=stateAlwaysHidden` — keyboard must never auto-pop on home screen
-- `Task.pendingIntent` not persisted — Room can't store PendingIntent; tapping task opens source app as fallback
+- `Task.pendingIntent` not persisted — Room can't store PendingIntent; `NotificationActionStore` holds PendingIntents in-memory keyed by notification key; tapping task opens source app as fallback when store is empty
 - `WillNotificationListenerService` uses its own `CoroutineScope(Dispatchers.IO + SupervisorJob)` — not tied to Activity lifecycle
 - `WillDatabase` is a singleton created in Activity/Service via `WillDatabase.getInstance(context)`
 - Swipe-up to open app drawer uses `nestedScroll` — `pointerInput` on an outer `Box` doesn't work because `LazyColumn` consumes all vertical drag events first. `nestedScroll.onPostScroll` intercepts the leftover scroll that the list couldn't consume.
+- `ActiveTaskOverlayService` uses `TYPE_APPLICATION_OVERLAY` — requires `SYSTEM_ALERT_WINDOW` permission; communicates results back to MainActivity via local broadcast (`ACTION_DONE`, `ACTION_LATER`, `ACTION_DELETE`)
 
 ## Development workflow
 
@@ -85,7 +133,6 @@ We work as XP (eXtreme Programming) pair programmers. These rules are **mandator
 6. **TDD cycle** — Red → Green → Refactor. No exceptions.
 7. **[IMPORTANT] E2E / regression tests** — After implementing a full feature or user flow, write an E2E test that exercises the integrated path. Unit tests catch isolated logic errors; E2E tests catch integration bugs that are invisible to unit tests.
 8. **Atomic conventional commits** — Commit often, one logical change per commit. Use conventional commit format. `feat:` and `fix:` messages target the final user (they generate the changelog) — write them as user-facing descriptions, promoting the new feature, not technical notes.
-9. **[IMPORTANT] Analytics on every feature** — Every user-facing feature must include at least one PostHog event. Server actions use `captureEvent()` from `lib/analytics/server.ts`; client-only events use helpers in `lib/analytics.ts`. See `docs/19-analytics.md` for the full taxonomy and rules. No PR ships a user-facing feature without instrumentation and a test for it.
 
 ## Basic Rules
 

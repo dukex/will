@@ -9,5 +9,5 @@
 
 ## Projects
 
-### will · in progress · 2026-04-16
-brand: will · next: gsp-project-research · .design/projects/will/
+### will · complete · 2026-04-16
+brand: will · .design/projects/will/

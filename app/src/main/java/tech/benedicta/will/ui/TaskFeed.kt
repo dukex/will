@@ -48,6 +48,7 @@ import tech.benedicta.will.ui.theme.WillBorder
 import tech.benedicta.will.ui.theme.WillDestructive
 import tech.benedicta.will.ui.theme.WillSuccess
 import tech.benedicta.will.ui.theme.WillTextPrimary
+import tech.benedicta.will.ui.theme.WillTextSecondary
 import tech.benedicta.will.ui.theme.WillTextTertiary
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -71,22 +72,44 @@ fun TaskFeed(
         it.status == TaskStatus.DONE && isToday(it.completedAt ?: 0L)
     }
 
-    if (tasks.isEmpty()) {
+    if (activeTasks.isEmpty() && pendingTasks.isEmpty()) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "no tasks yet",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = "notifications will appear here",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = WillTextTertiary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = Spacing.xs)
-                )
+                if (todayDone.isNotEmpty()) {
+                    val focusMinutes = todayDone.sumOf { task ->
+                        val start = task.startedAt ?: task.createdAt
+                        val end = task.completedAt ?: System.currentTimeMillis()
+                        (end - start) / 60_000L
+                    }.toInt()
+                    val focusLabel = "%02d:%02d focused today".format(focusMinutes / 60, focusMinutes % 60)
+                    Text(
+                        text = "clear",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = WillTextSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = focusLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WillTextTertiary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = Spacing.xs)
+                    )
+                } else {
+                    Text(
+                        text = "no tasks yet",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = WillTextSecondary,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = "notifications will appear here",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WillTextTertiary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = Spacing.xs)
+                    )
+                }
             }
         }
         return

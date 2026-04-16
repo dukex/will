@@ -31,6 +31,25 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) { repository.clearActiveTask() }
     }
 
+    fun handleOverlayAction(action: String, taskId: Long) {
+        val task = tasks.value.find { it.id == taskId } ?: return
+        viewModelScope.launch(dispatcher) {
+            when (action) {
+                ACTION_DONE -> repository.updateTask(
+                    task.copy(completedAt = System.currentTimeMillis(), isActive = false)
+                )
+                ACTION_DELETE -> repository.deleteTask(task)
+            }
+            repository.clearActiveTask()
+        }
+    }
+
+    companion object {
+        const val ACTION_DONE = "tech.benedicta.will.TASK_DONE"
+        const val ACTION_DELETE = "tech.benedicta.will.TASK_DELETE"
+        const val ACTION_LATER = "tech.benedicta.will.TASK_LATER"
+    }
+
     fun addTask(task: Task) {
         viewModelScope.launch(dispatcher) { repository.insertTask(task) }
     }

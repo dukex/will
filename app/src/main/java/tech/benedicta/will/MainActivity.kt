@@ -92,19 +92,11 @@ class MainActivity : ComponentActivity() {
         override fun onReceive(context: Context, intent: Intent) {
             val taskId = intent.getLongExtra(ActiveTaskOverlayService.EXTRA_TASK_ID, -1L)
             if (taskId == -1L || !::taskVm.isInitialized) return
-            val task = taskVm.tasks.value.find { it.id == taskId } ?: return
-            when (intent.action) {
-                ActiveTaskOverlayService.ACTION_DONE -> {
-                    taskVm.markDone(task)
-                    WillNotificationListenerService.instance?.clearConversationForTask(task.id)
-                }
-                ActiveTaskOverlayService.ACTION_DELETE -> {
-                    taskVm.deleteTask(task)
-                    WillNotificationListenerService.instance?.clearConversationForTask(task.id)
-                }
-                ActiveTaskOverlayService.ACTION_LATER -> Unit
+            val action = intent.action ?: return
+            if (action == TaskViewModel.ACTION_DONE || action == TaskViewModel.ACTION_DELETE) {
+                WillNotificationListenerService.instance?.clearConversationForTask(taskId)
             }
-            taskVm.clearActiveTask()
+            taskVm.handleOverlayAction(action, taskId)
         }
     }
 

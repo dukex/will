@@ -231,6 +231,7 @@ private fun AppDrawerOverlay(
             apps = apps,
             query = query,
             onQueryChange = onQueryChange,
+            onDismiss = onDismiss,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)

@@ -37,6 +37,7 @@ fun AppGrid(
     apps: List<LauncherApp>,
     query: String,
     onQueryChange: (String) -> Unit,
+    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
@@ -60,7 +61,7 @@ fun AppGrid(
             )
         }
         items(apps, key = { it.packageName }) { app ->
-            AppItem(app, onLaunch = { onQueryChange("") })
+            AppItem(app, onLaunch = { onQueryChange(""); onDismiss() })
         }
     }
 }

@@ -4,6 +4,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import tech.benedicta.will.OverlayEvent
+import tech.benedicta.will.WillApplication
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.os.IBinder
@@ -181,7 +183,7 @@ class ActiveTaskOverlayService : Service() {
             }
         }
         setOnClickListener {
-            sendBroadcast(Intent(action).putExtra(EXTRA_TASK_ID, taskId))
+            (application as WillApplication).emitOverlayEvent(OverlayEvent(action, taskId))
             returnToLauncher()
             stopSelf()
         }

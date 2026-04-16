@@ -8,8 +8,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import tech.benedicta.will.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -66,12 +68,13 @@ private val WillDarkColors = darkColorScheme(
     scrim                = Color(0xCC000000),
 )
 
-// TODO: replace with bundled Geist fonts once added to app/src/main/res/font/:
-//   geist_sans_regular.ttf, geist_sans_medium.ttf  → GeistSans FontFamily
-//   geist_mono_regular.ttf                         → GeistMono FontFamily
-// Download from: https://vercel.com/font
-private val GeistSans = FontFamily.SansSerif
-private val GeistMono = FontFamily.Monospace
+private val GeistSans = FontFamily(
+    Font(R.font.geist_sans_regular, FontWeight.Normal),
+    Font(R.font.geist_sans_medium,  FontWeight.Medium),
+)
+private val GeistMono = FontFamily(
+    Font(R.font.geist_mono_regular, FontWeight.Normal),
+)
 
 private val WillTypography = Typography(
     displaySmall = TextStyle(

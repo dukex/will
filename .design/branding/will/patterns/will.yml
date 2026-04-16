@@ -1,0 +1,193 @@
+name: will
+description: Minimal Android launcher — flat panes, single indigo accent, OLED-first dark
+base: terminal   # selective inheritance — structure kept, green replaced with indigo, scanlines removed
+generated: 2026-04-16
+
+tokens:
+  color:
+    # Core surfaces (shadcn-native var names)
+    background: "#000000"           # OLED true black — pixel off = zero power draw
+    foreground: "#F0F0F0"           # text-primary — avoids harsh contrast fatigue
+    card: "#0D0D0D"                 # surface-1 — task cards, primary containers
+    card-foreground: "#F0F0F0"
+    popover: "#161616"              # surface-2 — bottom sheets, overlay panels
+    popover-foreground: "#F0F0F0"
+    primary: "#4F6EF7"              # accent — cold indigo, interactive only
+    primary-foreground: "#FFFFFF"   # text on accent buttons (use FFFFFF, not F0F0F0 — 3.92:1 at 16sp+)
+    secondary: "#161616"            # surface-2 alias
+    secondary-foreground: "#F0F0F0"
+    accent: "#4F6EF7"               # same as primary — accent appears only on interactive elements
+    accent-foreground: "#FFFFFF"
+    muted: "#202020"                # surface-3 — secondary containers
+    muted-foreground: "#888888"     # text-secondary — app names, timestamps, metadata
+    destructive: "#E05252"          # delete, errors, unrecoverable actions
+    destructive-foreground: "#F0F0F0"
+    border: "#2A2A2A"               # dividers, card edges at rest
+    border-active: "#404040"        # card edges on focus / active state
+    input: "#0D0D0D"                # search field background
+    ring: "#4F6EF7"                 # focus ring = accent
+    success: "#4CAF74"              # task done, notification processed
+    success-foreground: "#000000"
+    # Text hierarchy
+    text-tertiary: "#505050"        # disabled states, placeholders only — 3.10:1 ratio, large text only
+
+  typography:
+    font-family-primary: "'Geist Sans', Inter, Roboto, sans-serif"
+    font-family-mono: "'Geist Mono', 'JetBrains Mono', 'Roboto Mono', monospace"
+    # Android sp scale — Major Second (1.125) ratio, base 14sp
+    font-weight-heading: 500        # Medium — section headers only. Never 700.
+    font-weight-body: 400           # Regular — everything else
+    font-weight-mono: 400
+    font-size-xs: "11sp"            # timestamps, source labels (Geist Mono)
+    font-size-sm: "12sp"            # secondary metadata (Geist Mono)
+    font-size-md: "13sp"            # section headers (Geist Sans 500)
+    font-size-base: "14sp"          # action labels, empty states (Geist Sans)
+    font-size-lg: "15sp"            # task titles (Geist Sans)
+    font-size-xl: "16sp"            # primary task titles, prominent labels
+    line-height-xs: 1.45
+    line-height-base: 1.50
+    letter-spacing-xs: "+0.01em"    # compensates for tight rendering at 11–12sp
+    letter-spacing-base: "0"
+    letter-spacing-lg: "-0.01em"    # tightens task titles at 15–16sp
+
+  shape:
+    border-radius-sm: "0dp"         # task cards — no radius. flat, undecorated
+    border-radius-md: "4dp"         # Android adaptive icon grid only
+    border-radius-lg: "8dp"         # overlay panels, bottom sheets
+    border-width: "1dp"
+
+  elevation:
+    # Will has no shadows. Borders define structure.
+    shadow-sm: "none"
+    shadow-md: "none"
+    shadow-lg: "none"
+    shadow-xl: "none"
+
+  spacing:
+    base: 8                         # 8dp grid (Android touch target baseline)
+    scale: [4, 8, 12, 16, 24, 32, 48, 64]
+    # Named values for common uses
+    card-padding-vertical: "12dp"
+    card-padding-horizontal: "16dp"
+    section-spacing-top: "8dp"
+    section-spacing-bottom: "4dp"
+    screen-horizontal: "24dp"
+
+  motion:
+    duration-fast: "100ms"
+    duration-normal: "150ms"
+    easing: "ease-out"              # not linear — feels deliberate, not mechanical
+
+dark_mode:
+  # Will is dark-only for MVP. No light mode. This block is the definitive state.
+  color:
+    background: "#000000"
+    foreground: "#F0F0F0"
+    card: "#0D0D0D"
+    popover: "#161616"
+    primary: "#4F6EF7"
+    muted: "#202020"
+    muted-foreground: "#888888"
+    border: "#2A2A2A"
+
+intensity:
+  variance: 2     # near-zero visual variance — flat structure, no hierarchy through decoration
+  motion: 2       # minimal — tap response only, no ambient animation, no scanlines
+  density: 8      # information-dense, tight line heights, no wasted whitespace
+
+patterns:
+  card:
+    border: "1dp solid #2A2A2A"
+    border-active: "1dp solid #404040"
+    shadow: "none — borders define structure, not elevation"
+    radius: "0dp"
+    background: "#0D0D0D"
+    padding: "12dp vertical, 16dp horizontal"
+    divider: "1dp #2A2A2A horizontal rule between items (no gap, no shadow)"
+  button-primary:
+    background: "#4F6EF7"           # accent as filled button only at 16sp+ for AA compliance
+    border: "none"
+    shadow: "none"
+    text: "Geist Sans 400, #FFFFFF, sentence case, 14sp"
+    radius: "0dp"
+    # Note: #F0F0F0 on #4F6EF7 = 3.42:1 — below AA for 14sp. Use #FFFFFF (3.92:1) at 16sp+ or prefer accent as border/indicator
+  button-secondary:
+    background: "transparent"
+    border: "1dp solid #2A2A2A"
+    shadow: "none"
+    text: "Geist Sans 400, #F0F0F0, sentence case"
+    radius: "0dp"
+  button-destructive:
+    background: "transparent"
+    border: "1dp solid #E05252"
+    text: "Geist Sans 400, #E05252, sentence case"
+    radius: "0dp"
+  input:
+    background: "#0D0D0D"
+    border: "none — search field uses no visible border at rest"
+    border-focus: "none — cursor and text indicate active state"
+    radius: "0dp"
+    font: "Geist Sans 400, #F0F0F0, 14sp"
+    placeholder: "Geist Sans 400, #888888, 14sp"
+    cursor: "default Android cursor — no custom blinking block"
+  badge:
+    shape: "no radius, no background fill — text label only"
+    text: "Geist Mono 400, #888888, 11sp — matches metadata style"
+    decoration: "none — no colored badges, no count indicators, no engagement mechanics"
+  nav:
+    style: "no TabRow, no bottom navigation — launcher has no app chrome"
+    background: "transparent"
+    gesture: "swipe-up from task feed reveals app drawer"
+  layout:
+    archetype: "flat-panes"
+    screen-padding: "24dp horizontal"
+    section-spacing: "8dp between header and list"
+    surfaces: "no texture, no grain, no noise — flat true black"
+    dividers: "1dp #2A2A2A horizontal rule — no ASCII rules, no decorative dividers"
+    decoration: "none"
+
+constraints:
+  # Inherited from terminal preset (structural rules), stripped of aesthetic rules that contradict brand
+  never:
+    - "gradients anywhere — backgrounds, cards, buttons, icons"
+    - "shadows or elevation — borders define structure only"
+    - "rounded corners on task cards — 0dp radius is load-bearing"
+    - "color used decoratively — accent (#4F6EF7) appears only on interactive elements"
+    - "FontWeight above 500 — no SemiBold (600), no Bold (700) anywhere"
+    - "Geist Mono for content text — monospace signals 'this is data', not prose"
+    - "engagement mechanics — no streaks, no badges, no count indicators, no achievement UI"
+    - "wellness language — no 'calm', 'balance', 'mindful', 'focus mode'"
+    - "device mockups or lifestyle photography"
+    - "light mode until post-MVP — dark only"
+    - "CRT scanlines or noise texture — functional tool, not retro cosplay"
+    - "ASCII decorations — Will is not performing terminal aesthetics, it inhabits them"
+    - "exclamation marks in any copy — one breaks the voice permanently"
+    - "emoji in any product or documentation surface"
+    - "tinted surfaces — surface tokens are neutral gray steps only, no blue info cards"
+  always:
+    - "true black (#000000) as home screen background — OLED pixel off = zero power"
+    - "Geist Mono for timestamps, source labels, task IDs, any system-generated value"
+    - "Geist Sans for task titles, labels, action text, anything the user reads"
+    - "1dp border in #2A2A2A as the structural boundary of all containers"
+    - "sentence case everywhere — product name Will is capitalized, everything else lowercase"
+    - "semantic color — #4F6EF7 means interactive, #E05252 means destructive, period"
+    - "edge-to-edge layout — no app chrome (no TabRow, no TopAppBar, no BottomNavigation)"
+    - "48dp minimum touch target on all interactive elements"
+    - "focus rings using #4F6EF7 for keyboard/TalkBack navigation"
+
+effects:
+  interaction-vocabulary: [flat-press, border-brighten, opacity-dim]
+  hover:
+    card: "border brightens from #2A2A2A to #404040 — not a color shift, a luminosity signal"
+    button-primary: "opacity 0.85 — no color change, no scale"
+    link: "color shifts to #F0F0F0 from #888888 — no underline"
+  active:
+    card: "opacity 0.7, no scale transform"
+    button: "opacity 0.6, no translate"
+  focus:
+    general: "1dp ring in #4F6EF7 — matches accent, platform-standard Android focus indicator"
+  transition: "duration-fast (100ms) ease-out — responsive, not animated"
+  ambient:
+    # None — no ambient animation. No scanlines, no cursor blink, no typewriter effect.
+    # The home screen must not draw attention to itself.
+    - "none"

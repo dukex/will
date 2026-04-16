@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Will — Brand Guidelines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --background: #000000;
+    --foreground: #F0F0F0;
+    --card: #0D0D0D;
+    --card-foreground: #F0F0F0;
+    --popover: #161616;
+    --popover-foreground: #F0F0F0;
+    --primary: #4F6EF7;
+    --primary-foreground: #FFFFFF;
+    --secondary: #161616;
+    --secondary-foreground: #F0F0F0;
+    --accent: #4F6EF7;
+    --accent-foreground: #FFFFFF;
+    --muted: #202020;
+    --muted-foreground: #888888;
+    --destructive: #E05252;
+    --destructive-foreground: #F0F0F0;
+    --success: #4CAF74;
+    --border: #2A2A2A;
+    --border-active: #404040;
+    --ring: #4F6EF7;
+    --radius: 0px;
+    --font-display: 'Geist', Inter, Roboto, sans-serif;
+    --font-body: 'Geist', Inter, Roboto, sans-serif;
+    --font-mono: 'Geist Mono', 'JetBrains Mono', 'Roboto Mono', monospace;
+    --ease: ease-out;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Layout ────────────────────────────────────────────── */
+  #toc {
+    position: fixed; left: 0; top: 0; height: 100vh; width: 180px;
+    z-index: 50; overflow-y: auto;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 28px; gap: 6px;
+    border-right: 1px solid var(--border);
+    background: var(--background);
+  }
+
+  .toc-wordmark {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--foreground);
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  .toc-link {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    padding: 2px 0;
+    transition: color 100ms var(--ease);
+  }
+  .toc-link:hover { color: var(--foreground); }
+  .toc-link.active { color: var(--primary); }
+
+  main { margin-left: 180px; }
+
+  section {
+    padding: 96px 64px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .container { max-width: 880px; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .section-heading {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    margin-bottom: 48px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Hero ──────────────────────────────────────────────── */
+  #hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 96px 64px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero-manifesto {
+    font-family: var(--font-body);
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    color: var(--foreground);
+    max-width: 640px;
+    margin-bottom: 40px;
+    position: relative; z-index: 1;
+  }
+
+  .hero-sub {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted-foreground);
+    max-width: 480px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+    position: relative; z-index: 1;
+  }
+
+  .hero-metrics {
+    display: flex; gap: 48px;
+    position: relative; z-index: 1;
+  }
+
+  .metric {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    color: var(--foreground);
+    letter-spacing: -0.02em;
+  }
+
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Logo ─────────────────────────────────────────────── */
+  .logo-directions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .logo-direction {
+    background: var(--card);
+    padding: 40px 32px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .logo-mark {
+    font-family: var(--font-body);
+    font-size: 28px;
+    color: var(--foreground);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    min-height: 40px;
+    display: flex; align-items: center;
+  }
+
+  .logo-mark .bracket { color: var(--primary); font-family: var(--font-mono); }
+  .logo-mark .wi { font-weight: 400; }
+  .logo-mark .ll { font-weight: 500; }
+
+  .logo-direction-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .logo-direction-rule {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    line-height: 1.6;
+  }
+
+  /* ── Color ────────────────────────────────────────────── */
+  .color-group { margin-bottom: 40px; }
+
+  .color-group-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .color-row {
+    display: flex; gap: 1px;
+    margin-bottom: 1px;
+  }
+
+  .color-swatch {
+    flex: 1;
+    height: 64px;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 8px;
+    position: relative;
+  }
+
+  .swatch-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .color-semantics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    border: 1px solid var(--border);
+  }
+
+  .semantic-row {
+    background: var(--card);
+    padding: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .semantic-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--foreground);
+  }
+
+  .semantic-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    text-align: right;
+  }
+
+  /* ── Typography ───────────────────────────────────────── */
+  .type-scale { margin-bottom: 48px; }
+
+  .scale-step { margin-bottom: 40px; }
+
+  .scale-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .type-rule {
+    display: flex; justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+
+  /* ── Visual Elements ──────────────────────────────────── */
+  .icon-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .icon-cell {
+    background: var(--card);
+    padding: 24px;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+  }
+
+  .icon-symbol {
+    font-size: 20px;
+    color: var(--foreground);
+  }
+
+  .icon-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    text-align: center;
+  }
+
+  /* ── Components ───────────────────────────────────────── */
+  .component-row {
+    display: flex; gap: 24px; align-items: flex-start;
+    margin-bottom: 48px;
+  }
+
+  .component-preview {
+    background: var(--card);
+    border: 1px solid var(--border);
+    flex: 0 0 320px;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .component-spec {
+    flex: 1;
+  }
+
+  .component-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* Task card preview */
+  .task-card {
+    padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 100ms var(--ease);
+  }
+  .task-card:hover { background: rgba(255,255,255,0.02); }
+  .task-card:last-child { border-bottom: none; }
+
+  .task-title {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--foreground);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+
+  .task-meta {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+  }
+
+  .task-timestamp {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.01em;
+  }
+
+  .task-source {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.01em;
+  }
+
+  /* Action sheet preview */
+  .action-sheet {
+    background: var(--popover);
+    border-top: 1px solid var(--border);
+  }
+
+  .action-sheet-title {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--foreground);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sheet-action {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+  }
+  .sheet-action:last-child { border-bottom: none; }
+  .sheet-action.primary { color: var(--primary); }
+  .sheet-action.default { color: var(--foreground); }
+  .sheet-action.destructive { color: var(--destructive); }
+
+  /* Buttons preview */
+  .btn-row {
+    display: flex; gap: 8px; flex-wrap: wrap; padding: 24px;
+  }
+
+  .btn {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    padding: 10px 18px;
+    border-radius: 0;
+    border: none;
+    cursor: pointer;
+    transition: opacity 100ms var(--ease);
+  }
+  .btn:hover { opacity: 0.85; }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); }
+  .btn-secondary { background: transparent; color: var(--foreground); border: 1px solid var(--border); }
+  .btn-destructive { background: transparent; color: var(--destructive); border: 1px solid var(--destructive); }
+
+  /* Spec table */
+  .spec-table { width: 100%; border-collapse: collapse; }
+  .spec-table td {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .spec-table td:first-child { color: var(--muted-foreground); width: 40%; padding-right: 16px; }
+  .spec-table td:last-child { color: var(--foreground); }
+
+  /* ── Personas ─────────────────────────────────────────── */
+  .persona-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    max-width: 560px;
+  }
+
+  .persona-name {
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--foreground);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+
+  .persona-role {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    margin-bottom: 24px;
+    letter-spacing: 0.04em;
+  }
+
+  .persona-row {
+    margin-bottom: 16px;
+  }
+
+  .persona-row-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .persona-row-value {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--foreground);
+    line-height: 1.5;
+  }
+
+  /* ── Voice ────────────────────────────────────────────── */
+  .voice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    border: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+
+  .voice-attr {
+    background: var(--card);
+    padding: 24px;
+  }
+
+  .voice-attr-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 8px;
+  }
+
+  .voice-attr-desc {
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--muted-foreground);
+    line-height: 1.5;
+  }
+
+  .rules-block { margin-bottom: 32px; }
+
+  .rules-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .rule-line {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rule-prefix {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    flex-shrink: 0;
+    width: 16px;
+    padding-top: 1px;
+  }
+  .rule-prefix.never { color: var(--destructive); }
+  .rule-prefix.always { color: var(--success); }
+
+  .rule-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--foreground);
+    line-height: 1.5;
+  }
+
+  .example-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    margin-bottom: 2px;
+  }
+
+  .example-cell {
+    padding: 12px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .example-do { background: rgba(79,110,247,0.06); color: var(--foreground); }
+  .example-dont { background: rgba(224,82,82,0.06); color: var(--muted-foreground); }
+
+  /* ── Constraints section ──────────────────────────────── */
+  .constraint-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+
+  .constraint-block-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-foreground);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .constraint-item {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--foreground);
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px;
+  }
+  .constraint-never .constraint-item::before { content: "×"; color: var(--destructive); flex-shrink: 0; }
+  .constraint-always .constraint-item::before { content: "→"; color: var(--success); flex-shrink: 0; }
+
+  /* ── Mobile ───────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    #toc { display: none; }
+    main { margin-left: 0; }
+    section { padding: 64px 24px; }
+    .hero-metrics { flex-wrap: wrap; gap: 24px; }
+    .logo-directions { grid-template-columns: 1fr; }
+    .color-semantics { grid-template-columns: 1fr; }
+    .voice-grid { grid-template-columns: 1fr; }
+    .component-row { flex-direction: column; }
+    .component-preview { flex: none; width: 100%; }
+    .example-pair { grid-template-columns: 1fr; }
+    .constraint-grid { grid-template-columns: 1fr; }
+    .icon-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav id="toc">
+  <div class="toc-wordmark">will</div>
+  <a href="#hero"          class="toc-link">Brand</a>
+  <a href="#logo"          class="toc-link">Logo</a>
+  <a href="#positioning"   class="toc-link">Positioning</a>
+  <a href="#color"         class="toc-link">Color</a>
+  <a href="#typography"    class="toc-link">Typography</a>
+  <a href="#visuals"       class="toc-link">Visual Elements</a>
+  <a href="#components"    class="toc-link">Components</a>
+  <a href="#personas"      class="toc-link">Personas</a>
+  <a href="#voice"         class="toc-link">Voice</a>
+  <a href="#constraints"   class="toc-link">Constraints</a>
+</nav>
+
+<main>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-manifesto">Your phone should work for you.<br>Not the other way around.</div>
+    <p class="hero-sub">Will is the Android launcher that converts notifications into actionable task objects so you can execute and put the phone down — because it replaces the home screen's architecture, not just its aesthetics.</p>
+    <div class="hero-metrics">
+      <div class="metric">
+        <span class="metric-value">352×</span>
+        <span class="metric-label">daily phone checks / user</span>
+      </div>
+      <div class="metric">
+        <span class="metric-value">0</span>
+        <span class="metric-label">engagement mechanics</span>
+      </div>
+      <div class="metric">
+        <span class="metric-value">open</span>
+        <span class="metric-label">source / free / always</span>
+      </div>
+      <div class="metric">
+        <span class="metric-value">Sage</span>
+        <span class="metric-label">70% + Creator 30%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Logo -->
+<section id="logo">
+  <div class="container">
+    <div class="section-heading">Logo</div>
+
+    <div class="logo-directions">
+
+      <div class="logo-direction">
+        <div class="logo-mark" style="font-weight:400; letter-spacing:-0.02em;">will</div>
+        <div class="logo-direction-name">Direction 1 — Wordmark</div>
+        <div class="logo-direction-rule">Geist Sans 400, lowercase, −0.02em tracking. Tool name register — same visual vocabulary as <code style="font-family:var(--font-mono);color:var(--muted-foreground)">git</code>, <code style="font-family:var(--font-mono);color:var(--muted-foreground)">curl</code>, <code style="font-family:var(--font-mono);color:var(--muted-foreground)">brew</code>.</div>
+      </div>
+
+      <div class="logo-direction">
+        <div class="logo-mark" style="font-family:'Geist Mono',monospace;"><span class="bracket">[</span>will</div>
+        <div class="logo-direction-name">Direction 2 — Bracket mark</div>
+        <div class="logo-direction-rule">Open bracket in <span style="color:var(--primary)">#4F6EF7</span>, wordmark in Geist Mono 400. Intentionally open — task in progress. Bracket = scope, containment, context.</div>
+      </div>
+
+      <div class="logo-direction">
+        <div class="logo-mark"><span class="wi">wi</span><span class="ll">ll</span></div>
+        <div class="logo-direction-name">Direction 3 — Weight shift</div>
+        <div class="logo-direction-rule"><code style="font-family:var(--font-mono);color:var(--muted-foreground)">wi</code> at 400, <code style="font-family:var(--font-mono);color:var(--muted-foreground)">ll</code> at 500. The double-L as structural column. Same color, weight shift only.</div>
+      </div>
+
+    </div>
+
+    <div class="spec-table-wrapper" style="margin-top:24px;">
+      <table class="spec-table">
+        <tr><td>Minimum size (full wordmark)</td><td>14px / 14sp</td></tr>
+        <tr><td>Minimum size (icon variant)</td><td>16px / 48dp Android icon</td></tr>
+        <tr><td>Clear space</td><td>0.5× cap height on all sides</td></tr>
+        <tr><td>Case</td><td>Always lowercase — "will", never "Will" in logo context</td></tr>
+        <tr><td>Monochrome</td><td>#FFFFFF on black (dark) or #000000 on white (press)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Positioning -->
+<section id="positioning">
+  <div class="container">
+    <div class="section-heading">Positioning</div>
+
+    <div style="max-width:640px; margin-bottom:48px;">
+      <p style="font-size:18px; line-height:1.55; letter-spacing:-0.01em; margin-bottom:24px; color:var(--foreground);">
+        For developers and product designers who pick up their phone with a specific intent and lose it to notifications and feed mechanics — Will is the Android launcher that converts notifications into actionable task objects so you can execute and put the phone down.
+      </p>
+      <p style="font-family:var(--font-mono); font-size:12px; color:var(--muted-foreground); line-height:1.6;">
+        Because it replaces the home screen's architecture, not just its aesthetics.
+      </p>
+    </div>
+
+    <div style="border:1px solid var(--border); margin-bottom:48px; overflow:hidden;">
+      <div style="padding:16px; border-bottom:1px solid var(--border);">
+        <span class="section-label" style="margin:0;">Competitive map — Tool-focused × Function-driven</span>
+      </div>
+      <div style="padding:32px; position:relative; height:280px; font-family:var(--font-mono); font-size:11px;">
+        <div style="position:absolute; top:50%; left:0; right:0; height:1px; background:var(--border);"></div>
+        <div style="position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--border);"></div>
+        <div style="position:absolute; top:8px; left:50%; transform:translateX(-50%); color:var(--muted-foreground);">aesthetic-driven</div>
+        <div style="position:absolute; bottom:8px; left:50%; transform:translateX(-50%); color:var(--muted-foreground);">function-driven</div>
+        <div style="position:absolute; left:8px; top:50%; transform:translateY(-50%); color:var(--muted-foreground);">wellness</div>
+        <div style="position:absolute; right:8px; top:50%; transform:translateY(-50%); color:var(--muted-foreground);">tool</div>
+        <div style="position:absolute; top:25%; left:30%; color:var(--muted-foreground); opacity:0.7;">Nothing</div>
+        <div style="position:absolute; top:45%; left:20%; color:var(--muted-foreground); opacity:0.7;">Niagara</div>
+        <div style="position:absolute; top:60%; left:38%; color:var(--muted-foreground); opacity:0.7;">Minimalist Phone</div>
+        <div style="position:absolute; top:72%; right:12%; color:var(--primary); font-weight:500;">★ Will</div>
+      </div>
+    </div>
+
+    <div style="max-width:560px;">
+      <div style="margin-bottom:16px;">
+        <div style="font-family:var(--font-mono); font-size:10px; color:var(--muted-foreground); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:8px;">Brand heartbeat</div>
+        <div style="font-size:14px; color:var(--foreground); font-style:italic; line-height:1.6;">
+          "A marca que recusa participar da economia da atenção — mesmo sendo um app de celular."
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Color -->
+<section id="color">
+  <div class="container">
+    <div class="section-heading">Color</div>
+
+    <div class="color-group">
+      <div class="color-group-label">Surfaces</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:#000000; flex:2;">
+          <div class="swatch-label" style="color:#444;">#000000<br>background</div>
+        </div>
+        <div class="color-swatch" style="background:#0D0D0D;">
+          <div class="swatch-label" style="color:#555;">#0D0D0D<br>card</div>
+        </div>
+        <div class="color-swatch" style="background:#161616;">
+          <div class="swatch-label" style="color:#666;">#161616<br>popover</div>
+        </div>
+        <div class="color-swatch" style="background:#202020;">
+          <div class="swatch-label" style="color:#666;">#202020<br>muted</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-label">Text</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:#F0F0F0;">
+          <div class="swatch-label" style="color:#888;">#F0F0F0<br>foreground</div>
+        </div>
+        <div class="color-swatch" style="background:#888888;">
+          <div class="swatch-label" style="color:#444;">#888888<br>muted-foreground</div>
+        </div>
+        <div class="color-swatch" style="background:#505050;">
+          <div class="swatch-label" style="color:#888;">#505050<br>tertiary</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-label">Semantic</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:#4F6EF7;">
+          <div class="swatch-label" style="color:rgba(255,255,255,0.6);">#4F6EF7<br>accent / primary</div>
+        </div>
+        <div class="color-swatch" style="background:#E05252;">
+          <div class="swatch-label" style="color:rgba(255,255,255,0.6);">#E05252<br>destructive</div>
+        </div>
+        <div class="color-swatch" style="background:#4CAF74;">
+          <div class="swatch-label" style="color:rgba(0,0,0,0.5);">#4CAF74<br>success</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-label">Borders</div>
+      <div class="color-row">
+        <div class="color-swatch" style="background:#2A2A2A;">
+          <div class="swatch-label" style="color:#666;">#2A2A2A<br>border (rest)</div>
+        </div>
+        <div class="color-swatch" style="background:#404040;">
+          <div class="swatch-label" style="color:#888;">#404040<br>border-active</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="color-group">
+      <div class="color-group-label">WCAG contrast audit</div>
+      <div class="color-semantics">
+        <div class="semantic-row">
+          <span class="semantic-name">#F0F0F0 on #000000</span>
+          <span class="semantic-meta">18.35:1 · AAA ✓</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#F0F0F0 on #0D0D0D</span>
+          <span class="semantic-meta">15.93:1 · AAA ✓</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#888888 on #000000</span>
+          <span class="semantic-meta">6.48:1 · AA ✓</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#4F6EF7 on #000000</span>
+          <span class="semantic-meta">5.36:1 · AA ✓</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#F0F0F0 on #4F6EF7</span>
+          <span class="semantic-meta">3.42:1 · large text only ⚠</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#E05252 on #000000</span>
+          <span class="semantic-meta">5.97:1 · AA ✓</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#4CAF74 on #000000</span>
+          <span class="semantic-meta">8.15:1 · AA ✓</span>
+        </div>
+        <div class="semantic-row">
+          <span class="semantic-name">#505050 on #000000</span>
+          <span class="semantic-meta">3.10:1 · disabled only ⚠</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Typography -->
+<section id="typography">
+  <div class="container">
+    <div class="section-heading">Typography</div>
+
+    <div style="margin-bottom:48px;">
+      <div class="section-label">Geist Sans — content, titles, labels</div>
+      <div class="type-scale">
+
+        <div class="scale-step">
+          <div style="font-family:'Geist',sans-serif; font-size:36px; font-weight:400; line-height:1.2; letter-spacing:-0.02em; color:var(--foreground);">
+            Pick it up. Do the thing. Put it down.
+          </div>
+          <div class="scale-meta">DisplaySmall · Geist Sans 400 · 36sp · lh 1.20 · −0.02em</div>
+        </div>
+
+        <div class="scale-step">
+          <div style="font-family:'Geist',sans-serif; font-size:16px; font-weight:400; line-height:1.5; letter-spacing:-0.01em; color:var(--foreground);">
+            Notification captured. Tap to execute.
+          </div>
+          <div class="scale-meta">type-xl · Geist Sans 400 · 16sp · lh 1.50 · −0.01em</div>
+        </div>
+
+        <div class="scale-step">
+          <div style="font-family:'Geist',sans-serif; font-size:15px; font-weight:400; line-height:1.47; letter-spacing:-0.01em; color:var(--foreground);">
+            Will does not support home screen widgets. Widgets are passive content surfaces.
+          </div>
+          <div class="scale-meta">type-lg · Task title · Geist Sans 400 · 15sp · lh 1.47 · −0.01em</div>
+        </div>
+
+        <div class="scale-step">
+          <div style="font-family:'Geist',sans-serif; font-size:14px; font-weight:400; line-height:1.5; color:var(--foreground);">
+            Grant notification access to capture tasks
+          </div>
+          <div class="scale-meta">type-base · Action labels · Geist Sans 400 · 14sp · lh 1.50</div>
+        </div>
+
+        <div class="scale-step">
+          <div style="font-family:'Geist',sans-serif; font-size:13px; font-weight:500; line-height:1.46; color:var(--foreground);">
+            Tasks
+          </div>
+          <div class="scale-meta">type-md · Section header · Geist Sans 500 · 13sp · lh 1.46</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="margin-bottom:48px;">
+      <div class="section-label">Geist Mono — data, timestamps, source labels</div>
+      <div class="type-scale">
+
+        <div class="scale-step">
+          <div style="font-family:'Geist Mono',monospace; font-size:12px; font-weight:400; line-height:1.5; color:var(--muted-foreground);">
+            Slack · GitHub · 09:41
+          </div>
+          <div class="scale-meta">type-sm · Source labels · Geist Mono 400 · 12sp · lh 1.50</div>
+        </div>
+
+        <div class="scale-step">
+          <div style="font-family:'Geist Mono',monospace; font-size:11px; font-weight:400; line-height:1.45; letter-spacing:0.01em; color:var(--muted-foreground);">
+            14:32 · com.slack.android · task_id_8f2a
+          </div>
+          <div class="scale-meta">type-xs · Timestamps, IDs · Geist Mono 400 · 11sp · lh 1.45 · +0.01em</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Pairing note</div>
+      <p style="font-family:var(--font-mono); font-size:12px; color:var(--muted-foreground); line-height:1.6; max-width:560px;">
+        Geist Sans handles content the user reads (task titles, action labels, section headers). Geist Mono handles values the system generates (timestamps, source app names, task IDs). The typeface communicates the category before the user reads the content — the same function as syntax highlighting.
+      </p>
+    </div>
+
+    <div style="margin-top:32px;">
+      <table class="spec-table">
+        <tr><td>Weight policy</td><td>400 Regular for all content. 500 Medium for section headers only. Never 600+ (SemiBold/Bold).</td></tr>
+        <tr><td>Scale ratio</td><td>Major Second (1.125) — compact, appropriate for information-dense launcher UI</td></tr>
+        <tr><td>Android bundling</td><td>Bundle in res/font/ — no Downloadable Fonts API (privacy, offline)</td></tr>
+        <tr><td>Fallback — Sans</td><td>Geist Sans → Inter → Roboto</td></tr>
+        <tr><td>Fallback — Mono</td><td>Geist Mono → JetBrains Mono → Roboto Mono → monospace</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Visual Elements -->
+<section id="visuals">
+  <div class="container">
+    <div class="section-heading">Visual Elements</div>
+
+    <div style="margin-bottom:40px;">
+      <div class="section-label">Iconography — Material Symbols (outlined, weight 200)</div>
+      <div class="icon-grid">
+        <div class="icon-cell">
+          <span class="material-symbols-outlined icon-symbol" style="font-size:24px; color:var(--foreground);">check</span>
+          <div class="icon-label">Done<br>24dp</div>
+        </div>
+        <div class="icon-cell">
+          <span class="icon-symbol" style="color:var(--muted-foreground);">⏱</span>
+          <div class="icon-label">Later<br>24dp</div>
+        </div>
+        <div class="icon-cell">
+          <span class="icon-symbol" style="color:var(--destructive);">✕</span>
+          <div class="icon-label">Delete<br>24dp</div>
+        </div>
+        <div class="icon-cell">
+          <span class="icon-symbol" style="color:var(--foreground);">⊞</span>
+          <div class="icon-label">Apps<br>24dp</div>
+        </div>
+        <div class="icon-cell">
+          <span class="icon-symbol" style="color:var(--foreground);">↑</span>
+          <div class="icon-label">Swipe up<br>24dp</div>
+        </div>
+      </div>
+      <table class="spec-table" style="margin-top:16px;">
+        <tr><td>Library</td><td>Material Symbols — outlined variant, weight 200</td></tr>
+        <tr><td>20dp</td><td>Inline action icons in task cards (if any)</td></tr>
+        <tr><td>24dp</td><td>Overlay action icons (done, later, delete) — primary interactive surface</td></tr>
+        <tr><td>32dp</td><td>Prominent single-action states</td></tr>
+        <tr><td>Default color</td><td>#F0F0F0 (neutral)</td></tr>
+        <tr><td>Active/selected</td><td>#4F6EF7 (accent only for active state)</td></tr>
+        <tr><td>Destructive</td><td>#E05252</td></tr>
+        <tr><td>Container treatment</td><td>None — bare icons on surface background</td></tr>
+      </table>
+    </div>
+
+    <div>
+      <div class="section-label">Surface treatment</div>
+      <table class="spec-table">
+        <tr><td>Texture</td><td>None. Flat surfaces only.</td></tr>
+        <tr><td>Gradients</td><td>Forbidden.</td></tr>
+        <tr><td>Shadows</td><td>None. Borders define structure.</td></tr>
+        <tr><td>Divider</td><td>1dp #2A2A2A horizontal rule</td></tr>
+        <tr><td>Imagery in product</td><td>None. The UI is the imagery.</td></tr>
+        <tr><td>Screenshots (README/Play Store)</td><td>Tight crop, true black bg, no device mockup</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Components -->
+<section id="components">
+  <div class="container">
+    <div class="section-heading">Components</div>
+
+    <!-- Task feed -->
+    <div class="component-row">
+      <div>
+        <div class="component-name">Task feed</div>
+        <div class="component-preview">
+          <div style="padding:8px 16px; border-bottom:1px solid var(--border);">
+            <span style="font-family:var(--font-body); font-size:13px; font-weight:500; color:var(--muted-foreground);">Tasks</span>
+          </div>
+          <div class="task-card">
+            <div>
+              <div class="task-title">Review PR #412 — auth middleware</div>
+              <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted-foreground); margin-top:2px;">Will needs your review</div>
+            </div>
+            <div class="task-meta">
+              <span class="task-timestamp">09:41</span>
+              <span class="task-source">GitHub</span>
+            </div>
+          </div>
+          <div class="task-card">
+            <div>
+              <div class="task-title">Stand-up in 5 minutes</div>
+              <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted-foreground); margin-top:2px;">Daily at 10:00</div>
+            </div>
+            <div class="task-meta">
+              <span class="task-timestamp">09:55</span>
+              <span class="task-source">Calendar</span>
+            </div>
+          </div>
+          <div class="task-card">
+            <div>
+              <div class="task-title">Ship the feature, not the plan</div>
+              <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted-foreground); margin-top:2px;">Reminder</div>
+            </div>
+            <div class="task-meta">
+              <span class="task-timestamp">10:02</span>
+              <span class="task-source">Reminders</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="component-spec">
+        <table class="spec-table">
+          <tr><td>Background</td><td>#000000 (launcher) / #0D0D0D (cards)</td></tr>
+          <tr><td>Divider</td><td>1dp #2A2A2A</td></tr>
+          <tr><td>Title font</td><td>Geist Sans 400, 15sp, #F0F0F0</td></tr>
+          <tr><td>Body font</td><td>Geist Sans 400, 12sp, #888888</td></tr>
+          <tr><td>Timestamp</td><td>Geist Mono 400, 11sp, #888888</td></tr>
+          <tr><td>Source label</td><td>Geist Mono 400, 11sp, #888888</td></tr>
+          <tr><td>Tap state</td><td>opacity 0.7, 100ms ease-out</td></tr>
+          <tr><td>Min touch target</td><td>48dp height</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Action sheet -->
+    <div class="component-row">
+      <div>
+        <div class="component-name">Task action sheet</div>
+        <div class="component-preview">
+          <div class="action-sheet">
+            <div class="action-sheet-title">Review PR #412 — auth middleware</div>
+            <div class="sheet-action primary">Mark as done</div>
+            <div class="sheet-action default">Remind me later</div>
+            <div class="sheet-action destructive">Delete</div>
+          </div>
+        </div>
+      </div>
+      <div class="component-spec">
+        <table class="spec-table">
+          <tr><td>Background</td><td>#161616 (surface-2)</td></tr>
+          <tr><td>Title font</td><td>Geist Sans 500, 14sp</td></tr>
+          <tr><td>Action font</td><td>Geist Sans 400, 14sp</td></tr>
+          <tr><td>Done</td><td>#4F6EF7</td></tr>
+          <tr><td>Later</td><td>#F0F0F0</td></tr>
+          <tr><td>Delete</td><td>#E05252</td></tr>
+          <tr><td>Dividers</td><td>1dp #2A2A2A</td></tr>
+          <tr><td>Action min height</td><td>48dp (touch target)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="component-row">
+      <div>
+        <div class="component-name">Buttons</div>
+        <div class="component-preview">
+          <div class="btn-row">
+            <button class="btn btn-primary">Grant</button>
+            <button class="btn btn-secondary">Later</button>
+            <button class="btn btn-destructive">Delete</button>
+          </div>
+        </div>
+      </div>
+      <div class="component-spec">
+        <table class="spec-table">
+          <tr><td>Border radius</td><td>0dp — never rounded</td></tr>
+          <tr><td>Primary bg</td><td>#4F6EF7 — use at 16sp+ only for AA</td></tr>
+          <tr><td>Primary text</td><td>#FFFFFF (not #F0F0F0 — contrast)</td></tr>
+          <tr><td>Secondary</td><td>transparent + 1dp #2A2A2A border</td></tr>
+          <tr><td>Destructive</td><td>transparent + 1dp #E05252 border</td></tr>
+          <tr><td>Font</td><td>Geist Sans 400, sentence case</td></tr>
+          <tr><td>Shadow</td><td>none</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Personas -->
+<section id="personas">
+  <div class="container">
+    <div class="section-heading">Persona</div>
+
+    <div class="persona-card">
+      <div class="persona-name">Lucas</div>
+      <div class="persona-role">Developer / Product Designer · 25–35</div>
+
+      <div class="persona-row">
+        <div class="persona-row-label">Day in the life</div>
+        <div class="persona-row-value">Starts the day with a backlog of Slack messages and GitHub notifications. Uses the phone as a work tool but keeps getting pulled into social media or infinite scroll. Has tried Notion, Todoist, and several launchers — each requires too much maintenance or adds cognitive overhead.</div>
+      </div>
+
+      <div class="persona-row">
+        <div class="persona-row-label">Frustration</div>
+        <div class="persona-row-value">Every "minimal" launcher is either all aesthetics with no function, or productivity apps that feel like more work on top of work. He doesn't want to be managed — he wants the phone to stop wasting his time.</div>
+      </div>
+
+      <div class="persona-row">
+        <div class="persona-row-label">Aspiration</div>
+        <div class="persona-row-value">Pick up the phone, do the thing, put it down. The phone should match his mental model: there's a task, complete it, move on.</div>
+      </div>
+
+      <div class="persona-row" style="margin-bottom:0;">
+        <div class="persona-row-label">Trust signals</div>
+        <div class="persona-row-value">Open source, clear opinions, no dark patterns. Distrusts engagement metrics, growth hacks, UI that celebrates streaks.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Voice -->
+<section id="voice">
+  <div class="container">
+    <div class="section-heading">Voice &amp; Tone</div>
+
+    <div class="voice-grid">
+      <div class="voice-attr">
+        <div class="voice-attr-name">Precise</div>
+        <div class="voice-attr-desc">Every word carries specific weight. Nothing is approximate, hedged, or padded. Will writes the way well-typed code reads.</div>
+      </div>
+      <div class="voice-attr">
+        <div class="voice-attr-name">Dry</div>
+        <div class="voice-attr-desc">No emotional inflation. No enthusiasm signals. Will does not perform positivity at the user. It states things.</div>
+      </div>
+      <div class="voice-attr">
+        <div class="voice-attr-name">Uncompromising</div>
+        <div class="voice-attr-desc">Will has positions and states them. When the architecture makes a choice, the copy says so without apologizing.</div>
+      </div>
+      <div class="voice-attr">
+        <div class="voice-attr-name">Peer-to-peer</div>
+        <div class="voice-attr-desc">Will speaks to Lucas as a fellow builder. Assumes the reader already understands the problem. Does not explain the attention economy to someone who has read the papers.</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:40px;">
+      <div class="section-label" style="margin-bottom:16px;">Examples</div>
+
+      <div class="example-pair">
+        <div class="example-cell example-do">→ "Notification captured. Tap to execute."</div>
+        <div class="example-cell example-dont">× "Your notification has been successfully captured and is ready for your review."</div>
+      </div>
+      <div class="example-pair">
+        <div class="example-cell example-do">→ "Task deleted."</div>
+        <div class="example-cell example-dont">× "Done! That's one less thing to worry about."</div>
+      </div>
+      <div class="example-pair">
+        <div class="example-cell example-do">→ "Will does not support home screen widgets. Widgets are passive content surfaces."</div>
+        <div class="example-cell example-dont">× "Will currently doesn't support widgets — we might add this in the future!"</div>
+      </div>
+      <div class="example-pair">
+        <div class="example-cell example-do">→ "3 tasks pending."</div>
+        <div class="example-cell example-dont">× "You've got things to do today!"</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Style rules</div>
+      <div class="rules-block">
+        <div class="rule-line">
+          <span class="rule-prefix never">×</span>
+          <span class="rule-text">Exclamation marks — ever</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix never">×</span>
+          <span class="rule-text">Emoji in product, docs, or release notes</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix never">×</span>
+          <span class="rule-text">"we" as subject — Will is the subject ("Will converts…" not "We convert…")</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix never">×</span>
+          <span class="rule-text">Wellness language — "calm," "balance," "mindful," "streak"</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix always">→</span>
+          <span class="rule-text">Sentence case everywhere ("Task feed" not "Task Feed")</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix always">→</span>
+          <span class="rule-text">"task" not "to-do" — a task is a unit of intent</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix always">→</span>
+          <span class="rule-text">"captured" not "received" — notifications are captured from the attention economy</span>
+        </div>
+        <div class="rule-line">
+          <span class="rule-prefix always">→</span>
+          <span class="rule-text">"tap to execute" not "open" — execution is intentional</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Constraints -->
+<section id="constraints">
+  <div class="container">
+    <div class="section-heading">Constraints</div>
+
+    <div class="constraint-grid">
+      <div class="constraint-never">
+        <div class="constraint-block-title">Never</div>
+        <div class="constraint-item">Gradients anywhere</div>
+        <div class="constraint-item">Shadows or elevation</div>
+        <div class="constraint-item">Rounded corners on task cards</div>
+        <div class="constraint-item">Accent on non-interactive elements</div>
+        <div class="constraint-item">FontWeight above 500</div>
+        <div class="constraint-item">Geist Mono for readable content</div>
+        <div class="constraint-item">Engagement mechanics</div>
+        <div class="constraint-item">Wellness language</div>
+        <div class="constraint-item">Device mockups</div>
+        <div class="constraint-item">CRT scanlines / noise / grain</div>
+        <div class="constraint-item">ASCII decorations</div>
+        <div class="constraint-item">Light mode (MVP)</div>
+      </div>
+
+      <div class="constraint-always">
+        <div class="constraint-block-title">Always</div>
+        <div class="constraint-item">True black (#000000) as launcher background</div>
+        <div class="constraint-item">Geist Mono for timestamps, source labels, IDs</div>
+        <div class="constraint-item">Geist Sans for human-readable content</div>
+        <div class="constraint-item">1dp border #2A2A2A as container boundary</div>
+        <div class="constraint-item">Sentence case</div>
+        <div class="constraint-item">Semantic color — #4F6EF7 = interactive</div>
+        <div class="constraint-item">Edge-to-edge layout, no app chrome</div>
+        <div class="constraint-item">48dp minimum touch target</div>
+        <div class="constraint-item">Focus rings using #4F6EF7</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  const links = document.querySelectorAll('.toc-link');
+  const sections = document.querySelectorAll('section[id]');
+
+  function updateActive() {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActive, { passive: true });
+  updateActive();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 ## Project: Will
 **Brand:** will
 **Started:** 2026-04-16
-**Current Phase:** 3 (Design)
+**Current Phase:** 4 (Critique)
 **Prettiness Level:** 0%
 
 ---
@@ -15,7 +15,7 @@
 | 1 | Brief | complete | 2026-04-16 | 2026-04-16 |
 | 2 | Research | complete | 2026-04-16 | 2026-04-16 |
 | 3 | Design | complete | 2026-04-16 | 2026-04-16 |
-| 4 | Critique | pending | — | — |
+| 4 | Critique | complete | 2026-04-16 | 2026-04-16 |
 | 5 | Build | pending | — | — |
 | 6 | Review | pending | — | — |
 

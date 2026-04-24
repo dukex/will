@@ -1,0 +1,25 @@
+{
+  "version": "0.8.2",
+  "project_type": "design",
+  "project": {
+    "name": "Will Site",
+    "created": "2026-04-16"
+  },
+  "preferences": {
+    "platform": "web",
+    "tech_stack": "VitePress + custom theme",
+    "accessibility_level": "WCAG 2.2 AA",
+    "implementation_target": "code",
+    "codebase_type": "new",
+    "design_scope": "full",
+    "style_preset": "",
+    "repo_type": "single",
+    "app_path": "site"
+  },
+  "git": {
+    "branch": "",
+    "pr": "",
+    "issue": ""
+  },
+  "gsp_version": "0.7.2"
+}

@@ -139,17 +139,8 @@ class MainActivity : ComponentActivity() {
         super.onPause()
         val task = pendingActiveTask
             ?: if (::taskVm.isInitialized) taskVm.activeTask.value else null
-        if (task != null) {
-            if (Settings.canDrawOverlays(this)) {
-                ActiveTaskOverlayService.show(this, task.id, task.title, task.text)
-            } else {
-                startActivity(
-                    Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        Uri.parse("package:$packageName")
-                    )
-                )
-            }
+        if (task != null && Settings.canDrawOverlays(this)) {
+            ActiveTaskOverlayService.show(this, task.id, task.title, task.text)
         }
     }
 

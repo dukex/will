@@ -63,6 +63,15 @@ fun HomeTopBar(
             .padding(top = topPadding + 8.dp, start = 24.dp, end = 24.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
+        IconButton(onClick = onOpenApps) {
+            Icon(
+                imageVector = Icons.Outlined.Apps,
+                contentDescription = "apps",
+                tint = WillTextSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
         Text(
             text = dateString,
             style = MaterialTheme.typography.bodyMedium,
@@ -99,14 +108,6 @@ fun HomeTopBar(
             Icon(
                 imageVector = Icons.Outlined.BarChart,
                 contentDescription = "focus dashboard",
-                tint = WillTextSecondary,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-        IconButton(onClick = onOpenApps) {
-            Icon(
-                imageVector = Icons.Outlined.Apps,
-                contentDescription = "apps",
                 tint = WillTextSecondary,
                 modifier = Modifier.size(24.dp)
             )

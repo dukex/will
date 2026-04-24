@@ -25,11 +25,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -37,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,14 +52,16 @@ import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskViewModel
+import tech.benedicta.will.task.TaskStatus
+import tech.benedicta.will.task.status
 import tech.benedicta.will.ui.AppGrid
+import tech.benedicta.will.ui.DoneTasksScreen
 import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.IntentInputSheet
 import tech.benedicta.will.ui.NotificationFilterSettings
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.PrivacySettings
-import tech.benedicta.will.ui.TaskActionSheet
 import tech.benedicta.will.ui.TaskFeed
 import tech.benedicta.will.ui.loadThemeMode
 import tech.benedicta.will.ui.theme.WillTheme
@@ -74,6 +70,7 @@ private const val SWIPE_THRESHOLD = 100f
 
 private enum class Screen {
     Home,
+    DoneTasks,
     NotificationFilter,
     FocusDashboard,
     PrivacySettings
@@ -240,13 +237,9 @@ private fun WillScreen(
     var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
-    var selectedTask by remember { mutableStateOf<Task?>(null) }
-    var showActionSheet by remember { mutableStateOf(false) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
-    var pendingDelete by remember { mutableStateOf<Task?>(null) }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
+    val doneTasks = tasks.filter { it.status == TaskStatus.DONE }
 
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
@@ -301,138 +294,108 @@ private fun WillScreen(
             )
             return
         }
+        Screen.DoneTasks -> {
+            DoneTasksScreen(
+                doneTasks = doneTasks,
+                onBack = { currentScreen = Screen.Home },
+                onDelete = { task ->
+                    taskVm.deleteTask(task)
+                    WillNotificationListenerService.instance?.clearConversationForTask(task.id)
+                },
+                onReopen = { task -> taskVm.reopenTask(task) }
+            )
+            return
+        }
         Screen.Home -> Unit
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                HomeTopBar(
-                    onAddTask = { showIntentInputSheet = true },
-                    onOpenFilter = { currentScreen = Screen.NotificationFilter },
-                    onOpenDashboard = { currentScreen = Screen.FocusDashboard }
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .nestedScroll(nestedScrollConnection)
-                        .pointerInput(appDrawerOpen) {
-                            detectVerticalDragGestures { _, dragAmount ->
-                                if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
-                            }
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            HomeTopBar(
+                onAddTask = { showIntentInputSheet = true },
+                onOpenFilter = { currentScreen = Screen.NotificationFilter },
+                onOpenDashboard = { currentScreen = Screen.FocusDashboard },
+                onOpenDoneTasks = { currentScreen = Screen.DoneTasks },
+                onOpenApps = { appDrawerOpen = true },
+                doneCount = doneTasks.size
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .nestedScroll(nestedScrollConnection)
+                    .pointerInput(appDrawerOpen) {
+                        detectVerticalDragGestures { _, dragAmount ->
+                            if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
                         }
-                ) {
-                    TaskFeed(
-                        tasks = tasks,
-                        onTap = { task ->
-                            onSetPendingActiveTask(task)
-                            taskVm.setActiveTask(task)
-                            val pendingIntent = NotificationActionStore.get(task.id)
-                                ?: WillNotificationListenerService.instance?.getPendingIntentForTask(task.id)
-                            if (pendingIntent != null) {
-                                // Cancel the source notification before firing the PI —
-                                // mirrors what the Android system does on notification tap,
-                                // ensuring apps like WhatsApp navigate to the specific conversation.
-                                WillNotificationListenerService.instance?.cancelNotificationForTask(task.id)
-                                runCatching { pendingIntent.send(context, 0, null) }
-                                    .onFailure {
-                                        context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                                            ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                            ?.let { context.startActivity(it) }
-                                    }
-                            } else {
-                                context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                                    ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    ?.let { context.startActivity(it) }
-                            }
-                        },
-                        onLongPress = { task ->
-                            selectedTask = task
-                            showActionSheet = true
-                        },
-                        onSwipeDone = { task ->
-                            taskVm.markDone(task)
-                            WillNotificationListenerService.instance?.clearConversationForTask(task.id)
-                        },
-                        onSwipeDelete = { task ->
-                            pendingDelete = task
-                            taskVm.deleteTask(task)
-                            WillNotificationListenerService.instance?.clearConversationForTask(task.id)
-                            coroutineScope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "task deleted",
-                                    actionLabel = "undo",
-                                    duration = SnackbarDuration.Short
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    pendingDelete?.let { taskVm.addTask(it) }
-                                }
-                                pendingDelete = null
-                            }
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
-
-                    if (!notificationPermissionGranted) {
-                        NotificationPermissionPrompt(
-                            onGrantPermission = onGrantPermission,
-                            modifier = Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                        )
                     }
+            ) {
+                TaskFeed(
+                    tasks = tasks,
+                    onTap = { task ->
+                        onSetPendingActiveTask(task)
+                        taskVm.setActiveTask(task)
+                        val listener = WillNotificationListenerService.instance
+                        val pendingIntent = NotificationActionStore.get(task.id)
+                            ?: task.notificationKey?.let { key ->
+                                listener?.getContentIntentByNotificationKey(key)
+                            }
+                        if (pendingIntent != null) {
+                            listener?.cancelNotificationByKey(task.notificationKey)
+                            runCatching { pendingIntent.send(context, 0, null) }
+                                .onFailure {
+                                    context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                                        ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                        ?.let { context.startActivity(it) }
+                                }
+                        } else {
+                            context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                                ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                                ?.let { context.startActivity(it) }
+                        }
+                    },
+                    onMarkDone = { task ->
+                        taskVm.markDone(task)
+                        WillNotificationListenerService.instance?.clearConversationForTask(task.id)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
 
-                    AppDrawerOverlay(
-                        visible = appDrawerOpen,
-                        apps = apps,
-                        query = appSearchQuery,
-                        onQueryChange = onAppSearchQueryChange,
-                        onDismiss = { appDrawerOpen = false }
+                if (!notificationPermissionGranted) {
+                    NotificationPermissionPrompt(
+                        onGrantPermission = onGrantPermission,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
                     )
                 }
+
+                AppDrawerOverlay(
+                    visible = appDrawerOpen,
+                    apps = apps,
+                    query = appSearchQuery,
+                    onQueryChange = onAppSearchQueryChange,
+                    onDismiss = { appDrawerOpen = false }
+                )
             }
         }
+    }
 
-        if (showActionSheet && selectedTask != null) {
-            TaskActionSheet(
-                task = selectedTask!!,
-                onDismiss = { showActionSheet = false; selectedTask = null },
-                onMarkDone = {
-                    taskVm.markDone(selectedTask!!)
-                    WillNotificationListenerService.instance?.clearConversationForTask(selectedTask!!.id)
-                    showActionSheet = false; selectedTask = null
-                },
-                onStart = { taskVm.startTask(selectedTask!!); showActionSheet = false; selectedTask = null },
-                onPause = { taskVm.pauseTask(selectedTask!!); showActionSheet = false; selectedTask = null },
-                onReopen = { taskVm.reopenTask(selectedTask!!); showActionSheet = false; selectedTask = null },
-                onDelete = {
-                    taskVm.deleteTask(selectedTask!!)
-                    WillNotificationListenerService.instance?.clearConversationForTask(selectedTask!!.id)
-                    showActionSheet = false; selectedTask = null
-                }
-            )
-        }
-
-        if (showIntentInputSheet) {
-            IntentInputSheet(
-                onDismiss = { showIntentInputSheet = false },
-                onAddTask = { title ->
-                    taskVm.addTask(
-                        Task(
-                            title = title,
-                            text = "",
-                            sourcePackage = "manual",
-                            createdAt = System.currentTimeMillis()
-                        )
+    if (showIntentInputSheet) {
+        IntentInputSheet(
+            onDismiss = { showIntentInputSheet = false },
+            onAddTask = { title ->
+                taskVm.addTask(
+                    Task(
+                        title = title,
+                        text = "",
+                        sourcePackage = "manual",
+                        createdAt = System.currentTimeMillis()
                     )
-                    showIntentInputSheet = false
-                }
-            )
-        }
+                )
+                showIntentInputSheet = false
+            }
+        )
     }
 }

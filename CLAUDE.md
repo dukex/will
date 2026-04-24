@@ -63,7 +63,7 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
 | `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher |
 | **Task domain** | |
-| `task/Task.kt` | pure domain model — no Android/Room deps |
+| `task/Task.kt` | pure domain model — no Android/Room deps; includes `notificationKey` for deep-link persistence |
 | `task/TaskRepository.kt` | repository interface (domain layer) |
 | `task/TaskViewModel.kt` | StateFlow<List<Task>>, addTask, deleteTask, markActive |
 | **Infrastructure** | |
@@ -75,14 +75,15 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | **Notification** | |
 | `notification/NotificationProcessor.kt` | pure logic: notification data → Task (or null) |
 | `notification/NotificationActionStore.kt` | holds PendingIntents keyed by notification key (in-memory) |
-| `notification/NotificationKeyTracker.kt` | tracks active notification keys for removal sync |
+| `notification/NotificationKeyTracker.kt` | **deprecated** — dedup now via Room unique index on `conversationKey` |
 | `notification/WillNotificationListenerService.kt` | intercepts notifications; inserts Tasks; fires PendingIntent on tap |
 | **Overlay** | |
 | `overlay/ActiveTaskOverlayService.kt` | TYPE_APPLICATION_OVERLAY bubble; draggable; expands to panel with done/later/delete |
 | **UI** | |
-| `ui/TaskFeed.kt` | LazyColumn of TaskCards; tap opens source app; long-press activates overlay |
-| `ui/TaskActionSheet.kt` | bottom sheet for task actions |
-| `ui/HomeTopBar.kt` | minimal top bar with date/time |
+| `ui/TaskFeed.kt` | LazyColumn of TaskCards; tap opens source app; visible checkbox marks done |
+| `ui/DoneTasksScreen.kt` | separate screen for completed tasks — reopen or delete |
+| `ui/TaskActionSheet.kt` | bottom sheet for task actions (legacy — unused) |
+| `ui/HomeTopBar.kt` | minimal top bar with date/time; done count badge; nav to filters/dashboard/done |
 | `ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch |
 | `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
@@ -134,7 +135,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 
 - **No app chrome** — no TabRow, no TopAppBar, no bottom navigation bar. These are app patterns, not home screen patterns.
 - **Task feed is the home screen** — full screen, edge-to-edge, status bar overlays content.
-- **App grid is secondary** — accessible via gesture (swipe up) or overlay, never a tab.
+- **App grid is secondary** — accessible via explicit button in top bar (+ swipe up as bonus gesture), never a tab.
 - **No decorative containers** around the main content — the screen IS the launcher.
 - **Permission prompts** = small non-intrusive banners (bottom of screen), never full-screen dialogs that block the home screen.
 
@@ -149,7 +150,9 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - `stateNotNeeded=true` — launcher doesn't need onSaveInstanceState
 - `screenOrientation=portrait` — portrait only, matches minimal launcher convention
 - `windowSoftInputMode=stateAlwaysHidden` — keyboard must never auto-pop on home screen
-- `Task.pendingIntent` not persisted — Room can't store PendingIntent; `NotificationActionStore` holds PendingIntents in-memory keyed by notification key; tapping task opens source app as fallback when store is empty
+- `Task.notificationKey` persisted in Room — on tap, used to look up `contentIntent` from active notifications even after app restart; `NotificationActionStore` is a fast in-memory cache, `notificationKey` is the durable fallback
+- **Conversation dedup via Room unique index** — `Task.conversationKey` (`packageName:shortcutId`) has a unique index; `INSERT ... IGNORE` prevents duplicates. `clearConversationKey()` must be called on done/delete so the next notification for that conversation creates a fresh task
+- `NotificationKeyTracker` is **deprecated** — all dedup is now handled by Room's unique index on `conversationKey`, surviving service restarts
 - `WillNotificationListenerService` uses its own `CoroutineScope(Dispatchers.IO + SupervisorJob)` — not tied to Activity lifecycle
 - `WillDatabase` is a singleton created in Activity/Service via `WillDatabase.getInstance(context)`
 - Swipe-up to open app drawer uses `nestedScroll` — `pointerInput` on an outer `Box` doesn't work because `LazyColumn` consumes all vertical drag events first. `nestedScroll.onPostScroll` intercepts the leftover scroll that the list couldn't consume.

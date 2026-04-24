@@ -303,6 +303,7 @@ private fun WillScreen(
                 TaskFeed(
                     tasks = tasks,
                     onTap = { task ->
+                        android.util.Log.d("Will", "TAP task=${task.id} pkg=${task.sourcePackage} nKey=${task.notificationKey != null}")
                         onSetPendingActiveTask(task)
                         taskVm.setActiveTask(task)
                         val listener = WillNotificationListenerService.instance
@@ -310,16 +311,21 @@ private fun WillScreen(
                             ?: task.notificationKey?.let { key ->
                                 listener?.getContentIntentByNotificationKey(key)
                             }
+                        android.util.Log.d("Will", "TAP pendingIntent=${pendingIntent != null} listener=${listener != null}")
                         if (pendingIntent != null) {
                             listener?.cancelNotificationByKey(task.notificationKey)
                             runCatching { pendingIntent.send(context, 0, null) }
-                                .onFailure {
+                                .onSuccess { android.util.Log.d("Will", "TAP sent pendingIntent OK") }
+                                .onFailure { e ->
+                                    android.util.Log.d("Will", "TAP pendingIntent FAILED: ${e.message}, launching app")
                                     context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
                                         ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                                         ?.let { context.startActivity(it) }
                                 }
                         } else {
-                            context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                            val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+                            android.util.Log.d("Will", "TAP fallback launchIntent=${launchIntent != null} for ${task.sourcePackage}")
+                            launchIntent
                                 ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                                 ?.let { context.startActivity(it) }
                         }

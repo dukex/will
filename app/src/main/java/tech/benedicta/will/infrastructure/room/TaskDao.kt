@@ -3,13 +3,14 @@ package tech.benedicta.will.infrastructure.room
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TaskDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(task: TaskEntity): Long
 
     @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
@@ -32,4 +33,7 @@ interface TaskDao {
 
     @Query("DELETE FROM tasks")
     suspend fun deleteAll()
+
+    @Query("UPDATE tasks SET conversationKey = NULL WHERE id = :taskId")
+    suspend fun clearConversationKey(taskId: Long)
 }

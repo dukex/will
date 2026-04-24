@@ -161,6 +161,47 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private fun launchTask(context: android.content.Context, task: Task) {
+    val listener = WillNotificationListenerService.instance
+
+    // 1. In-memory PendingIntent (fastest, works within same session)
+    val pendingIntent = NotificationActionStore.get(task.id)
+        ?: task.notificationKey?.let { key ->
+            listener?.getContentIntentByNotificationKey(key)
+        }
+
+    if (pendingIntent != null) {
+        listener?.cancelNotificationByKey(task.notificationKey)
+        runCatching { pendingIntent.send(context, 0, null) }
+            .onFailure { launchViaShortcutOrPackage(context, task) }
+        return
+    }
+
+    // 2. Shortcut deep-link (works even after restart if app supports shortcuts)
+    // 3. Generic app launch (last resort)
+    launchViaShortcutOrPackage(context, task)
+}
+
+private fun launchViaShortcutOrPackage(context: android.content.Context, task: Task) {
+    val shortcutId = task.conversationKey
+        ?.removePrefix("${task.sourcePackage}:")
+        ?.takeIf { it.isNotBlank() }
+
+    if (shortcutId != null) {
+        val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
+            as android.content.pm.LauncherApps
+        runCatching {
+            launcherApps.startShortcut(
+                task.sourcePackage, shortcutId, null, null, android.os.Process.myUserHandle()
+            )
+        }.onSuccess { return }
+    }
+
+    context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+        ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        ?.let { context.startActivity(it) }
+}
+
 @Composable
 private fun AppDrawerOverlay(
     visible: Boolean,
@@ -294,32 +335,9 @@ private fun WillScreen(
                 TaskFeed(
                     tasks = tasks,
                     onTap = { task ->
-                        android.util.Log.d("Will", "TAP task=${task.id} pkg=${task.sourcePackage} nKey=${task.notificationKey != null}")
                         onSetPendingActiveTask(task)
                         taskVm.setActiveTask(task)
-                        val listener = WillNotificationListenerService.instance
-                        val pendingIntent = NotificationActionStore.get(task.id)
-                            ?: task.notificationKey?.let { key ->
-                                listener?.getContentIntentByNotificationKey(key)
-                            }
-                        android.util.Log.d("Will", "TAP pendingIntent=${pendingIntent != null} listener=${listener != null}")
-                        if (pendingIntent != null) {
-                            listener?.cancelNotificationByKey(task.notificationKey)
-                            runCatching { pendingIntent.send(context, 0, null) }
-                                .onSuccess { android.util.Log.d("Will", "TAP sent pendingIntent OK") }
-                                .onFailure { e ->
-                                    android.util.Log.d("Will", "TAP pendingIntent FAILED: ${e.message}, launching app")
-                                    context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                                        ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                        ?.let { context.startActivity(it) }
-                                }
-                        } else {
-                            val launchIntent = context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
-                            android.util.Log.d("Will", "TAP fallback launchIntent=${launchIntent != null} for ${task.sourcePackage}")
-                            launchIntent
-                                ?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                                ?.let { context.startActivity(it) }
-                        }
+                        launchTask(context, task)
                     },
                     onMarkDone = { task ->
                         taskVm.markDone(task)

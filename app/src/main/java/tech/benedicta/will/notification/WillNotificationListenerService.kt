@@ -1,6 +1,5 @@
 package tech.benedicta.will.notification
 
-import android.app.PendingIntent
 import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
@@ -27,7 +26,6 @@ class WillNotificationListenerService : NotificationListenerService() {
         if (processor.shouldIgnoreFlags(sbn.notification.flags)) return
 
         val conversationKey = conversationKeyFor(sbn)
-        val pendingIntent = sbn.notification.contentIntent
 
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
@@ -47,19 +45,11 @@ class WillNotificationListenerService : NotificationListenerService() {
         scope.launch {
             appFilterRepository.addApp(sbn.packageName, appName)
             if (!appFilterRepository.isEnabled(sbn.packageName)) return@launch
-            val taskId = repository.insertTask(task)
-            if (taskId == -1L) return@launch
-            if (pendingIntent != null) NotificationActionStore.put(taskId, pendingIntent)
+            repository.insertTask(task)
         }
     }
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification) {
-        // Task lifecycle is user-controlled — nothing to clean up.
-    }
-
-    fun clearConversationForTask(taskId: Long) {
-        NotificationActionStore.remove(taskId)
-    }
+    override fun onNotificationRemoved(sbn: StatusBarNotification) {}
 
     private fun conversationKeyFor(sbn: StatusBarNotification): String? {
         val shortcutId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -68,21 +58,12 @@ class WillNotificationListenerService : NotificationListenerService() {
         return if (shortcutId != null) "${sbn.packageName}:$shortcutId" else null
     }
 
-    override fun onListenerConnected() {
-        instance = this
-    }
+    override fun onListenerConnected() { instance = this }
 
     override fun onDestroy() {
         super.onDestroy()
         instance = null
         job.cancel()
-    }
-
-    fun getContentIntentByNotificationKey(notificationKey: String): PendingIntent? =
-        activeNotifications?.firstOrNull { it.key == notificationKey }?.notification?.contentIntent
-
-    fun cancelNotificationByKey(notificationKey: String?) {
-        if (notificationKey != null) runCatching { cancelNotification(notificationKey) }
     }
 
     companion object {

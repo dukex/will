@@ -18,7 +18,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,7 +38,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.LauncherApp
@@ -236,31 +234,9 @@ private fun WillScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
-    var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
 
     val doneTasks = tasks.filter { it.status == TaskStatus.DONE }
-
-    val nestedScrollConnection = remember {
-        object : NestedScrollConnection {
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource
-            ): Offset {
-                if (!appDrawerOpen && available.y < 0f) {
-                    overscrollAccumulator += available.y
-                    if (overscrollAccumulator < -SWIPE_THRESHOLD) {
-                        appDrawerOpen = true
-                        overscrollAccumulator = 0f
-                    }
-                } else {
-                    overscrollAccumulator = 0f
-                }
-                return Offset.Zero
-            }
-        }
-    }
 
     BackHandler(enabled = true) {
         when {
@@ -323,12 +299,6 @@ private fun WillScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .nestedScroll(nestedScrollConnection)
-                    .pointerInput(appDrawerOpen) {
-                        detectVerticalDragGestures { _, dragAmount ->
-                            if (!appDrawerOpen && dragAmount < -SWIPE_THRESHOLD) appDrawerOpen = true
-                        }
-                    }
             ) {
                 TaskFeed(
                     tasks = tasks,

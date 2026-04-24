@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -26,9 +28,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import tech.benedicta.will.task.Task
 import tech.benedicta.will.ui.theme.WillBorder
 import tech.benedicta.will.ui.theme.WillTextSecondary
+import tech.benedicta.will.ui.theme.WillTextTertiary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -38,11 +40,9 @@ fun HomeTopBar(
     onAddTask: () -> Unit = {},
     onOpenFilter: () -> Unit = {},
     onOpenDashboard: () -> Unit = {},
-    // Legacy params kept for backward compatibility — no longer rendered
-    activeTask: Task? = null,
-    onTaskDone: () -> Unit = {},
-    onTaskLater: () -> Unit = {},
-    onTaskDelete: () -> Unit = {},
+    onOpenDoneTasks: () -> Unit = {},
+    onOpenApps: () -> Unit = {},
+    doneCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
@@ -77,6 +77,16 @@ fun HomeTopBar(
                 modifier = Modifier.size(24.dp)
             )
         }
+        if (doneCount > 0) {
+            IconButton(onClick = onOpenDoneTasks) {
+                Icon(
+                    imageVector = Icons.Outlined.CheckCircle,
+                    contentDescription = "$doneCount done tasks",
+                    tint = WillTextTertiary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
         IconButton(onClick = onOpenFilter) {
             Icon(
                 imageVector = Icons.Outlined.FilterList,
@@ -89,6 +99,14 @@ fun HomeTopBar(
             Icon(
                 imageVector = Icons.Outlined.BarChart,
                 contentDescription = "focus dashboard",
+                tint = WillTextSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        IconButton(onClick = onOpenApps) {
+            Icon(
+                imageVector = Icons.Outlined.Apps,
+                contentDescription = "apps",
                 tint = WillTextSecondary,
                 modifier = Modifier.size(24.dp)
             )

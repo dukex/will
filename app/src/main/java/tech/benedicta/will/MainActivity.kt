@@ -44,7 +44,6 @@ import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
-import tech.benedicta.will.notification.NotificationActionStore
 import tech.benedicta.will.notification.WillNotificationListenerService
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
@@ -85,7 +84,6 @@ class MainActivity : ComponentActivity() {
             (application as WillApplication).overlayEvents.collect { event ->
                 if (!::taskVm.isInitialized) return@collect
                 if (event.action == TaskViewModel.ACTION_DONE || event.action == TaskViewModel.ACTION_DELETE) {
-                    WillNotificationListenerService.instance?.clearConversationForTask(event.taskId)
                 }
                 taskVm.handleOverlayAction(event.action, event.taskId)
             }
@@ -162,41 +160,14 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun launchTask(context: android.content.Context, task: Task) {
-    val listener = WillNotificationListenerService.instance
-
-    // 1. In-memory PendingIntent (fastest, works within same session)
-    val pendingIntent = NotificationActionStore.get(task.id)
-        ?: task.notificationKey?.let { key ->
-            listener?.getContentIntentByNotificationKey(key)
-        }
-
-    if (pendingIntent != null) {
-        listener?.cancelNotificationByKey(task.notificationKey)
-        runCatching { pendingIntent.send(context, 0, null) }
-            .onFailure { launchViaShortcutOrPackage(context, task) }
-        return
-    }
-
-    // 2. Shortcut deep-link (works even after restart if app supports shortcuts)
-    // 3. Generic app launch (last resort)
-    launchViaShortcutOrPackage(context, task)
-}
-
-private fun launchViaShortcutOrPackage(context: android.content.Context, task: Task) {
-    val shortcutId = task.conversationKey
-        ?.removePrefix("${task.sourcePackage}:")
-        ?.takeIf { it.isNotBlank() }
-
+    val shortcutId = task.conversationKey?.removePrefix("${task.sourcePackage}:")
     if (shortcutId != null) {
         val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
             as android.content.pm.LauncherApps
         runCatching {
-            launcherApps.startShortcut(
-                task.sourcePackage, shortcutId, null, null, android.os.Process.myUserHandle()
-            )
+            launcherApps.startShortcut(task.sourcePackage, shortcutId, null, null, android.os.Process.myUserHandle())
         }.onSuccess { return }
     }
-
     context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
         ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         ?.let { context.startActivity(it) }
@@ -306,10 +277,7 @@ private fun WillScreen(
             DoneTasksScreen(
                 doneTasks = doneTasks,
                 onBack = { currentScreen = Screen.Home },
-                onDelete = { task ->
-                    taskVm.deleteTask(task)
-                    WillNotificationListenerService.instance?.clearConversationForTask(task.id)
-                },
+                onDelete = { task -> taskVm.deleteTask(task) },
                 onReopen = { task -> taskVm.reopenTask(task) }
             )
             return
@@ -341,7 +309,6 @@ private fun WillScreen(
                     },
                     onMarkDone = { task ->
                         taskVm.markDone(task)
-                        WillNotificationListenerService.instance?.clearConversationForTask(task.id)
                     },
                     modifier = Modifier.fillMaxSize()
                 )

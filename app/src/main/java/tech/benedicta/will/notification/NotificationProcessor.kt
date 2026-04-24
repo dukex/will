@@ -8,7 +8,9 @@ class NotificationProcessor {
         title: String?,
         text: String?,
         sourcePackage: String,
-        timestamp: Long
+        timestamp: Long,
+        notificationKey: String? = null,
+        conversationKey: String? = null
     ): Task? {
         if (sourcePackage.isBlank()) return null
         if (sourcePackage in IGNORED_PACKAGES) return null
@@ -18,13 +20,18 @@ class NotificationProcessor {
             !text.isNullOrBlank() -> text
             else -> return null
         }
+
+        if (isSystemNoise(resolvedTitle)) return null
+
         val resolvedText = if (!title.isNullOrBlank() && !text.isNullOrBlank()) text else ""
 
         return Task(
             title = resolvedTitle,
             text = resolvedText,
             sourcePackage = sourcePackage,
-            createdAt = timestamp
+            createdAt = timestamp,
+            notificationKey = notificationKey,
+            conversationKey = conversationKey
         )
     }
 
@@ -39,7 +46,26 @@ class NotificationProcessor {
         private const val FLAG_ONGOING_EVENT = 0x00000002
 
         val IGNORED_PACKAGES: Set<String> = setOf(
-            "com.google.android.apps.wellbeing",  // Digital Wellbeing
+            "com.google.android.apps.wellbeing",
+            "android",
+            "com.android.systemui",
+            "com.google.android.deskclock",
+            "com.motorola.ccc.ota",
         )
+
+        private val NOISE_PATTERNS: List<Regex> = listOf(
+            Regex("^Downloading \\d+ (video|file|image|photo)", RegexOption.IGNORE_CASE),
+            Regex("^Charging complete$", RegexOption.IGNORE_CASE),
+            Regex("^Update complete$", RegexOption.IGNORE_CASE),
+            Regex("^Could not connect to", RegexOption.IGNORE_CASE),
+            Regex("has no internet access$", RegexOption.IGNORE_CASE),
+            Regex("has limited connectivity$", RegexOption.IGNORE_CASE),
+            Regex("^Upcoming alarm$", RegexOption.IGNORE_CASE),
+            Regex("^Your bedtime starts at", RegexOption.IGNORE_CASE),
+            Regex("^Alarm volume", RegexOption.IGNORE_CASE),
+        )
+
+        fun isSystemNoise(title: String): Boolean =
+            NOISE_PATTERNS.any { it.containsMatchIn(title) }
     }
 }

@@ -40,4 +40,8 @@ class MemoryTaskRepository : TaskRepository {
     override suspend fun deleteAllTasks() {
         _tasks.value = emptyList()
     }
+
+    override suspend fun clearConversationKey(taskId: Long) {
+        _tasks.update { list -> list.map { if (it.id == taskId) it.copy(conversationKey = null) else it } }
+    }
 }

@@ -17,4 +17,5 @@ class RoomTaskRepository(private val dao: TaskDao) : TaskRepository {
     }
     override suspend fun clearActiveTask() = dao.clearAllActive()
     override suspend fun deleteAllTasks() = dao.deleteAll()
+    override suspend fun clearConversationKey(taskId: Long) = dao.clearConversationKey(taskId)
 }

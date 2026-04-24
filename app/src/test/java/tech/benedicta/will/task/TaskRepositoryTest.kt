@@ -66,6 +66,63 @@ class TaskRepositoryTest {
 
         assertEquals("New", tasks[0].title)
     }
+
+    @Test
+    fun `preserves notificationKey through insert and retrieve`() = runTest {
+        val repo = FakeTaskRepository()
+        val task = Task(
+            title = "WhatsApp msg",
+            text = "Hello",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L,
+            notificationKey = "0|com.whatsapp|123|null|10042"
+        )
+
+        val id = repo.insertTask(task)
+        val tasks = repo.getAllTasks().first()
+
+        assertEquals("0|com.whatsapp|123|null|10042", tasks[0].notificationKey)
+    }
+
+    @Test
+    fun `duplicate conversationKey is ignored on insert`() = runTest {
+        val repo = FakeTaskRepository()
+        val task1 = Task(
+            title = "First msg",
+            text = "Hello",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L,
+            conversationKey = "com.whatsapp:chat123"
+        )
+        val task2 = Task(
+            title = "Second msg",
+            text = "World",
+            sourcePackage = "com.whatsapp",
+            createdAt = 2000L,
+            conversationKey = "com.whatsapp:chat123"
+        )
+
+        repo.insertTask(task1)
+        val id2 = repo.insertTask(task2)
+
+        assertEquals(-1L, id2)
+        val tasks = repo.getAllTasks().first()
+        assertEquals(1, tasks.size)
+        assertEquals("First msg", tasks[0].title)
+    }
+
+    @Test
+    fun `null conversationKey allows multiple inserts`() = runTest {
+        val repo = FakeTaskRepository()
+        val task1 = Task(title = "Generic 1", text = "", sourcePackage = "com.whatsapp", createdAt = 1000L)
+        val task2 = Task(title = "Generic 2", text = "", sourcePackage = "com.whatsapp", createdAt = 2000L)
+
+        repo.insertTask(task1)
+        repo.insertTask(task2)
+
+        val tasks = repo.getAllTasks().first()
+        assertEquals(2, tasks.size)
+    }
 }
 
 private class FakeTaskRepository : TaskRepository {
@@ -73,6 +130,10 @@ private class FakeTaskRepository : TaskRepository {
     private var nextId = 1L
 
     override suspend fun insertTask(task: Task): Long {
+        if (task.conversationKey != null &&
+            tasks.any { it.conversationKey == task.conversationKey }) {
+            return -1L
+        }
         val id = nextId++
         tasks.add(task.copy(id = id))
         return id
@@ -101,4 +162,8 @@ private class FakeTaskRepository : TaskRepository {
         tasks.clear(); tasks.addAll(updated)
     }
     override suspend fun deleteAllTasks() { tasks.clear() }
+    override suspend fun clearConversationKey(taskId: Long) {
+        val index = tasks.indexOfFirst { it.id == taskId }
+        if (index != -1) tasks[index] = tasks[index].copy(conversationKey = null)
+    }
 }

@@ -9,5 +9,7 @@ data class Task(
     val startedAt: Long? = null,
     val completedAt: Long? = null,
     val contextSwitchCount: Int = 0,
-    val isActive: Boolean = false
+    val isActive: Boolean = false,
+    val notificationKey: String? = null,
+    val conversationKey: String? = null
 )

@@ -34,9 +34,10 @@ class TaskViewModel(
     fun handleOverlayAction(action: String, taskId: Long) {
         val task = tasks.value.find { it.id == taskId } ?: return
         viewModelScope.launch(dispatcher) {
+            repository.clearConversationKey(taskId)
             when (action) {
                 ACTION_DONE -> repository.updateTask(
-                    task.copy(completedAt = System.currentTimeMillis(), isActive = false)
+                    task.copy(completedAt = System.currentTimeMillis(), isActive = false, conversationKey = null)
                 )
                 ACTION_DELETE -> repository.deleteTask(task)
             }
@@ -55,13 +56,17 @@ class TaskViewModel(
     }
 
     fun deleteTask(task: Task) {
-        viewModelScope.launch(dispatcher) { repository.deleteTask(task) }
+        viewModelScope.launch(dispatcher) {
+            repository.clearConversationKey(task.id)
+            repository.deleteTask(task)
+        }
     }
 
     fun markDone(task: Task) {
         viewModelScope.launch(dispatcher) {
+            repository.clearConversationKey(task.id)
             repository.updateTask(
-                task.copy(completedAt = System.currentTimeMillis(), isActive = false)
+                task.copy(completedAt = System.currentTimeMillis(), isActive = false, conversationKey = null)
             )
         }
     }

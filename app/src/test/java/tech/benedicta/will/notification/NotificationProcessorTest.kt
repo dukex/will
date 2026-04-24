@@ -144,4 +144,86 @@ class NotificationProcessorTest {
     fun `shouldIgnoreFlags returns false for zero flags`() {
         assert(!processor.shouldIgnoreFlags(0))
     }
+
+    @Test
+    fun `passes notificationKey through to Task`() {
+        val result = processor.process(
+            title = "New message",
+            text = "Hello",
+            sourcePackage = "com.whatsapp",
+            timestamp = 1000L,
+            notificationKey = "0|com.whatsapp|123|null|10042"
+        )
+
+        assertEquals("0|com.whatsapp|123|null|10042", result?.notificationKey)
+    }
+
+    @Test
+    fun `notificationKey defaults to null`() {
+        val result = processor.process(
+            title = "Test",
+            text = "body",
+            sourcePackage = "com.test",
+            timestamp = 0L
+        )
+
+        assertNull(result?.notificationKey)
+    }
+
+    @Test
+    fun `passes conversationKey through to Task`() {
+        val result = processor.process(
+            title = "New message",
+            text = "Hello",
+            sourcePackage = "com.whatsapp",
+            timestamp = 1000L,
+            conversationKey = "com.whatsapp:chat123"
+        )
+
+        assertEquals("com.whatsapp:chat123", result?.conversationKey)
+    }
+
+    @Test
+    fun `conversationKey defaults to null`() {
+        val result = processor.process(
+            title = "Test",
+            text = "body",
+            sourcePackage = "com.test",
+            timestamp = 0L
+        )
+
+        assertNull(result?.conversationKey)
+    }
+
+    @Test
+    fun `android system package is ignored`() {
+        assertNull(processor.process("title", "body", "android", 0L))
+    }
+
+    @Test
+    fun `systemui package is ignored`() {
+        assertNull(processor.process("title", "body", "com.android.systemui", 0L))
+    }
+
+    @Test
+    fun `deskclock package is ignored`() {
+        assertNull(processor.process("title", "body", "com.google.android.deskclock", 0L))
+    }
+
+    @Test
+    fun `returns null for system noise titles`() {
+        val noiseTitles = listOf(
+            "Downloading 2 videos",
+            "Charging complete",
+            "Update complete",
+            "Could not connect to Wi-Fi network",
+            "PARAQUIACON has no internet access",
+            "PARAQUIACON has limited connectivity",
+            "Upcoming alarm"
+        )
+        noiseTitles.forEach { title ->
+            val result = processor.process(title, "body", "com.example", 0L)
+            assertNull("Expected null for noise title: $title", result)
+        }
+    }
 }

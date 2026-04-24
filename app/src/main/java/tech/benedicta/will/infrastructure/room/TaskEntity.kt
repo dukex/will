@@ -1,10 +1,14 @@
 package tech.benedicta.will.infrastructure.room
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import tech.benedicta.will.task.Task
 
-@Entity(tableName = "tasks")
+@Entity(
+    tableName = "tasks",
+    indices = [Index(value = ["conversationKey"], unique = true)]
+)
 data class TaskEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val title: String,
@@ -14,7 +18,9 @@ data class TaskEntity(
     val startedAt: Long? = null,
     val completedAt: Long? = null,
     val contextSwitchCount: Int = 0,
-    val isActive: Boolean = false
+    val isActive: Boolean = false,
+    val notificationKey: String? = null,
+    val conversationKey: String? = null
 ) {
     fun toTask() = Task(
         id = id,
@@ -25,7 +31,9 @@ data class TaskEntity(
         startedAt = startedAt,
         completedAt = completedAt,
         contextSwitchCount = contextSwitchCount,
-        isActive = isActive
+        isActive = isActive,
+        notificationKey = notificationKey,
+        conversationKey = conversationKey
     )
 }
 
@@ -38,5 +46,7 @@ fun Task.toEntity() = TaskEntity(
     startedAt = startedAt,
     completedAt = completedAt,
     contextSwitchCount = contextSwitchCount,
-    isActive = isActive
+    isActive = isActive,
+    notificationKey = notificationKey,
+    conversationKey = conversationKey
 )

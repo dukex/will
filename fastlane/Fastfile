@@ -1,0 +1,29 @@
+default_platform(:android)
+
+build_gradle = File.read("../app/build.gradle.kts")
+version_name = build_gradle.match(/versionName\s*=\s*"([^"]+)"/)[1]
+version_code = build_gradle.match(/versionCode\s*=\s*(\d+)/)[1]
+
+lane :deploy do
+upload_to_play_store(
+  version_name: version_name,
+  version_code: version_code,
+  release_status: "completed",
+  track: "beta",
+  aab: "build/app-release.aab",
+  package_name: "tech.benedicta.will",
+  metadata_path: "fastlane/metadata/android"
+)
+end
+
+lane :promote_to_production do
+upload_to_play_store(
+  version_name: "#{version_name}-#{version_code}",
+  version_code: version_code,
+  release_status: "completed",
+  track: "beta",
+  track_promote_to: "production",
+  package_name: "tech.benedicta.will",
+  metadata_path: "fastlane/metadata/android"
+)
+end

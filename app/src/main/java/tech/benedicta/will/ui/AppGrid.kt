@@ -1,7 +1,8 @@
 package tech.benedicta.will.ui
 
 import android.content.Intent
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -21,12 +22,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -38,6 +40,7 @@ fun AppGrid(
     query: String,
     onQueryChange: (String) -> Unit,
     onDismiss: () -> Unit = {},
+    onLongPressApp: (LauncherApp) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
@@ -61,7 +64,11 @@ fun AppGrid(
             )
         }
         items(apps, key = { it.packageName }) { app ->
-            AppItem(app, onLaunch = { onQueryChange(""); onDismiss() })
+            AppItem(
+                app = app,
+                onLaunch = { onQueryChange(""); onDismiss() },
+                onLongPress = { onLongPressApp(app) }
+            )
         }
     }
 }
@@ -95,22 +102,30 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AppItem(app: LauncherApp, onLaunch: () -> Unit) {
+private fun AppItem(app: LauncherApp, onLaunch: () -> Unit, onLongPress: () -> Unit) {
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
     Text(
         text = app.name,
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {
-                val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName)
-                if (launchIntent != null) {
-                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(launchIntent)
+            .combinedClickable(
+                onClick = {
+                    val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName)
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(launchIntent)
+                    }
+                    onLaunch()
+                },
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongPress()
                 }
-                onLaunch()
-            }
+            )
             .padding(vertical = 12.dp)
     )
 }

@@ -24,6 +24,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
+import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
 import tech.benedicta.will.notification.WillNotificationListenerService
@@ -56,6 +60,7 @@ import tech.benedicta.will.ui.DoneTasksScreen
 import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.IntentInputSheet
+import tech.benedicta.will.ui.PinnedAppsRow
 import tech.benedicta.will.ui.SettingsScreen
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.PrivacySettings
@@ -113,9 +118,17 @@ class MainActivity : ComponentActivity() {
                     )
                 )
 
+                val pinnedAppsVm: PinnedAppsViewModel = viewModel(
+                    factory = PinnedAppsViewModel.factory(
+                        (application as WillApplication).pinnedAppsRepository,
+                        launcherVm.apps
+                    )
+                )
+
                 val filteredApps by launcherVm.filteredApps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
+                val pinnedApps by pinnedAppsVm.pinnedApps.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
                 WillScreen(
@@ -125,6 +138,8 @@ class MainActivity : ComponentActivity() {
                     tasks = tasks,
                     taskVm = taskVm,
                     appFilterVm = appFilterVm,
+                    pinnedApps = pinnedApps,
+                    pinnedAppsVm = pinnedAppsVm,
                     notificationPermissionGranted = notificationPermissionGranted,
                     onGrantPermission = { openNotificationListenerSettings() },
                     onSetPendingActiveTask = { task -> pendingActiveTask = task }
@@ -179,7 +194,8 @@ private fun AppDrawerOverlay(
     apps: List<LauncherApp>,
     query: String,
     onQueryChange: (String) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onLongPressApp: (LauncherApp) -> Unit = {}
 ) {
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     val nestedScrollConnection = remember {
@@ -214,6 +230,7 @@ private fun AppDrawerOverlay(
             query = query,
             onQueryChange = onQueryChange,
             onDismiss = onDismiss,
+            onLongPressApp = onLongPressApp,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -230,14 +247,30 @@ private fun WillScreen(
     tasks: List<Task>,
     taskVm: TaskViewModel,
     appFilterVm: AppFilterViewModel,
+    pinnedApps: List<LauncherApp>,
+    pinnedAppsVm: PinnedAppsViewModel,
     notificationPermissionGranted: Boolean,
     onGrantPermission: () -> Unit,
     onSetPendingActiveTask: (Task) -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
+
+    val onLongPressApp: (LauncherApp) -> Unit = { app ->
+        scope.launch {
+            if (pinnedAppsVm.isPinned(app.packageName)) {
+                pinnedAppsVm.unpin(app.packageName)
+                snackbarHostState.showSnackbar("Unpinned ${app.name}")
+            } else {
+                val ok = pinnedAppsVm.pin(app.packageName)
+                if (!ok) snackbarHostState.showSnackbar("Pin limit reached (5)")
+            }
+        }
+    }
 
     val doneTasks = tasks.filter { it.status == TaskStatus.DONE }
 
@@ -295,6 +328,10 @@ private fun WillScreen(
                 onOpenApps = { appDrawerOpen = true },
                 doneCount = doneTasks.size
             )
+            PinnedAppsRow(
+                pinnedApps = pinnedApps,
+                onUnpin = { app -> pinnedAppsVm.unpin(app.packageName) }
+            )
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -328,7 +365,13 @@ private fun WillScreen(
                     apps = apps,
                     query = appSearchQuery,
                     onQueryChange = onAppSearchQueryChange,
-                    onDismiss = { appDrawerOpen = false }
+                    onDismiss = { appDrawerOpen = false },
+                    onLongPressApp = onLongPressApp
+                )
+
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.align(Alignment.BottomCenter)
                 )
             }
         }

@@ -197,5 +197,10 @@ private class FakeViewModelTaskRepository : TaskRepository {
     override suspend fun clearActiveTask() {
         _tasks.value = _tasks.value.map { it.copy(isActive = false) }
     }
+    override suspend fun clearConversationKey(taskId: Long) {
+        _tasks.value = _tasks.value.map {
+            if (it.id == taskId) it.copy(conversationKey = null) else it
+        }
+    }
     override suspend fun deleteAllTasks() { _tasks.value = emptyList() }
 }

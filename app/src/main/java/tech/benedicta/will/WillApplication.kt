@@ -5,8 +5,10 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
+import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskRepository
 import tech.benedicta.will.infrastructure.room.WillDatabase
+import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.task.TaskRepository
 
@@ -18,6 +20,9 @@ class WillApplication : Application() {
     }
     val appFilterRepository: AppFilterRepository by lazy {
         SharedPrefsAppFilterRepository(this)
+    }
+    val pinnedAppsRepository: PinnedAppsRepository by lazy {
+        SharedPrefsPinnedAppsRepository(this)
     }
 
     private val _overlayEvents = MutableSharedFlow<OverlayEvent>(

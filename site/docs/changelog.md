@@ -3,6 +3,7 @@
 ## [unreleased]
 
 ### added
+- pin up to 5 apps to the home screen — long-press an app in the drawer to pin or unpin it; pinned apps live above the task feed for one-tap launch
 - visible checkbox to mark tasks as done — no more hidden gestures
 - separate "done" screen accessible from top bar — completed tasks live off the main feed
 - apps button in top bar — no need to discover the swipe-up gesture

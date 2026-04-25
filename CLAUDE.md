@@ -46,6 +46,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | PT-02: Core Architecture | ✅ done | Task model (Room entity), TaskDao, RoomTaskRepository, TaskViewModel |
 | US-01: Basic Launcher | ✅ done | app grid + launch works; recent apps deferred (API restricted) |
 | US-02: Notification Capture | ✅ done | NotificationListenerService → Task → Room; PendingIntent fired on tap; removal synced via NotificationKeyTracker; per-app filter moved to US-08 |
+| US-Pin-01: Pin up to 5 apps | ✅ done | long-press in app drawer toggles pin; PinnedAppsRow renders above TaskFeed; persisted via SharedPreferences |
 | US-03+ | ⬜ not started | |
 
 ## Key Files
@@ -62,6 +63,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/AppRepository.kt` | interface for app list source |
 | `launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
 | `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher |
+| `launcher/PinnedAppsRepository.kt` | interface for pinned apps storage; `MAX_PINNED = 5` |
+| `launcher/PinnedAppsViewModel.kt` | combines pinned packageNames + installed apps → StateFlow<List<LauncherApp>> in pin order; `canPinMore`, `togglePin`, `pin`, `unpin` |
 | **Task domain** | |
 | `task/Task.kt` | pure domain model — no Android/Room deps; includes `notificationKey` for deep-link persistence |
 | `task/TaskRepository.kt` | repository interface (domain layer) |
@@ -72,6 +75,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `infrastructure/room/WillDatabase.kt` | singleton RoomDatabase |
 | `infrastructure/room/RoomTaskRepository.kt` | TaskRepository impl backed by Room |
 | `infrastructure/memory/MemoryTaskRepository.kt` | in-memory TaskRepository (used in tests) |
+| `infrastructure/memory/MemoryPinnedAppsRepository.kt` | in-memory PinnedAppsRepository (used in tests) |
+| `infrastructure/SharedPrefsPinnedAppsRepository.kt` | PinnedAppsRepository impl backed by SharedPreferences (`pinned_apps` prefs file, pipe-separated package list) |
 | **Notification** | |
 | `notification/NotificationProcessor.kt` | pure logic: notification data → Task (or null) |
 | `notification/NotificationActionStore.kt` | holds PendingIntents keyed by notification key (in-memory) |
@@ -84,7 +89,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `ui/DoneTasksScreen.kt` | separate screen for completed tasks — reopen or delete |
 | `ui/TaskActionSheet.kt` | bottom sheet for task actions (legacy — unused) |
 | `ui/HomeTopBar.kt` | minimal top bar with date/time; done count badge; nav to filters/dashboard/done |
-| `ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch |
+| `ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch, long-press to toggle pin |
+| `ui/PinnedAppsRow.kt` | vertical list of up to 5 pinned apps shown above the TaskFeed; same row layout as TaskItem (48dp dot + name + packageName); tap to launch, long-press to unpin (haptic feedback) |
 | `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
 | **Tests** | |
@@ -172,7 +178,6 @@ We work as XP (eXtreme Programming) pair programmers. These rules are **mandator
 8. **Atomic conventional commits** — Commit often, one logical change per commit. Use conventional commit format. `feat:` and `fix:` messages target the final user (they generate the changelog) — write them as user-facing descriptions, promoting the new feature, not technical notes.
 9. **[IMPORTANT] Regression test after a bug report** — When a bug is reported, write a test that reproduces the bug before fixing it. This ensures the bug is fully understood and prevents regressions in the future.
 10. **site/docs/changelog.md** — After finish a feature, update the changelog with a user-facing description of the change. Group changes by user story or feature, not by technical details.
-
 
 ## Basic Rules
 

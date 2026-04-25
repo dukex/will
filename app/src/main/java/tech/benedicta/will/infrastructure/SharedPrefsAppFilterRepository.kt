@@ -19,9 +19,7 @@ class SharedPrefsAppFilterRepository(private val context: Context) : AppFilterRe
                 appName = parts.getOrElse(0) { key },
                 isEnabled = parts.getOrElse(1) { "true" } == "true"
             )
-        }.sortedWith(
-            compareByDescending<AppNotificationFilter> { it.isEnabled }.thenBy { it.appName }
-        )
+        }.sortedBy { it.appName }
 
     override fun getAllFilters(): Flow<List<AppNotificationFilter>> = _filters.asStateFlow()
 

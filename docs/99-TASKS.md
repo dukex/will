@@ -10,11 +10,11 @@
 - [x] Configure Gradle dependencies for core AndroidX libraries
 
 ### PT-02: Core Architecture Foundation
-- [ ] Design and implement Task data model
-- [ ] Set up Room database for Task persistence
-- [ ] Create Repository pattern for data access
-- [ ] Implement basic Dependency Injection (Hilt or manual)
-- [ ] Create ViewModel for Task management
+- [x] Design and implement Task data model
+- [x] Set up Room database for Task persistence
+- [x] Create Repository pattern for data access
+- [x] Implement basic Dependency Injection (Hilt or manual)
+- [x] Create ViewModel for Task management
 
 ## User Stories
 
@@ -30,7 +30,6 @@ Subtasks:
 - [x] Display app icons and names in a scrollable grid
 - [x] Allow launching apps by tapping icons
 - [x] Implement back button behavior to return to launcher (handled by singleTask + clearTaskOnLaunch at system level)
-- [ ] Show recent apps when long-pressing home button (system-level API restricted on Android 5+, deferred)
 
 ### US-02: Notification Capture and Task Creation ✅
 **As a user, I want notifications to automatically become actionable tasks in Will so I don't miss important alerts.**
@@ -51,87 +50,90 @@ Subtasks:
 **As a user, I want to create tasks by speaking or typing commands so I can quickly capture intentions without navigating apps.**
 
 Subtasks:
-- [ ] Implement voice input functionality (Speech-to-Text)
-- [ ] Implement text input field for manual command entry
+- [x] Implement text input field for manual command entry (`IntentInputSheet`)
+- [x] For internal actions: create reminder/task in Will
+- [ ] Implement voice input functionality (Speech-to-Text via `SpeechRecognizer`)
+- [ ] Display processing feedback during NLP analysis (idle/processing/suggestion states in sheet)
 - [ ] Create NLP pipeline for intent classification
 - [ ] Implement tokenization and Named Entity Recognition (NER)
 - [ ] Map recognized intents to appropriate actions (internal/external)
-- [ ] For internal actions: create reminder/task in Will
 - [ ] For external actions: generate appropriate deep links or intents
-- [ ] Display processing feedback during NLP analysis
 - [ ] Show suggested actions based on recognized intent
 - [ ] Allow editing/correcting recognized commands
-- [ ] Learn from user corrections to improve accuracy over time
+- [ ] ~~Learn from user corrections~~ → out of MVP per `.design/projects/will/brief/scope.md`
 
 ### US-04: Task Lifecycle Tracking and Completion Detection
 **As a user, I want Will to automatically track when I start and complete tasks so I can measure my productivity accurately.**
 
 Subtasks:
-- [ ] Implement startedAt timestamp when user engages with a task
+- [x] Add `startedAt`, `completedAt`, `contextSwitchCount`, `status` fields on Task/TaskEntity
+- [x] Provide visual feedback on task status (`TaskStatusIndicator` — pending / in-progress / done)
+- [x] Allow manual task completion marking (checkbox in TaskFeed; overlay actions)
+- [x] Show lifecycle context in `TaskActionSheet` (state-aware copy and actions)
+- [ ] Implement startedAt timestamp when user engages with a task (currently only via overlay activation — not via app launch detection)
 - [ ] Create AccessibilityService to monitor app usage
 - [ ] Detect when user switches between apps (context switching)
 - [ ] Increment contextSwitchCount for each app transition
 - [ ] Identify task completion signals in third-party apps (e.g., "Sent", "Success" buttons)
 - [ ] Automatically set completedAt when task completion is detected
-- [ ] Allow manual task completion marking
 - [ ] Handle cases where automatic detection fails
-- [ ] Provide visual feedback on task status (pending, in-progress, completed)
 - [ ] Implement task expiration/stale task handling
 
 ### US-05: Productivity Metrics Dashboard
 **As a user, I want to see visualizations of my task completion patterns so I can understand and improve my productivity.**
 
 Subtasks:
-- [ ] Calculate Time-on-Task (completedAt - startedAt) for each task
+- [x] Calculate Time-on-Task (completedAt − startedAt) for each task (`FocusDashboardViewModel`)
+- [x] Create daily focus score based on task completion metrics
+- [x] Build dashboard using custom Canvas (no external chart lib)
+- [x] Display time-on-task distribution (bar chart, normalized per-task)
+- [x] Show context switch frequency (today's total)
 - [ ] Implement GOMS model to estimate "Carga Estranha" (cognitive load saved)
-- [ ] Create daily focus score based on task completion metrics
-- [ ] Build dashboard using ComposeCharts or similar library
-- [ ] Display time-on-task distribution (bar chart, histogram)
-- [ ] Show context switch frequency over time
-- [ ] Visualize focus score trends (line graph)
-- [ ] Provide filtering by date range (day, week, month)
-- [ ] Allow exporting metrics data
-- [ ] Implement goal setting and progress tracking features
+- [ ] Visualize focus score trends across days (line graph)
+- [ ] Provide filtering by date range (week, month) — currently only today
+- [ ] ~~Export metrics~~ → out of MVP per scope.md
+- [ ] ~~Goal setting / progress tracking~~ → out of MVP per scope.md
 
 ### US-06: Reactive Task Feed with Deep Linking
 **As a user, I want a clean, text-focused interface that updates in real-time and takes me directly to the right app functionality.**
 
 Subtasks:
-- [ ] Implement StateFlow/SharedFlow for reactive UI updates
-- [ ] Create vertical stream of task cards (text-focused, minimal icons)
-- [ ] Design task cards to show essential info: title, source app, time
-- [ ] Implement priority-based task ordering (urgent, today, scheduled)
-- [ ] Add swipe actions for quick task management (complete, snooze, etc.)
-- [ ] Implement deep linking to jump directly to relevant app screens
-- [ ] Create App Actions integration for common tasks
-- [ ] Handle clipboard monitoring for entities (barcodes, contact names)
-- [ ] Provide visual feedback when deep linking is attempted
-- [ ] Allow customization of feed density and information shown
+- [x] Implement StateFlow for reactive UI updates (`TaskViewModel.tasks`)
+- [x] Create vertical stream of task cards, text-focused, minimal icons (`TaskFeed`)
+- [x] Design task cards to show essential info: title, source app, time
+- [x] Lifecycle-based ordering (active → pending → done-today)
+- [x] Implement deep linking to jump directly to relevant app screens (PendingIntent + `notificationKey` fallback)
+- [ ] Provide visual feedback when deep linking is attempted (toast/state when PendingIntent is fired)
 - [ ] Implement search/filter functionality within the task feed
+- [ ] ~~Priority-based ordering (urgent/today/scheduled)~~ → not in current scope; lifecycle ordering replaces it
+- [ ] ~~App Actions integration~~ → out of MVP per scope.md
+- [ ] ~~Clipboard monitoring~~ → out of MVP per scope.md
+- [ ] ~~Customizable feed density~~ → out of MVP per scope.md
 
 ### US-07: Privacy-First On-Device Processing
 **As a user, I want all my task data processed locally on my device so my privacy is protected.**
 
 Subtasks:
-- [ ] Ensure all NLP processing happens on-device (no network calls)
-- [ ] Store all Task data exclusively in Room database (local only)
-- [ ] Prevent any task metadata from leaving the device
-- [ ] Implement transparent privacy settings explaining data usage
-- [ ] Provide option to delete all task history
+- [x] Store all Task data exclusively in Room database (local only)
+- [x] Prevent any task metadata from leaving the device (no network code in app)
+- [x] Implement transparent privacy settings explaining data usage (`PrivacySettings`)
+- [x] Provide option to delete all task history (with confirm-then-execute pattern)
+- [x] Provide clear explanation of required permissions and why
+- [ ] Ensure all NLP processing happens on-device (no network calls) → enforce when US-03 NLP lands
+- [ ] Ensure accessibility service data is not logged or transmitted → enforce when US-04 AccessibilityService lands
 - [ ] Allow selective deletion of tasks by time range or app
-- [ ] Implement data encryption for sensitive task information
-- [ ] Ensure accessibility service data is not logged or transmitted
-- [ ] Provide clear explanation of required permissions and why
-- [ ] Implement regular local backups option (to device storage only)
+- [ ] ~~Data encryption~~ → out of MVP per scope.md
+- [ ] ~~Local backups~~ → out of MVP per scope.md
 
-### US-08: Notification Filter Settings
+### US-08: Notification Filter Settings ✅
 **As a user, I want to control which apps can create tasks from notifications so my feed stays relevant.**
 
 Subtasks:
-- [ ] Create settings screen accessible from the task feed
-- [ ] List all apps that have sent notifications, with enable/disable toggle
-- [ ] Persist filter preferences in Room or SharedPreferences
-- [ ] Apply filter in WillNotificationListenerService before creating tasks
+- [x] Create settings screen accessible from the task feed (`SettingsScreen`, reachable from `HomeTopBar`)
+- [x] List all apps that have sent notifications, with enable/disable toggle (`AppToggleRow`)
+- [x] Persist filter preferences (`SharedPrefsAppFilterRepository`)
+- [x] Apply filter in `WillNotificationListenerService` before creating tasks
+- [x] Link to data & privacy from the same screen (`onNavigateToPrivacy`)
 
 ## Technical Debt and Improvement Tasks
 

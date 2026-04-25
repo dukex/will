@@ -5,3 +5,4 @@ build/
 site/node_modules/
 site/.vitepress/dist
 site/.vitepress/cache
+*.local.json

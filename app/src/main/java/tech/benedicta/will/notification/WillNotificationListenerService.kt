@@ -23,6 +23,16 @@ class WillNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (sbn.packageName in NotificationProcessor.IGNORED_PACKAGES) return
+
+        val appName = runCatching {
+            packageManager.getApplicationLabel(
+                packageManager.getApplicationInfo(sbn.packageName, 0)
+            ).toString()
+        }.getOrDefault(sbn.packageName)
+
+        scope.launch { appFilterRepository.addApp(sbn.packageName, appName) }
+
         if (processor.shouldIgnoreFlags(sbn.notification.flags)) return
 
         val conversationKey = conversationKeyFor(sbn)
@@ -36,14 +46,7 @@ class WillNotificationListenerService : NotificationListenerService() {
             conversationKey = conversationKey
         ) ?: return
 
-        val appName = runCatching {
-            packageManager.getApplicationLabel(
-                packageManager.getApplicationInfo(sbn.packageName, 0)
-            ).toString()
-        }.getOrDefault(sbn.packageName)
-
         scope.launch {
-            appFilterRepository.addApp(sbn.packageName, appName)
             if (!appFilterRepository.isEnabled(sbn.packageName)) return@launch
             repository.insertTask(task)
         }

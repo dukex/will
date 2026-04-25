@@ -12,7 +12,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,7 +38,7 @@ import java.util.Locale
 @Composable
 fun HomeTopBar(
     onAddTask: () -> Unit = {},
-    onOpenFilter: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     onOpenDashboard: () -> Unit = {},
     onOpenDoneTasks: () -> Unit = {},
     onOpenApps: () -> Unit = {},
@@ -96,10 +96,10 @@ fun HomeTopBar(
                 )
             }
         }
-        IconButton(onClick = onOpenFilter) {
+        IconButton(onClick = onOpenSettings) {
             Icon(
-                imageVector = Icons.Outlined.FilterList,
-                contentDescription = "notification filter",
+                imageVector = Icons.Outlined.Settings,
+                contentDescription = "settings",
                 tint = WillTextSecondary,
                 modifier = Modifier.size(24.dp)
             )

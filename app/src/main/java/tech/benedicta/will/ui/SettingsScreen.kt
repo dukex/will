@@ -48,7 +48,7 @@ import tech.benedicta.will.ui.theme.WillTextSecondary
 import tech.benedicta.will.ui.theme.WillTextTertiary
 
 @Composable
-fun NotificationFilterSettings(
+fun SettingsScreen(
     onBack: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
     viewModel: AppFilterViewModel
@@ -79,7 +79,7 @@ fun NotificationFilterSettings(
                 )
             }
             Text(
-                text = "notifications",
+                text = "settings",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.padding(start = Spacing.sm)
@@ -101,7 +101,7 @@ fun NotificationFilterSettings(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "notifications will appear here once apps send them",
+                        text = "apps will appear here once they send notifications",
                         style = MaterialTheme.typography.labelSmall,
                         color = WillTextTertiary,
                         modifier = Modifier.padding(top = Spacing.xs)
@@ -111,7 +111,7 @@ fun NotificationFilterSettings(
         } else {
             LazyColumn(Modifier.weight(1f)) {
                 item {
-                    SectionHeader("apps sending notifications")
+                    SectionHeader("apps that create tasks")
                     HorizontalDivider(color = WillBorder, thickness = 1.dp)
                 }
                 items(filters, key = { it.packageName }) { filter ->
@@ -168,9 +168,9 @@ private fun AppToggleRow(
             .clickable { onToggle(!isEnabled) }
             .padding(horizontal = Spacing.xl, vertical = Spacing.md)
             .semantics(mergeDescendants = true) {
-                contentDescription = "$appName. notifications ${if (isEnabled) "on" else "off"}"
+                contentDescription = "$appName. task creation ${if (isEnabled) "on" else "off"}"
                 customActions = listOf(
-                    CustomAccessibilityAction(if (isEnabled) "turn off" else "turn on") {
+                    CustomAccessibilityAction(if (isEnabled) "disable task creation" else "enable task creation") {
                         onToggle(!isEnabled)
                         true
                     }

@@ -56,7 +56,7 @@ import tech.benedicta.will.ui.DoneTasksScreen
 import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.IntentInputSheet
-import tech.benedicta.will.ui.NotificationFilterSettings
+import tech.benedicta.will.ui.SettingsScreen
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.PrivacySettings
 import tech.benedicta.will.ui.TaskFeed
@@ -68,7 +68,7 @@ private const val SWIPE_THRESHOLD = 100f
 private enum class Screen {
     Home,
     DoneTasks,
-    NotificationFilter,
+    Settings,
     FocusDashboard,
     PrivacySettings
 }
@@ -243,15 +243,15 @@ private fun WillScreen(
 
     BackHandler(enabled = true) {
         when {
-            currentScreen == Screen.PrivacySettings -> currentScreen = Screen.NotificationFilter
+            currentScreen == Screen.PrivacySettings -> currentScreen = Screen.Settings
             currentScreen != Screen.Home -> currentScreen = Screen.Home
             appDrawerOpen -> appDrawerOpen = false
         }
     }
 
     when (currentScreen) {
-        Screen.NotificationFilter -> {
-            NotificationFilterSettings(
+        Screen.Settings -> {
+            SettingsScreen(
                 onBack = { currentScreen = Screen.Home },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 viewModel = appFilterVm
@@ -268,7 +268,7 @@ private fun WillScreen(
         }
         Screen.PrivacySettings -> {
             PrivacySettings(
-                onBack = { currentScreen = Screen.NotificationFilter },
+                onBack = { currentScreen = Screen.Settings },
                 onDeleteAllTasks = { taskVm.deleteAllTasks() }
             )
             return
@@ -289,7 +289,7 @@ private fun WillScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             HomeTopBar(
                 onAddTask = { showIntentInputSheet = true },
-                onOpenFilter = { currentScreen = Screen.NotificationFilter },
+                onOpenSettings = { currentScreen = Screen.Settings },
                 onOpenDashboard = { currentScreen = Screen.FocusDashboard },
                 onOpenDoneTasks = { currentScreen = Screen.DoneTasks },
                 onOpenApps = { appDrawerOpen = true },

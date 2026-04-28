@@ -3,7 +3,7 @@ description: Bump the will project version, update CHANGELOG, create a git tag a
 allowed-tools: Read Edit Write Bash
 ---
 
-Bump the version in `app/build.gradle.kts`, update `site/docs/changelog.md`, commit, tag, and push.
+Bump the version in `app/build.gradle.kts`, update `site/docs/changelog.md`, update the project `CHANGELOG.md`, commit, tag, and push.
 
 ## Steps
 
@@ -14,11 +14,13 @@ git describe --tags --abbrev=0 2>/dev/null
 ```
 
 If a tag exists, collect commits since it:
+
 ```bash
 git log <last_tag>..HEAD --oneline
 ```
 
 If no tag exists, collect all commits:
+
 ```bash
 git log --oneline
 ```
@@ -42,7 +44,7 @@ Read `app/build.gradle.kts`, extract `versionCode` and `versionName`, compute th
 
 Edit the `versionCode` and/or `versionName` field to the new value.
 
-**5. Update `site/docs/changelog.md`**
+**5. Update `site/docs/changelog.md` and the `CHANGELOG.md`**
 
 Read the existing `site/docs/changelog.md` (create it if missing using Keep a Changelog format). Prepend a new section at the top:
 
@@ -50,31 +52,36 @@ Read the existing `site/docs/changelog.md` (create it if missing using Keep a Ch
 ## [<new_version>] - <YYYY-MM-DD>
 
 ### Added
+
 - <feat: commits listed here>
 
 ### Fixed
+
 - <fix: commits listed here>
 
 ### Changed
+
 - <other relevant commits>
 ```
 
 Only include `feat:`, `fix:`, and breaking change commits. Skip `chore:`, `docs:`, `test:`, `ci:`, `refactor:` unless they carry user-visible impact. Strip the conventional commit prefix — write the message as a clean changelog line.
 
 If `site/docs/changelog.md` did not exist, also add a header:
+
 ```markdown
 # Changelog
 
 All notable changes to this project will be documented in this file.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
-
 ```
+
+The same rules apply to `CHANGELOG.md`
 
 **6. Commit, tag, push**
 
 ```bash
-git add app/build.gradle.kts site/docs/changelog.md
+git add app/build.gradle.kts site/docs/changelog.md CHANGELOG.md
 git commit -m "chore: bump version to v<new_version>"
 git tag v<new_version>
 git push origin main --tags

@@ -22,7 +22,8 @@ jobs:
           path: |
             ~/.gradle/caches                                                                                                                                                                      
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*',
+            '**/gradle-wrapper.properties') }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -37,10 +38,10 @@ jobs:
           encodedString: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
       - name: Create key.properties
         run: |
-          echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > android/key.properties                                                                                                  
-          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/key.properties                                                                                                   
-          echo "keyPassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> android/key.properties                                                                                                   
-          echo "keyAlias=upload" >> android/key.properties
+          echo "storeFile=${{ steps.android_keystore.outputs.filePath }}" > key.properties                                                                                                  
+          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> key.properties                                                                                                   
+          echo "keyPassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> key.properties                                                                                                   
+          echo "keyAlias=upload" >> key.properties
       - name: Build Android
         run: ./gradlew bundleRelease
         env:
@@ -54,7 +55,7 @@ jobs:
             app/build/outputs/bundle/release                                                                                                                                                      
 
   android-beta:
-    needs: [build]
+    needs: [ build ]
     name: Android
     runs-on: ubuntu-latest
     environment: android-beta
@@ -79,7 +80,7 @@ jobs:
           bundle exec fastlane deploy                                                                                                                                                
 
   android-production:
-    needs: [android-beta]
+    needs: [ android-beta ]
     name: Android Production
     runs-on: ubuntu-latest
     environment: android-production

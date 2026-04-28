@@ -176,7 +176,7 @@ class MainActivity : ComponentActivity() {
 
 private fun launchTask(context: android.content.Context, task: Task) {
     val shortcutId = task.conversationKey?.removePrefix("${task.sourcePackage}:")
-    if (shortcutId != null) {
+    if (shortcutId != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {
         val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
             as android.content.pm.LauncherApps
         runCatching {

@@ -1,26 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap");
 
 :root {
   --vp-c-bg: #000000;
-  --vp-c-bg-soft: #0D0D0D;
+  --vp-c-bg-soft: #0d0d0d;
   --vp-c-bg-mute: #161616;
-  --vp-c-bg-alt: #0D0D0D;
+  --vp-c-bg-alt: #0d0d0d;
   --vp-c-bg-elv: #161616;
 
-  --vp-c-text-1: #F0F0F0;
+  --vp-c-text-1: #f0f0f0;
   --vp-c-text-2: #888888;
   --vp-c-text-3: #505050;
 
-  --vp-c-brand-1: #4F6EF7;
-  --vp-c-brand-2: #4F6EF7;
-  --vp-c-brand-3: #4F6EF7;
+  --vp-c-brand-1: #4f6ef7;
+  --vp-c-brand-2: #4f6ef7;
+  --vp-c-brand-3: #4f6ef7;
   --vp-c-brand-soft: rgba(79, 110, 247, 0.12);
 
-  --vp-c-border: #2A2A2A;
-  --vp-c-divider: #2A2A2A;
-  --vp-c-gutter: #0D0D0D;
+  --vp-c-border: #2a2a2a;
+  --vp-c-divider: #2a2a2a;
+  --vp-c-gutter: #0d0d0d;
 
-  --vp-c-neutral: #F0F0F0;
+  --vp-c-neutral: #f0f0f0;
   --vp-c-neutral-inverse: #000000;
 
   --vp-shadow-1: none;
@@ -31,24 +31,24 @@
 
   --vp-border-radius: 0px;
 
-  --vp-font-family-base: 'Geist', 'Inter', system-ui, sans-serif;
-  --vp-font-family-mono: 'Geist Mono', 'JetBrains Mono', monospace;
+  --vp-font-family-base: "Geist", "Inter", system-ui, sans-serif;
+  --vp-font-family-mono: "Geist Mono", "JetBrains Mono", monospace;
 
   --vp-transition-color: 100ms ease-out;
 }
 
 .dark {
   --vp-c-bg: #000000;
-  --vp-c-bg-soft: #0D0D0D;
+  --vp-c-bg-soft: #0d0d0d;
   --vp-c-bg-mute: #161616;
-  --vp-c-bg-alt: #0D0D0D;
+  --vp-c-bg-alt: #0d0d0d;
   --vp-c-bg-elv: #161616;
-  --vp-c-text-1: #F0F0F0;
+  --vp-c-text-1: #f0f0f0;
   --vp-c-text-2: #888888;
   --vp-c-text-3: #505050;
-  --vp-c-border: #2A2A2A;
-  --vp-c-divider: #2A2A2A;
-  --vp-c-gutter: #0D0D0D;
+  --vp-c-border: #2a2a2a;
+  --vp-c-divider: #2a2a2a;
+  --vp-c-gutter: #0d0d0d;
 }
 
 html {
@@ -57,13 +57,12 @@ html {
 
 /* Nav */
 .VPNav {
-  background: #000000 !important;
-  border-bottom: 1px solid #2A2A2A !important;
+  border-bottom: 1px solid #2a2a2a !important;
   box-shadow: none !important;
 }
 
-.dark .VPNav {
-  background: #000000 !important;
+.VPNav:has(> .home) {
+  display: none !important;
 }
 
 /* Hero — suppress VitePress decorations */
@@ -78,7 +77,7 @@ html {
   background: none !important;
   -webkit-background-clip: initial !important;
   background-clip: initial !important;
-  -webkit-text-fill-color: #F0F0F0 !important;
+  -webkit-text-fill-color: #f0f0f0 !important;
   font-weight: 400 !important;
   letter-spacing: -0.02em;
   font-family: var(--vp-font-family-base) !important;
@@ -99,24 +98,26 @@ html {
 .VPButton {
   border-radius: 0 !important;
   font-weight: 400 !important;
-  transition: opacity 100ms ease-out, border-color 100ms ease-out !important;
+  transition:
+    opacity 100ms ease-out,
+    border-color 100ms ease-out !important;
 }
 
 .VPButton.brand {
-  background: #4F6EF7 !important;
-  border: 1px solid #4F6EF7 !important;
-  color: #FFFFFF !important;
+  background: #4f6ef7 !important;
+  border: 1px solid #4f6ef7 !important;
+  color: #ffffff !important;
 }
 
 .VPButton.brand:hover {
   opacity: 0.82 !important;
-  background: #4F6EF7 !important;
+  background: #4f6ef7 !important;
 }
 
 .VPButton.alt {
   background: transparent !important;
-  border: 1px solid #2A2A2A !important;
-  color: #F0F0F0 !important;
+  border: 1px solid #2a2a2a !important;
+  color: #f0f0f0 !important;
 }
 
 .VPButton.alt:hover {
@@ -126,9 +127,9 @@ html {
 
 /* Feature cards */
 .VPFeature {
-  border: 1px solid #2A2A2A !important;
+  border: 1px solid #2a2a2a !important;
   border-radius: 0 !important;
-  background: #0D0D0D !important;
+  background: #0d0d0d !important;
   box-shadow: none !important;
   transition: border-color 100ms ease-out !important;
 }
@@ -139,7 +140,7 @@ html {
 
 .VPFeature .title {
   font-weight: 400 !important;
-  color: #F0F0F0 !important;
+  color: #f0f0f0 !important;
 }
 
 .VPFeature .details {
@@ -154,7 +155,7 @@ html {
 /* Footer */
 .VPFooter {
   background: #000000 !important;
-  border-top: 1px solid #2A2A2A !important;
+  border-top: 1px solid #2a2a2a !important;
   font-family: var(--vp-font-family-mono) !important;
 }
 
@@ -168,7 +169,7 @@ html {
 /* Sidebar */
 .VPSidebar {
   background: #000000 !important;
-  border-right: 1px solid #2A2A2A !important;
+  border-right: 1px solid #2a2a2a !important;
 }
 
 .dark .VPSidebar {
@@ -177,7 +178,7 @@ html {
 
 /* Sidebar link active state */
 .VPSidebarItem.is-active > .item .link {
-  color: #4F6EF7 !important;
+  color: #4f6ef7 !important;
 }
 
 /* Content area */
@@ -186,38 +187,38 @@ html {
 }
 
 /* Code blocks */
-.dark div[class*='language-'] {
-  background-color: #0D0D0D !important;
-  border: 1px solid #2A2A2A !important;
+.dark div[class*="language-"] {
+  background-color: #0d0d0d !important;
+  border: 1px solid #2a2a2a !important;
   border-radius: 0 !important;
 }
 
-div[class*='language-'] {
+div[class*="language-"] {
   border-radius: 0 !important;
 }
 
 /* Inline code */
 :not(pre) > code {
   background-color: rgba(79, 110, 247, 0.1) !important;
-  color: #8FA4FA !important;
+  color: #8fa4fa !important;
   border-radius: 0 !important;
   font-family: var(--vp-font-family-mono) !important;
 }
 
 /* Tables */
 .vp-doc table {
-  border: 1px solid #2A2A2A;
+  border: 1px solid #2a2a2a;
 }
 
 .vp-doc th {
-  background: #0D0D0D;
-  border-bottom: 1px solid #2A2A2A;
+  background: #0d0d0d;
+  border-bottom: 1px solid #2a2a2a;
   font-weight: 500;
 }
 
 .vp-doc td,
 .vp-doc th {
-  border: 1px solid #2A2A2A;
+  border: 1px solid #2a2a2a;
 }
 
 /* Headings — Medium weight, never bold */
@@ -230,13 +231,13 @@ div[class*='language-'] {
 
 /* Dividers */
 .vp-doc hr {
-  border-color: #2A2A2A;
+  border-color: #2a2a2a;
 }
 
 /* Search */
 .VPNavBarSearch .DocSearch-Button {
   border-radius: 0 !important;
-  border: 1px solid #2A2A2A !important;
+  border: 1px solid #2a2a2a !important;
   background: transparent !important;
 }
 
@@ -247,7 +248,7 @@ div[class*='language-'] {
 
 /* Focus ring */
 :focus-visible {
-  outline: 2px solid #4F6EF7 !important;
+  outline: 2px solid #4f6ef7 !important;
   outline-offset: 2px !important;
 }
 

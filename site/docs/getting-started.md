@@ -15,14 +15,26 @@ cd will
 ./gradlew installDebug
 ```
 
-## set as default launcher
+## first launch
+
+Will opens with a guided onboarding the first time you launch it. the flow has three steps:
+
+1. **set Will as the default launcher** — uses Android's role manager on Android 10+, falls back to the home-app picker on older releases.
+2. **grant the overlay permission** — required for the floating active-task bubble.
+3. **grant the notification listener** — optional. Will still works as a launcher without it; you just lose the auto-task pipeline.
+
+each step opens the relevant system page. when you come back, Will detects the new grant and advances. you can replay the flow any time from `settings → re-run onboarding`.
+
+if you skip onboarding entirely (e.g. installing through ADB), the rest of this section walks through the same setup manually.
+
+## set as default launcher (manual)
 
 1. install the APK
 2. press home
 3. select Will from the launcher picker
 4. mark Will as default when prompted
 
-## permissions
+## permissions (manual)
 
 Will is useless without the notification listener — every other permission is optional and unlocks one specific feature.
 

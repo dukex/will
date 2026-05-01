@@ -3,6 +3,8 @@
 ## [unreleased]
 
 ### added
+- first-run onboarding — Will now walks you through making it the default launcher, granting the active-task overlay, and (optionally) enabling the notification listener, instead of dropping you into a wall of system dialogs. you can re-run the flow any time from settings.
+- distinctive Will icon — a flat geometric "W" stroke on true black replaces the default platform mark. ships with a monochrome variant so Android 13+ themed icons inherit your system tint.
 - pin up to 5 apps to the home screen — long-press an app in the drawer to pin or unpin it; pinned apps live above the task feed for one-tap launch
 - visible checkbox to mark tasks as done — no more hidden gestures
 - separate "done" screen accessible from top bar — completed tasks live off the main feed

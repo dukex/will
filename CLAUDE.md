@@ -89,6 +89,15 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `notification/NotificationActionStore.kt` | holds PendingIntents keyed by notification key (in-memory) |
 | `notification/NotificationKeyTracker.kt` | **deprecated** — dedup now via Room unique index on `conversationKey` |
 | `notification/WillNotificationListenerService.kt` | intercepts notifications; inserts Tasks; fires PendingIntent on tap |
+| **Onboarding** | |
+| `onboarding/OnboardingStep.kt` *(in OnboardingState.kt)* | enum of the three sequential steps + Done; `required` flag distinguishes optional notifications step |
+| `onboarding/OnboardingState.kt` | pure-Kotlin state machine: `next`, `canSkip`, `isComplete`, `advanceToFirstUngranted` |
+| `onboarding/OnboardingRepository.kt` | persists the completion flag; `markCompleted` / `reset` |
+| `onboarding/PermissionInspector.kt` | reads default-launcher / overlay / listener grants into an `OnboardingState` snapshot |
+| `onboarding/OnboardingViewModel.kt` | binds repository + inspector + state machine; `refresh` for resume, `next`/`skip` for taps, `rerun` for the settings entry |
+| `infrastructure/SharedPrefsOnboardingRepository.kt` | OnboardingRepository backed by `SharedPreferences` (`onboarding` prefs file, `completed` boolean) |
+| `infrastructure/AndroidPermissionInspector.kt` | PermissionInspector backed by RoleManager.ROLE_HOME (Q+) / PackageManager fallback, `Settings.canDrawOverlays`, `NotificationManagerCompat.getEnabledListenerPackages` |
+| `ui/OnboardingScreen.kt` | brand-aligned three-step Compose screen consumed by MainActivity before WillScreen; primary action launches the right system intent, optional step also offers "skip for now" |
 | **Overlay** | |
 | `overlay/ActiveTaskOverlayService.kt` | TYPE_APPLICATION_OVERLAY bubble; draggable; expands to panel with done/later/delete |
 | **UI** | |

@@ -57,15 +57,8 @@ class WillNotificationListenerService : NotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {}
 
-    override fun onListenerConnected() { instance = this }
-
     override fun onDestroy() {
         super.onDestroy()
-        instance = null
         job.cancel()
-    }
-
-    companion object {
-        @Volatile var instance: WillNotificationListenerService? = null
     }
 }

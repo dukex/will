@@ -53,6 +53,8 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-06: Reactive Feed + Deep Linking | 🟡 partial | StateFlow feed, lifecycle ordering, PendingIntent deep linking shipped; swipe actions, search, deep-link feedback pending |
 | US-07: Privacy-First | 🟡 partial | `PrivacySettings` + delete-all + permissions rationale shipped; selective deletion and NLP/accessibility on-device guarantees still to enforce |
 | US-08: Notification Filter Settings | ✅ done | `SettingsScreen` + `AppFilterViewModel` + `SharedPrefsAppFilterRepository`; filter applied in `WillNotificationListenerService` |
+| US-09: Brand Android Icon Set | ⬜ todo | adaptive icon, monochrome variant, density variants, splash drawable still on the default platform mark |
+| US-10: First-run Onboarding | ⬜ todo | default-launcher role + overlay (required) + notification listener (optional) gated behind a single guided flow; not started |
 
 ## Key Files
 

@@ -125,6 +125,37 @@ Subtasks:
 - [ ] ~~Data encryption~~ → out of MVP per scope.md
 - [ ] ~~Local backups~~ → out of MVP per scope.md
 
+### US-09: Brand-aligned Android Icon Set
+**As a user, I want Will to have a distinctive icon so I can recognize it on my home screen and in the app drawer at a glance.**
+
+Subtasks:
+- [ ] Replace the default `ic_launcher` / `ic_launcher_round` with the Will mark
+- [ ] Provide an adaptive icon (foreground layer + `#000000` background per `will.yml`)
+- [ ] Generate density variants (mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi)
+- [ ] Provide a monochrome icon for Android 13+ themed icons
+- [ ] Replace the splash drawable so it matches the icon, not the platform default
+- [ ] Verify icon legibility on light, dark, and patterned wallpapers
+- [ ] Document the icon spec under `.design/branding/will/` so future revisions stay consistent
+
+### US-10: First-run Onboarding for Default Launcher and Permissions
+**As a user installing Will for the first time, I want a guided path to make Will my default launcher and grant only the permissions I want, without being dropped into a wall of system dialogs.**
+
+Subtasks:
+- [ ] Detect first launch when no required permissions or default-launcher role is set
+- [ ] Build a single onboarding flow with sequential steps
+  - [ ] step 1 — set Will as the default home (RoleManager `ROLE_HOME` on Android 10+, fall back to the launcher chooser intent on older devices)
+  - [ ] step 2 — grant `SYSTEM_ALERT_WINDOW` (required for the active-task overlay)
+  - [ ] step 3 — grant the notification listener (optional; the screen explains what is unlocked)
+- [ ] Each step renders in the brand voice: title, one-sentence rationale, the system action button, and a "skip" affordance for optional steps only
+- [ ] Detect when each permission is granted (lifecycle resume check) and auto-advance
+- [ ] Persist a `onboarding_completed` flag so onboarding does not replay
+- [ ] Allow re-running onboarding from `SettingsScreen`
+- [ ] Honour the design system: 0dp cards, 1dp `#2A2A2A` borders, accent only on the action button
+- [ ] Tests
+  - [ ] unit — step state machine (start → next/skip → done) with no Android dependencies
+  - [ ] unit — first-run detector against `SharedPreferences` + permission stubs
+  - [ ] e2e / integration — full happy path: install → onboarding → home renders with feed
+
 ### US-08: Notification Filter Settings ✅
 **As a user, I want to control which apps can create tasks from notifications so my feed stays relevant.**
 
@@ -159,7 +190,7 @@ Subtasks:
 - [ ] Ensure accessibility compliance (content descriptions, touch targets)
 - [ ] Support dark theme and system theme settings
 - [ ] Implement proper backup and restore functionality
-- [ ] Add first-run experience and feature tour
+- [ ] ~~Add first-run experience and feature tour~~ → tracked as US-10
 - [ ] Create settings screen for all configurable options
 - [ ] Implement proper app shortcuts and widgets
 - [ ] Add support for different screen sizes and orientations

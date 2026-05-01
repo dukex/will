@@ -47,6 +47,7 @@ interface TaskDao {
             createdAt = :createdAt,
             title = :title,
             text = :text,
+            shortcutId = :shortcutId,
             unreadCount = unreadCount + 1
         WHERE id = :taskId
     """)
@@ -55,7 +56,8 @@ interface TaskDao {
         notificationKey: String?,
         createdAt: Long,
         title: String,
-        text: String
+        text: String,
+        shortcutId: String?
     )
 
     @Transaction
@@ -69,7 +71,8 @@ interface TaskDao {
                     notificationKey = task.notificationKey ?: existing.notificationKey,
                     createdAt = task.createdAt,
                     title = task.title,
-                    text = task.text
+                    text = task.text,
+                    shortcutId = task.shortcutId ?: existing.shortcutId
                 )
                 return existing.id
             }

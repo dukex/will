@@ -59,6 +59,7 @@ class MemoryTaskRepository : TaskRepository {
                             createdAt = task.createdAt,
                             title = task.title,
                             text = task.text,
+                            shortcutId = task.shortcutId ?: it.shortcutId,
                             unreadCount = it.unreadCount + 1
                         ) else it
                     }

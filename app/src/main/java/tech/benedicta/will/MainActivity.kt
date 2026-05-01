@@ -49,7 +49,6 @@ import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
-import tech.benedicta.will.notification.WillNotificationListenerService
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
@@ -169,10 +168,21 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun launchTask(context: android.content.Context, task: Task) {
-    val active = WillNotificationListenerService.instance?.activeNotifications
-        ?.firstOrNull { it.key == task.notificationKey }
-    val sent = active?.notification?.contentIntent?.runCatching { send() }?.isSuccess == true
-    if (!sent) launchAppByPackage(context, task.sourcePackage)
+    if (task.shortcutId != null && launchShortcut(context, task.sourcePackage, task.shortcutId)) return
+    launchAppByPackage(context, task.sourcePackage)
+}
+
+private fun launchShortcut(
+    context: android.content.Context,
+    packageName: String,
+    shortcutId: String
+): Boolean {
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N_MR1) return false
+    val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
+        as android.content.pm.LauncherApps
+    return runCatching {
+        launcherApps.startShortcut(packageName, shortcutId, null, null, android.os.Process.myUserHandle())
+    }.isSuccess
 }
 
 private fun launchAppByPackage(context: android.content.Context, packageName: String) {

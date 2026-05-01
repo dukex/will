@@ -10,7 +10,8 @@ class NotificationProcessor {
         sourcePackage: String,
         timestamp: Long,
         notificationKey: String? = null,
-        conversationTitle: String? = null
+        conversationTitle: String? = null,
+        shortcutId: String? = null
     ): Task? {
         if (sourcePackage.isBlank()) return null
         if (sourcePackage in IGNORED_PACKAGES) return null
@@ -32,7 +33,8 @@ class NotificationProcessor {
             sourcePackage = sourcePackage,
             createdAt = timestamp,
             notificationKey = notificationKey,
-            conversationKey = "$sourcePackage:${keySource.trim().lowercase()}"
+            conversationKey = "$sourcePackage:${keySource.trim().lowercase()}",
+            shortcutId = shortcutId
         )
     }
 

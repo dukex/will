@@ -12,5 +12,6 @@ data class Task(
     val isActive: Boolean = false,
     val notificationKey: String? = null,
     val conversationKey: String? = null,
-    val unreadCount: Int = 1
+    val unreadCount: Int = 1,
+    val shortcutId: String? = null
 )

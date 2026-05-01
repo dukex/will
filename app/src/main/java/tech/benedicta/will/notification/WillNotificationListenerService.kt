@@ -1,5 +1,6 @@
 package tech.benedicta.will.notification
 
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import kotlinx.coroutines.CoroutineScope
@@ -38,10 +39,14 @@ class WillNotificationListenerService : NotificationListenerService() {
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()
         val conversationTitle = extras.getCharSequence("android.conversationTitle")?.toString()
+        val shortcutId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            sbn.notification.shortcutId
+        } else null
         val task = processor.process(
             title, text, sbn.packageName, sbn.postTime,
             notificationKey = sbn.key,
-            conversationTitle = conversationTitle
+            conversationTitle = conversationTitle,
+            shortcutId = shortcutId
         ) ?: return
 
         scope.launch {

@@ -21,7 +21,8 @@ data class TaskEntity(
     val isActive: Boolean = false,
     val notificationKey: String? = null,
     val conversationKey: String? = null,
-    val unreadCount: Int = 1
+    val unreadCount: Int = 1,
+    val shortcutId: String? = null
 ) {
     fun toTask() = Task(
         id = id,
@@ -35,7 +36,8 @@ data class TaskEntity(
         isActive = isActive,
         notificationKey = notificationKey,
         conversationKey = conversationKey,
-        unreadCount = unreadCount
+        unreadCount = unreadCount,
+        shortcutId = shortcutId
     )
 }
 
@@ -51,5 +53,6 @@ fun Task.toEntity() = TaskEntity(
     isActive = isActive,
     notificationKey = notificationKey,
     conversationKey = conversationKey,
-    unreadCount = unreadCount
+    unreadCount = unreadCount,
+    shortcutId = shortcutId
 )

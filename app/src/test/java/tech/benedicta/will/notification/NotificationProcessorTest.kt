@@ -217,6 +217,48 @@ class NotificationProcessorTest {
     }
 
     @Test
+    fun `conversationTitle is preferred over title for the key`() {
+        val a = processor.process(
+            title = "Group A (2 messages): Sender X",
+            text = "msg",
+            sourcePackage = "com.example.messenger",
+            timestamp = 1000L,
+            conversationTitle = "Group A"
+        )
+        val b = processor.process(
+            title = "Group A (3 messages): Sender Y",
+            text = "msg",
+            sourcePackage = "com.example.messenger",
+            timestamp = 2000L,
+            conversationTitle = "Group A"
+        )
+
+        assertEquals(a?.conversationKey, b?.conversationKey)
+        assertEquals("com.example.messenger:group a", a?.conversationKey)
+    }
+
+    @Test
+    fun `null or blank conversationTitle falls back to title-based key`() {
+        val withNull = processor.process(
+            title = "Contact One",
+            text = "hi",
+            sourcePackage = "com.example.messenger",
+            timestamp = 1000L,
+            conversationTitle = null
+        )
+        val withBlank = processor.process(
+            title = "Contact One",
+            text = "hi",
+            sourcePackage = "com.example.messenger",
+            timestamp = 2000L,
+            conversationTitle = "   "
+        )
+
+        assertEquals("com.example.messenger:contact one", withNull?.conversationKey)
+        assertEquals("com.example.messenger:contact one", withBlank?.conversationKey)
+    }
+
+    @Test
     fun `conversationKey falls back to text when title is null`() {
         val result = processor.process(
             title = null,

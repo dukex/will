@@ -37,9 +37,11 @@ class WillNotificationListenerService : NotificationListenerService() {
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()
+        val conversationTitle = extras.getCharSequence("android.conversationTitle")?.toString()
         val task = processor.process(
             title, text, sbn.packageName, sbn.postTime,
-            notificationKey = sbn.key
+            notificationKey = sbn.key,
+            conversationTitle = conversationTitle
         ) ?: return
 
         scope.launch {

@@ -9,7 +9,8 @@ class NotificationProcessor {
         text: String?,
         sourcePackage: String,
         timestamp: Long,
-        notificationKey: String? = null
+        notificationKey: String? = null,
+        conversationTitle: String? = null
     ): Task? {
         if (sourcePackage.isBlank()) return null
         if (sourcePackage in IGNORED_PACKAGES) return null
@@ -23,6 +24,7 @@ class NotificationProcessor {
         if (isSystemNoise(resolvedTitle)) return null
 
         val resolvedText = if (!title.isNullOrBlank() && !text.isNullOrBlank()) text else ""
+        val keySource = conversationTitle?.takeIf { it.isNotBlank() } ?: resolvedTitle
 
         return Task(
             title = resolvedTitle,
@@ -30,7 +32,7 @@ class NotificationProcessor {
             sourcePackage = sourcePackage,
             createdAt = timestamp,
             notificationKey = notificationKey,
-            conversationKey = "$sourcePackage:${resolvedTitle.trim().lowercase()}"
+            conversationKey = "$sourcePackage:${keySource.trim().lowercase()}"
         )
     }
 

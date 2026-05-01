@@ -66,11 +66,7 @@ fun TaskFeed(
     }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            top = insets.calculateTopPadding() + 8.dp,
-            bottom = insets.calculateBottomPadding() + 8.dp
-        )
+        modifier = modifier.fillMaxSize()
     ) {
         if (header != null) header()
 

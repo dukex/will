@@ -140,6 +140,30 @@ class OnboardingViewModelTest {
 
         assertEquals(OnboardingStep.Overlay, vm.state.value.step)
     }
+
+    @Test
+    fun `rerun clears the persisted flag and re-anchors to first ungranted step`() = runTest {
+        val repo = MemoryOnboardingRepository(initial = true)
+        val inspector = MutablePermissionInspector(default = true, overlay = false, listener = false)
+        val vm = OnboardingViewModel(repo, inspector, dispatcher = testDispatcher)
+
+        vm.rerun()
+
+        assertFalse(repo.isCompleted().first())
+        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
+    }
+
+    @Test
+    fun `rerun lands on Done when every grant is already in`() = runTest {
+        val repo = MemoryOnboardingRepository(initial = true)
+        val inspector = MutablePermissionInspector(default = true, overlay = true, listener = true)
+        val vm = OnboardingViewModel(repo, inspector, dispatcher = testDispatcher)
+
+        vm.rerun()
+
+        assertEquals(OnboardingStep.Done, vm.state.value.step)
+        assertFalse(repo.isCompleted().first())
+    }
 }
 
 private class MutablePermissionInspector(

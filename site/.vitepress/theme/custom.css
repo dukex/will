@@ -252,6 +252,43 @@ div[class*="language-"] {
   outline-offset: 2px !important;
 }
 
+/* Minimal Android device frame for screenshots — flat, 1dp border, no shadows */
+.android-frame {
+  display: inline-block;
+  padding: 6px;
+  border: 1px solid #2a2a2a;
+  border-radius: 28px;
+  background: #000000;
+  width: 100%;
+  max-width: 280px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.android-frame img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 0;
+  border-radius: 22px;
+  margin: 0;
+}
+
+/* punch-hole camera — sits inside the screen area, not in the bezel */
+.android-frame::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #161616;
+  border: 1px solid #404040;
+  z-index: 1;
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

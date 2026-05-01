@@ -49,6 +49,7 @@ import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
@@ -61,6 +62,7 @@ import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.IntentForAppSheet
 import tech.benedicta.will.ui.IntentInputSheet
+import tech.benedicta.will.ui.OnboardingScreen
 import tech.benedicta.will.ui.pinnedAppsItems
 import tech.benedicta.will.ui.SettingsScreen
 import tech.benedicta.will.ui.NotificationPermissionPrompt
@@ -82,6 +84,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var taskVm: TaskViewModel
     private var pendingActiveTask: Task? = null
+    private var onboardingVm: OnboardingViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,20 +106,41 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             WillTheme {
+                val app = application as WillApplication
+                val onboardingViewModel: OnboardingViewModel = viewModel(
+                    factory = OnboardingViewModel.Factory(
+                        app.onboardingRepository,
+                        app.permissionInspector
+                    )
+                )
+                onboardingVm = onboardingViewModel
+                val onboardingDone by app.onboardingRepository.isCompleted()
+                    .collectAsState(initial = false)
+                val onboardingState by onboardingViewModel.state.collectAsState()
+
+                if (!onboardingDone && !onboardingState.isComplete) {
+                    OnboardingScreen(
+                        viewModel = onboardingViewModel,
+                        onSetDefaultLauncher = { openDefaultLauncherSettings() },
+                        onGrantOverlay = { openOverlayPermissionSettings() },
+                        onGrantNotificationListener = { openNotificationListenerSettings() },
+                        onCompleted = { onboardingViewModel.refresh() }
+                    )
+                    return@WillTheme
+                }
+
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )
                 taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
 
                 val appFilterVm: AppFilterViewModel = viewModel(
-                    factory = AppFilterViewModel.Factory(
-                        (application as WillApplication).appFilterRepository
-                    )
+                    factory = AppFilterViewModel.Factory(app.appFilterRepository)
                 )
 
                 val pinnedAppsVm: PinnedAppsViewModel = viewModel(
                     factory = PinnedAppsViewModel.factory(
-                        (application as WillApplication).pinnedAppsRepository,
+                        app.pinnedAppsRepository,
                         launcherVm.apps
                     )
                 )
@@ -157,6 +181,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         pendingActiveTask = null
         ActiveTaskOverlayService.hide(this)
+        onboardingVm?.refresh()
     }
 
     private fun isNotificationListenerEnabled(): Boolean =
@@ -164,6 +189,31 @@ class MainActivity : ComponentActivity() {
 
     private fun openNotificationListenerSettings() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+    }
+
+    private fun openOverlayPermissionSettings() {
+        val uri = android.net.Uri.parse("package:$packageName")
+        runCatching {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, uri))
+        }.onFailure {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+        }
+    }
+
+    private fun openDefaultLauncherSettings() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            val roleManager = getSystemService(android.app.role.RoleManager::class.java)
+            val intent = roleManager?.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME)
+            if (intent != null) {
+                runCatching { startActivity(intent) }.onFailure { fallbackHomeSettings() }
+                return
+            }
+        }
+        fallbackHomeSettings()
+    }
+
+    private fun fallbackHomeSettings() {
+        runCatching { startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) }
     }
 }
 

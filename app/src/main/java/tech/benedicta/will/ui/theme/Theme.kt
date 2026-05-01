@@ -15,7 +15,6 @@ import tech.benedicta.will.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import tech.benedicta.will.ui.ThemeMode
 
 // Brand color constants — source of truth: .design/branding/will/patterns/will.yml
 val WillBackground      = Color(0xFF000000)  // OLED true black
@@ -180,10 +179,7 @@ object Spacing {
 }
 
 @Composable
-fun WillTheme(
-    themeMode: ThemeMode = ThemeMode.DARK,
-    content: @Composable () -> Unit
-) {
+fun WillTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = WillDarkColors,
         typography  = WillTypography,

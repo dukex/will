@@ -67,7 +67,6 @@ import tech.benedicta.will.ui.SettingsScreen
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.PrivacySettings
 import tech.benedicta.will.ui.TaskFeed
-import tech.benedicta.will.ui.loadThemeMode
 import tech.benedicta.will.ui.theme.WillTheme
 
 private const val SWIPE_THRESHOLD = 100f
@@ -104,9 +103,7 @@ class MainActivity : ComponentActivity() {
         val taskRepository = (application as WillApplication).taskRepository
 
         setContent {
-            val themeMode = remember { loadThemeMode(this) }
-
-            WillTheme(themeMode = themeMode) {
+            WillTheme {
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )

@@ -44,4 +44,30 @@ class MemoryTaskRepository : TaskRepository {
     override suspend fun clearConversationKey(taskId: Long) {
         _tasks.update { list -> list.map { if (it.id == taskId) it.copy(conversationKey = null) else it } }
     }
+
+    override suspend fun upsertByConversationKey(task: Task): Long {
+        val key = task.conversationKey
+        if (key != null) {
+            val existing = _tasks.value.firstOrNull {
+                it.conversationKey == key && it.completedAt == null
+            }
+            if (existing != null) {
+                _tasks.update { list ->
+                    list.map {
+                        if (it.id == existing.id) it.copy(
+                            notificationKey = task.notificationKey ?: it.notificationKey,
+                            createdAt = task.createdAt,
+                            title = task.title,
+                            text = task.text,
+                            unreadCount = it.unreadCount + 1
+                        ) else it
+                    }
+                }
+                return existing.id
+            }
+        }
+        val newTask = task.copy(id = nextId++, unreadCount = 1)
+        _tasks.update { it + newTask }
+        return newTask.id
+    }
 }

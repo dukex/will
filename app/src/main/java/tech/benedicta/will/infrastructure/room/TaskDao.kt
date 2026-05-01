@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -36,4 +37,43 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET conversationKey = NULL WHERE id = :taskId")
     suspend fun clearConversationKey(taskId: Long)
+
+    @Query("SELECT * FROM tasks WHERE conversationKey = :key AND completedAt IS NULL LIMIT 1")
+    suspend fun findOpenByConversationKey(key: String): TaskEntity?
+
+    @Query("""
+        UPDATE tasks
+        SET notificationKey = :notificationKey,
+            createdAt = :createdAt,
+            title = :title,
+            text = :text,
+            unreadCount = unreadCount + 1
+        WHERE id = :taskId
+    """)
+    suspend fun bumpConversation(
+        taskId: Long,
+        notificationKey: String?,
+        createdAt: Long,
+        title: String,
+        text: String
+    )
+
+    @Transaction
+    suspend fun upsertByConversationKey(task: TaskEntity): Long {
+        val key = task.conversationKey
+        if (key != null) {
+            val existing = findOpenByConversationKey(key)
+            if (existing != null) {
+                bumpConversation(
+                    taskId = existing.id,
+                    notificationKey = task.notificationKey ?: existing.notificationKey,
+                    createdAt = task.createdAt,
+                    title = task.title,
+                    text = task.text
+                )
+                return existing.id
+            }
+        }
+        return insert(task.copy(unreadCount = 1))
+    }
 }

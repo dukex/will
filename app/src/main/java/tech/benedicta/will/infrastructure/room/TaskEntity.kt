@@ -20,7 +20,8 @@ data class TaskEntity(
     val contextSwitchCount: Int = 0,
     val isActive: Boolean = false,
     val notificationKey: String? = null,
-    val conversationKey: String? = null
+    val conversationKey: String? = null,
+    val unreadCount: Int = 1
 ) {
     fun toTask() = Task(
         id = id,
@@ -33,7 +34,8 @@ data class TaskEntity(
         contextSwitchCount = contextSwitchCount,
         isActive = isActive,
         notificationKey = notificationKey,
-        conversationKey = conversationKey
+        conversationKey = conversationKey,
+        unreadCount = unreadCount
     )
 }
 
@@ -48,5 +50,6 @@ fun Task.toEntity() = TaskEntity(
     contextSwitchCount = contextSwitchCount,
     isActive = isActive,
     notificationKey = notificationKey,
-    conversationKey = conversationKey
+    conversationKey = conversationKey,
+    unreadCount = unreadCount
 )

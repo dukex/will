@@ -123,6 +123,107 @@ class TaskRepositoryTest {
         val tasks = repo.getAllTasks().first()
         assertEquals(2, tasks.size)
     }
+
+    @Test
+    fun `upsertByConversationKey inserts new task with unreadCount 1`() = runTest {
+        val repo = FakeTaskRepository()
+        val task = Task(
+            title = "Maria",
+            text = "Hi",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L,
+            notificationKey = "key-1",
+            conversationKey = "com.whatsapp:maria"
+        )
+
+        val id = repo.upsertByConversationKey(task)
+        val tasks = repo.getAllTasks().first()
+
+        assertEquals(1L, id)
+        assertEquals(1, tasks.size)
+        assertEquals(1, tasks[0].unreadCount)
+        assertEquals("key-1", tasks[0].notificationKey)
+    }
+
+    @Test
+    fun `upsertByConversationKey updates open task with newer notificationKey and increments unreadCount`() = runTest {
+        val repo = FakeTaskRepository()
+        val first = Task(
+            title = "Maria",
+            text = "Hi",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L,
+            notificationKey = "key-1",
+            conversationKey = "com.whatsapp:maria"
+        )
+        val second = first.copy(text = "How are you?", createdAt = 2000L, notificationKey = "key-2")
+
+        val id1 = repo.upsertByConversationKey(first)
+        val id2 = repo.upsertByConversationKey(second)
+        val tasks = repo.getAllTasks().first()
+
+        assertEquals(id1, id2)
+        assertEquals(1, tasks.size)
+        assertEquals("key-2", tasks[0].notificationKey)
+        assertEquals(2000L, tasks[0].createdAt)
+        assertEquals(2, tasks[0].unreadCount)
+    }
+
+    @Test
+    fun `upsertByConversationKey accumulates unreadCount across multiple updates`() = runTest {
+        val repo = FakeTaskRepository()
+        val base = Task(
+            title = "Maria",
+            text = "msg",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L,
+            notificationKey = "key-1",
+            conversationKey = "com.whatsapp:maria"
+        )
+
+        repo.upsertByConversationKey(base)
+        repo.upsertByConversationKey(base.copy(notificationKey = "key-2", createdAt = 2000L))
+        repo.upsertByConversationKey(base.copy(notificationKey = "key-3", createdAt = 3000L))
+
+        val tasks = repo.getAllTasks().first()
+        assertEquals(1, tasks.size)
+        assertEquals(3, tasks[0].unreadCount)
+        assertEquals("key-3", tasks[0].notificationKey)
+    }
+
+    @Test
+    fun `upsertByConversationKey creates new task when existing one is completed`() = runTest {
+        val repo = FakeTaskRepository()
+        val first = Task(
+            title = "Maria",
+            text = "Hi",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L,
+            notificationKey = "key-1",
+            conversationKey = "com.whatsapp:maria"
+        )
+        val id1 = repo.upsertByConversationKey(first)
+        repo.updateTask(first.copy(id = id1, completedAt = 1500L, conversationKey = null))
+
+        val second = first.copy(notificationKey = "key-2", createdAt = 2000L)
+        val id2 = repo.upsertByConversationKey(second)
+
+        val tasks = repo.getAllTasks().first()
+        assertEquals(2, tasks.size)
+        assertTrue(id1 != id2)
+    }
+
+    @Test
+    fun `upsertByConversationKey with null key always inserts`() = runTest {
+        val repo = FakeTaskRepository()
+        val task = Task(title = "Generic", text = "", sourcePackage = "com.whatsapp", createdAt = 1000L)
+
+        val id1 = repo.upsertByConversationKey(task)
+        val id2 = repo.upsertByConversationKey(task.copy(createdAt = 2000L))
+
+        assertTrue(id1 != id2)
+        assertEquals(2, repo.getAllTasks().first().size)
+    }
 }
 
 private class FakeTaskRepository : TaskRepository {
@@ -165,5 +266,28 @@ private class FakeTaskRepository : TaskRepository {
     override suspend fun clearConversationKey(taskId: Long) {
         val index = tasks.indexOfFirst { it.id == taskId }
         if (index != -1) tasks[index] = tasks[index].copy(conversationKey = null)
+    }
+
+    override suspend fun upsertByConversationKey(task: Task): Long {
+        val key = task.conversationKey
+        if (key != null) {
+            val index = tasks.indexOfFirst {
+                it.conversationKey == key && it.completedAt == null
+            }
+            if (index != -1) {
+                val existing = tasks[index]
+                tasks[index] = existing.copy(
+                    notificationKey = task.notificationKey ?: existing.notificationKey,
+                    createdAt = task.createdAt,
+                    title = task.title,
+                    text = task.text,
+                    unreadCount = existing.unreadCount + 1
+                )
+                return existing.id
+            }
+        }
+        val id = nextId++
+        tasks.add(task.copy(id = id, unreadCount = 1))
+        return id
     }
 }

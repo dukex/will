@@ -11,5 +11,6 @@ data class Task(
     val contextSwitchCount: Int = 0,
     val isActive: Boolean = false,
     val notificationKey: String? = null,
-    val conversationKey: String? = null
+    val conversationKey: String? = null,
+    val unreadCount: Int = 1
 )

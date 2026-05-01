@@ -12,4 +12,5 @@ interface TaskRepository {
     suspend fun clearActiveTask()
     suspend fun deleteAllTasks()
     suspend fun clearConversationKey(taskId: Long)
+    suspend fun upsertByConversationKey(task: Task): Long
 }

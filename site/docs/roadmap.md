@@ -10,19 +10,16 @@ snapshot of what is shipped, what is in flight, and what is intentionally deferr
 - **US-02 — notification capture**: NotificationListenerService → Task → Room, tap fires the original `PendingIntent`, conversation dedup via Room unique index, unread counter
 - **US-Pin-01 — pin up to 5 apps**: long-press to pin or unpin, pinned row scrolls with the feed
 - **US-08 — notification filter**: `SettingsScreen` with per-app toggles backed by `SharedPreferences`
+- **US-10 — first-run onboarding (core)**: guided three-step flow (default launcher, overlay, notification listener), lifecycle-aware auto-advance, persisted completion flag, re-run from settings. Instrumented end-to-end test deferred.
 
 ## in flight
 
+- **US-09 — brand-aligned Android icon set**: adaptive icon vectors and the Android 13+ monochrome variant ship. Density-specific raster mipmaps for API 24-25 fallback, the splash drawable, and a wallpaper-legibility audit are still pending.
 - **US-03 — voice and text input**: text input through `IntentInputSheet` is shipped. voice (SpeechRecognizer) and the NLP pipeline are pending.
 - **US-04 — lifecycle tracking**: domain fields, manual completion, and `TaskStatusIndicator` are shipped. AccessibilityService for automatic detection is pending.
 - **US-05 — focus dashboard**: today's focus score, time-on-task chart, and context switches are shipped. date-range filtering and trends are pending.
 - **US-06 — reactive feed and deep linking**: StateFlow feed, lifecycle ordering, and deep linking are shipped. swipe actions, search, and deep-link feedback are pending.
 - **US-07 — privacy controls**: `PrivacySettings`, delete-all, and permission rationale are shipped. selective deletion and explicit on-device guarantees for NLP / accessibility are still to enforce. see [privacy](/docs/privacy).
-
-## not started
-
-- **US-09 — brand-aligned Android icon set**: adaptive icon, monochrome variant for Android 13+ themed icons, density coverage, brand-matching splash. Will currently ships with the default platform mark.
-- **US-10 — first-run onboarding**: a single guided flow that walks through default launcher, the overlay permission (required), and the notification listener (optional). Replaces the wall of system dialogs new users face today.
 
 ## explicitly deferred
 

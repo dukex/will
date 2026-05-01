@@ -129,32 +129,34 @@ Subtasks:
 **As a user, I want Will to have a distinctive icon so I can recognize it on my home screen and in the app drawer at a glance.**
 
 Subtasks:
-- [ ] Replace the default `ic_launcher` / `ic_launcher_round` with the Will mark
-- [ ] Provide an adaptive icon (foreground layer + `#000000` background per `will.yml`)
-- [ ] Generate density variants (mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi)
-- [ ] Provide a monochrome icon for Android 13+ themed icons
+- [x] Replace the default `ic_launcher` / `ic_launcher_round` with the Will mark (adaptive icon vectors at `res/drawable/ic_launcher_*`)
+- [x] Provide an adaptive icon (foreground layer + `#000000` background per `will.yml`)
+- [ ] Generate density variants (mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi) — legacy webps still default; needs raster tooling
+- [x] Provide a monochrome icon for Android 13+ themed icons (`ic_launcher_monochrome.xml`)
 - [ ] Replace the splash drawable so it matches the icon, not the platform default
 - [ ] Verify icon legibility on light, dark, and patterned wallpapers
 - [ ] Document the icon spec under `.design/branding/will/` so future revisions stay consistent
 
-### US-10: First-run Onboarding for Default Launcher and Permissions
+### US-10: First-run Onboarding for Default Launcher and Permissions ✅ (core)
 **As a user installing Will for the first time, I want a guided path to make Will my default launcher and grant only the permissions I want, without being dropped into a wall of system dialogs.**
 
 Subtasks:
-- [ ] Detect first launch when no required permissions or default-launcher role is set
-- [ ] Build a single onboarding flow with sequential steps
-  - [ ] step 1 — set Will as the default home (RoleManager `ROLE_HOME` on Android 10+, fall back to the launcher chooser intent on older devices)
-  - [ ] step 2 — grant `SYSTEM_ALERT_WINDOW` (required for the active-task overlay)
-  - [ ] step 3 — grant the notification listener (optional; the screen explains what is unlocked)
-- [ ] Each step renders in the brand voice: title, one-sentence rationale, the system action button, and a "skip" affordance for optional steps only
-- [ ] Detect when each permission is granted (lifecycle resume check) and auto-advance
-- [ ] Persist a `onboarding_completed` flag so onboarding does not replay
-- [ ] Allow re-running onboarding from `SettingsScreen`
-- [ ] Honour the design system: 0dp cards, 1dp `#2A2A2A` borders, accent only on the action button
-- [ ] Tests
-  - [ ] unit — step state machine (start → next/skip → done) with no Android dependencies
-  - [ ] unit — first-run detector against `SharedPreferences` + permission stubs
-  - [ ] e2e / integration — full happy path: install → onboarding → home renders with feed
+- [x] Detect first launch when no required permissions or default-launcher role is set (`PermissionInspector` + `OnboardingRepository`)
+- [x] Build a single onboarding flow with sequential steps
+  - [x] step 1 — set Will as the default home (RoleManager `ROLE_HOME` on Android 10+, fall back to `ACTION_HOME_SETTINGS` on older devices)
+  - [x] step 2 — grant `SYSTEM_ALERT_WINDOW` (required for the active-task overlay)
+  - [x] step 3 — grant the notification listener (optional; the screen explains what is unlocked)
+- [x] Each step renders in the brand voice: title, one-sentence rationale, the system action button, and a "skip" affordance for optional steps only
+- [x] Detect when each permission is granted (lifecycle resume check) and auto-advance (`OnboardingViewModel.refresh()`)
+- [x] Persist a `onboarding_completed` flag so onboarding does not replay (`SharedPrefsOnboardingRepository`)
+- [x] Allow re-running onboarding from `SettingsScreen`
+- [x] Honour the design system: 0dp cards, 1dp `#2A2A2A` borders, accent only on the action button
+- [x] Tests
+  - [x] unit — step state machine (`OnboardingStateTest`)
+  - [x] unit — onboarding repository contract (`OnboardingRepositoryTest`)
+  - [x] unit — permission inspector contract (`PermissionInspectorTest`)
+  - [x] unit — view model wiring (`OnboardingViewModelTest`)
+  - [ ] e2e / integration — full happy path: install → onboarding → home renders with feed (deferred — requires instrumented tests)
 
 ### US-08: Notification Filter Settings ✅
 **As a user, I want to control which apps can create tasks from notifications so my feed stays relevant.**

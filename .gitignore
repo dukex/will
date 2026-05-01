@@ -7,6 +7,7 @@ site/node_modules/
 site/.vitepress/dist
 site/.vitepress/cache
 *.local.json
+*.local.md
 fastlane/report.xml
 fastlane/test_output
 fastlane/screenshots

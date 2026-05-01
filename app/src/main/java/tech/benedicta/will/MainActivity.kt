@@ -43,6 +43,8 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import tech.benedicta.will.launcher.AppLaunchAction
+import tech.benedicta.will.launcher.AppLaunchGate
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
@@ -59,6 +61,7 @@ import tech.benedicta.will.ui.AppGrid
 import tech.benedicta.will.ui.DoneTasksScreen
 import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
+import tech.benedicta.will.ui.IntentForAppSheet
 import tech.benedicta.will.ui.IntentInputSheet
 import tech.benedicta.will.ui.pinnedAppsItems
 import tech.benedicta.will.ui.SettingsScreen
@@ -183,7 +186,11 @@ private fun launchTask(context: android.content.Context, task: Task) {
             launcherApps.startShortcut(task.sourcePackage, shortcutId, null, null, android.os.Process.myUserHandle())
         }.onSuccess { return }
     }
-    context.packageManager.getLaunchIntentForPackage(task.sourcePackage)
+    launchAppByPackage(context, task.sourcePackage)
+}
+
+private fun launchAppByPackage(context: android.content.Context, packageName: String) {
+    context.packageManager.getLaunchIntentForPackage(packageName)
         ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         ?.let { context.startActivity(it) }
 }
@@ -194,6 +201,7 @@ private fun AppDrawerOverlay(
     apps: List<LauncherApp>,
     query: String,
     onQueryChange: (String) -> Unit,
+    onLaunchApp: (LauncherApp) -> Unit,
     onDismiss: () -> Unit,
     onLongPressApp: (LauncherApp) -> Unit = {}
 ) {
@@ -229,6 +237,7 @@ private fun AppDrawerOverlay(
             apps = apps,
             query = query,
             onQueryChange = onQueryChange,
+            onLaunchApp = onLaunchApp,
             onDismiss = onDismiss,
             onLongPressApp = onLongPressApp,
             modifier = Modifier
@@ -268,6 +277,20 @@ private fun WillScreen(
             } else {
                 val ok = pinnedAppsVm.pin(app.packageName)
                 if (!ok) snackbarHostState.showSnackbar("Pin limit reached (5)")
+            }
+        }
+    }
+
+    var pendingAppLaunch by remember { mutableStateOf<LauncherApp?>(null) }
+    val activeTask by taskVm.activeTask.collectAsState()
+
+    val onLaunchApp: (LauncherApp) -> Unit = { app ->
+        when (val action = AppLaunchGate.decide(activeTask, app.packageName, app.name)) {
+            is AppLaunchAction.LaunchDirectly -> {
+                launchAppByPackage(context, action.packageName)
+            }
+            is AppLaunchAction.PromptForIntent -> {
+                pendingAppLaunch = app
             }
         }
     }
@@ -339,6 +362,7 @@ private fun WillScreen(
                         {
                             pinnedAppsItems(
                                 pinnedApps = pinnedApps,
+                                onLaunch = onLaunchApp,
                                 onUnpin = { app -> pinnedAppsVm.unpin(app.packageName) }
                             )
                         }
@@ -373,6 +397,7 @@ private fun WillScreen(
                     apps = apps,
                     query = appSearchQuery,
                     onQueryChange = onAppSearchQueryChange,
+                    onLaunchApp = onLaunchApp,
                     onDismiss = { appDrawerOpen = false },
                     onLongPressApp = onLongPressApp
                 )
@@ -383,6 +408,29 @@ private fun WillScreen(
                 )
             }
         }
+    }
+
+    pendingAppLaunch?.let { app ->
+        IntentForAppSheet(
+            appName = app.name,
+            onDismiss = { pendingAppLaunch = null },
+            onStart = { intent ->
+                taskVm.addTaskAndStart(
+                    Task(
+                        title = intent,
+                        text = "",
+                        sourcePackage = app.packageName,
+                        createdAt = System.currentTimeMillis()
+                    )
+                )
+                launchAppByPackage(context, app.packageName)
+                pendingAppLaunch = null
+            },
+            onOpenAnyway = {
+                launchAppByPackage(context, app.packageName)
+                pendingAppLaunch = null
+            }
+        )
     }
 
     if (showIntentInputSheet) {

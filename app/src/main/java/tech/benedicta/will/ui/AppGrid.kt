@@ -1,6 +1,5 @@
 package tech.benedicta.will.ui
 
-import android.content.Intent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -27,7 +26,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.ImeAction
@@ -39,6 +37,7 @@ fun AppGrid(
     apps: List<LauncherApp>,
     query: String,
     onQueryChange: (String) -> Unit,
+    onLaunchApp: (LauncherApp) -> Unit = { },
     onDismiss: () -> Unit = {},
     onLongPressApp: (LauncherApp) -> Unit = {},
     modifier: Modifier = Modifier
@@ -66,7 +65,11 @@ fun AppGrid(
         items(apps, key = { it.packageName }) { app ->
             AppItem(
                 app = app,
-                onLaunch = { onQueryChange(""); onDismiss() },
+                onClick = {
+                    onQueryChange("")
+                    onDismiss()
+                    onLaunchApp(app)
+                },
                 onLongPress = { onLongPressApp(app) }
             )
         }
@@ -104,8 +107,7 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit, modifier
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AppItem(app: LauncherApp, onLaunch: () -> Unit, onLongPress: () -> Unit) {
-    val context = LocalContext.current
+private fun AppItem(app: LauncherApp, onClick: () -> Unit, onLongPress: () -> Unit) {
     val haptics = LocalHapticFeedback.current
     Text(
         text = app.name,
@@ -113,14 +115,7 @@ private fun AppItem(app: LauncherApp, onLaunch: () -> Unit, onLongPress: () -> U
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                onClick = {
-                    val launchIntent = context.packageManager.getLaunchIntentForPackage(app.packageName)
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        context.startActivity(launchIntent)
-                    }
-                    onLaunch()
-                },
+                onClick = onClick,
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongPress()

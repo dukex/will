@@ -152,6 +152,43 @@ class TaskViewModelTest {
     }
 
     @Test
+    fun `addTaskAndStart inserts task and marks it active`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        val task = Task(
+            title = "Reply Maria",
+            text = "",
+            sourcePackage = "com.whatsapp",
+            createdAt = 1000L
+        )
+
+        viewModel.addTaskAndStart(task)
+
+        val inserted = viewModel.tasks.value.single()
+        assertEquals("Reply Maria", inserted.title)
+        assertTrue("inserted task should be active", inserted.isActive)
+        assertEquals(inserted.id, viewModel.activeTask.value?.id)
+        assertNotNull("startedAt should be populated", inserted.startedAt)
+    }
+
+    @Test
+    fun `addTaskAndStart deactivates any previously active task`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(
+            Task(title = "Old", text = "", sourcePackage = "com.old", createdAt = 0L, isActive = true)
+        )
+        val viewModel = TaskViewModel(repo, testDispatcher)
+
+        viewModel.addTaskAndStart(
+            Task(title = "New", text = "", sourcePackage = "com.new", createdAt = 1000L)
+        )
+
+        val activeIds = viewModel.tasks.value.filter { it.isActive }.map { it.id }
+        assertEquals(1, activeIds.size)
+        assertEquals("New", viewModel.activeTask.value?.title)
+    }
+
+    @Test
     fun `markDone persists completedAt timestamp`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
@@ -203,4 +240,25 @@ private class FakeViewModelTaskRepository : TaskRepository {
         }
     }
     override suspend fun deleteAllTasks() { _tasks.value = emptyList() }
+    override suspend fun upsertByConversationKey(task: Task): Long {
+        val key = task.conversationKey
+        if (key != null) {
+            val existing = _tasks.value.firstOrNull {
+                it.conversationKey == key && it.completedAt == null
+            }
+            if (existing != null) {
+                _tasks.value = _tasks.value.map {
+                    if (it.id == existing.id) it.copy(
+                        notificationKey = task.notificationKey ?: it.notificationKey,
+                        createdAt = task.createdAt,
+                        title = task.title,
+                        text = task.text,
+                        unreadCount = it.unreadCount + 1
+                    ) else it
+                }
+                return existing.id
+            }
+        }
+        return insertTask(task.copy(unreadCount = 1))
+    }
 }

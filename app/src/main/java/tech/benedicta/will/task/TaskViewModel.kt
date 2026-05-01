@@ -55,6 +55,16 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) { repository.insertTask(task) }
     }
 
+    fun addTaskAndStart(task: Task) {
+        viewModelScope.launch(dispatcher) {
+            val now = System.currentTimeMillis()
+            val id = repository.insertTask(
+                task.copy(isActive = true, startedAt = task.startedAt ?: now)
+            )
+            repository.setActiveTask(id)
+        }
+    }
+
     fun deleteTask(task: Task) {
         viewModelScope.launch(dispatcher) {
             repository.clearConversationKey(task.id)

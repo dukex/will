@@ -57,6 +57,16 @@ class OnboardingViewModel(
         persistIfDone()
     }
 
+    /**
+     * Force the user back through onboarding from settings. Resets the
+     * persisted completion flag and re-anchors the in-memory state at the
+     * first ungranted step.
+     */
+    fun rerun() {
+        _state.value = inspector.snapshot().advanceToFirstUngranted()
+        viewModelScope.launch(dispatcher) { repository.reset() }
+    }
+
     private fun persistIfDone() {
         if (_state.value.isComplete) {
             viewModelScope.launch(dispatcher) { repository.markCompleted() }

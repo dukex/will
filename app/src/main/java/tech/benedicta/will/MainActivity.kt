@@ -162,7 +162,8 @@ class MainActivity : ComponentActivity() {
                     pinnedAppsVm = pinnedAppsVm,
                     notificationPermissionGranted = notificationPermissionGranted,
                     onGrantPermission = { openNotificationListenerSettings() },
-                    onSetPendingActiveTask = { task -> pendingActiveTask = task }
+                    onSetPendingActiveTask = { task -> pendingActiveTask = task },
+                    onRerunOnboarding = { onboardingViewModel.rerun() }
                 )
             }
         }
@@ -306,7 +307,8 @@ private fun WillScreen(
     pinnedAppsVm: PinnedAppsViewModel,
     notificationPermissionGranted: Boolean,
     onGrantPermission: () -> Unit,
-    onSetPendingActiveTask: (Task) -> Unit = {}
+    onSetPendingActiveTask: (Task) -> Unit = {},
+    onRerunOnboarding: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
@@ -358,6 +360,7 @@ private fun WillScreen(
             SettingsScreen(
                 onBack = { currentScreen = Screen.Home },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
+                onRerunOnboarding = onRerunOnboarding,
                 viewModel = appFilterVm
             )
             return

@@ -51,6 +51,7 @@ import tech.benedicta.will.ui.theme.WillTextTertiary
 fun SettingsScreen(
     onBack: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
+    onRerunOnboarding: () -> Unit = {},
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -137,6 +138,32 @@ fun SettingsScreen(
                     ) {
                         Text(
                             text = "data & privacy",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = WillTextTertiary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(
+                            Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            tint = WillTextTertiary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                item {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onRerunOnboarding() }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Button
+                                contentDescription = "re-run onboarding"
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "re-run onboarding",
                             style = MaterialTheme.typography.bodyMedium,
                             color = WillTextTertiary,
                             modifier = Modifier.weight(1f)

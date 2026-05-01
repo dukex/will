@@ -60,7 +60,14 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <!-- debug-only screenshot seeder; absent from release builds -->
+        <receiver
+            android:name=".debug.DemoSeedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="tech.benedicta.will.SEED_DEMO" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
-
-

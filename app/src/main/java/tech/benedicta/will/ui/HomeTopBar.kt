@@ -117,8 +117,5 @@ fun HomeTopBar(
     HorizontalDivider(color = WillBorder, thickness = 1.dp)
 }
 
-fun formatTime(millis: Long, locale: Locale): String =
-    SimpleDateFormat("HH:mm", locale).format(Date(millis))
-
 fun formatDate(millis: Long, locale: Locale): String =
     SimpleDateFormat("EEE, MMM d", locale).format(Date(millis))

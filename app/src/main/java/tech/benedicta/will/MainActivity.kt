@@ -90,8 +90,6 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             (application as WillApplication).overlayEvents.collect { event ->
                 if (!::taskVm.isInitialized) return@collect
-                if (event.action == TaskViewModel.ACTION_DONE || event.action == TaskViewModel.ACTION_DELETE) {
-                }
                 taskVm.handleOverlayAction(event.action, event.taskId)
             }
         }
@@ -263,6 +261,7 @@ private fun WillScreen(
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
         scope.launch {
             currentScreen = Screen.Home
+            appDrawerOpen = false
             if (pinnedAppsVm.isPinned(app.packageName)) {
                 pinnedAppsVm.unpin(app.packageName)
                 snackbarHostState.showSnackbar("Unpinned ${app.name}")

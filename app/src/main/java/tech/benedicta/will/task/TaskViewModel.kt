@@ -27,10 +27,6 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) { repository.setActiveTask(task.id) }
     }
 
-    fun clearActiveTask() {
-        viewModelScope.launch(dispatcher) { repository.clearActiveTask() }
-    }
-
     fun handleOverlayAction(action: String, taskId: Long) {
         val task = tasks.value.find { it.id == taskId } ?: return
         viewModelScope.launch(dispatcher) {
@@ -78,20 +74,6 @@ class TaskViewModel(
             repository.updateTask(
                 task.copy(completedAt = System.currentTimeMillis(), isActive = false, conversationKey = null)
             )
-        }
-    }
-
-    fun startTask(task: Task) {
-        viewModelScope.launch(dispatcher) {
-            repository.updateTask(
-                task.copy(isActive = true, startedAt = task.startedAt ?: System.currentTimeMillis())
-            )
-        }
-    }
-
-    fun pauseTask(task: Task) {
-        viewModelScope.launch(dispatcher) {
-            repository.updateTask(task.copy(isActive = false))
         }
     }
 

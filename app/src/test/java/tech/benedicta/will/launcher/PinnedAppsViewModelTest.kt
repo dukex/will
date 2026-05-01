@@ -92,30 +92,6 @@ class PinnedAppsViewModelTest {
     }
 
     @Test
-    fun `togglePin pins when not pinned`() = runTest {
-        val vm = PinnedAppsViewModel(
-            MemoryPinnedAppsRepository(),
-            installed(whatsApp),
-            testDispatcher
-        )
-
-        vm.togglePin("com.whatsapp")
-
-        assertEquals(listOf(whatsApp), vm.pinnedApps.value)
-    }
-
-    @Test
-    fun `togglePin unpins when already pinned`() = runTest {
-        val repo = MemoryPinnedAppsRepository()
-        repo.pin("com.whatsapp")
-        val vm = PinnedAppsViewModel(repo, installed(whatsApp), testDispatcher)
-
-        vm.togglePin("com.whatsapp")
-
-        assertTrue(vm.pinnedApps.value.isEmpty())
-    }
-
-    @Test
     fun `canPinMore is true under limit`() = runTest {
         val vm = PinnedAppsViewModel(
             MemoryPinnedAppsRepository(),

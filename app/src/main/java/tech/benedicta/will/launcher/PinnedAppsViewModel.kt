@@ -37,13 +37,6 @@ class PinnedAppsViewModel(
         viewModelScope.launch(ioDispatcher) { repository.unpin(packageName) }
     }
 
-    fun togglePin(packageName: String) {
-        viewModelScope.launch(ioDispatcher) {
-            if (repository.isPinned(packageName)) repository.unpin(packageName)
-            else repository.pin(packageName)
-        }
-    }
-
     suspend fun isPinned(packageName: String): Boolean = repository.isPinned(packageName)
 
     companion object {

@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
         val taskRepository = (application as WillApplication).taskRepository
 
         setContent {
-            var themeMode by remember { mutableStateOf(loadThemeMode(this)) }
+            val themeMode = remember { loadThemeMode(this) }
 
             WillTheme(themeMode = themeMode) {
                 val launcherVm: LauncherViewModel = viewModel(

@@ -31,22 +31,6 @@ import tech.benedicta.will.ui.theme.Spacing
 import tech.benedicta.will.ui.theme.WillBorder
 import tech.benedicta.will.ui.theme.WillTextTertiary
 
-@Composable
-fun PinnedAppsRow(
-    pinnedApps: List<LauncherApp>,
-    onUnpin: (LauncherApp) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    if (pinnedApps.isEmpty()) return
-
-    Column(modifier = modifier.fillMaxWidth()) {
-        pinnedApps.forEach { app ->
-            PinnedAppItem(app = app, onUnpin = onUnpin)
-            HorizontalDivider(color = WillBorder, thickness = 1.dp)
-        }
-    }
-}
-
 fun LazyListScope.pinnedAppsItems(
     pinnedApps: List<LauncherApp>,
     onUnpin: (LauncherApp) -> Unit

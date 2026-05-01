@@ -171,28 +171,61 @@ class NotificationProcessorTest {
     }
 
     @Test
-    fun `passes conversationKey through to Task`() {
+    fun `derives conversationKey from packageName and title`() {
         val result = processor.process(
-            title = "New message",
-            text = "Hello",
+            title = "Maria",
+            text = "Hi",
             sourcePackage = "com.whatsapp",
-            timestamp = 1000L,
-            conversationKey = "com.whatsapp:chat123"
+            timestamp = 1000L
         )
 
-        assertEquals("com.whatsapp:chat123", result?.conversationKey)
+        assertEquals("com.whatsapp:maria", result?.conversationKey)
     }
 
     @Test
-    fun `conversationKey defaults to null`() {
+    fun `same packageName and same title produce identical conversationKey`() {
+        val first = processor.process("Maria", "Hi", "com.whatsapp", 1000L)
+        val second = processor.process("Maria", "Different message", "com.whatsapp", 2000L)
+
+        assertEquals(first?.conversationKey, second?.conversationKey)
+    }
+
+    @Test
+    fun `different titles produce different conversationKeys`() {
+        val maria = processor.process("Maria", "Hi", "com.whatsapp", 1000L)
+        val joao = processor.process("Joao", "Hi", "com.whatsapp", 1000L)
+
+        assert(maria?.conversationKey != joao?.conversationKey)
+    }
+
+    @Test
+    fun `conversationKey is case insensitive and trimmed`() {
+        val a = processor.process("  Maria  ", "Hi", "com.whatsapp", 1000L)
+        val b = processor.process("MARIA", "Hi", "com.whatsapp", 2000L)
+        val c = processor.process("maria", "Hi", "com.whatsapp", 3000L)
+
+        assertEquals(a?.conversationKey, b?.conversationKey)
+        assertEquals(b?.conversationKey, c?.conversationKey)
+    }
+
+    @Test
+    fun `same title in different packages produce different conversationKeys`() {
+        val whats = processor.process("Maria", "Hi", "com.whatsapp", 1000L)
+        val tg = processor.process("Maria", "Hi", "org.telegram.messenger", 1000L)
+
+        assert(whats?.conversationKey != tg?.conversationKey)
+    }
+
+    @Test
+    fun `conversationKey falls back to text when title is null`() {
         val result = processor.process(
-            title = "Test",
-            text = "body",
-            sourcePackage = "com.test",
+            title = null,
+            text = "You have a new notification",
+            sourcePackage = "com.example",
             timestamp = 0L
         )
 
-        assertNull(result?.conversationKey)
+        assertEquals("com.example:you have a new notification", result?.conversationKey)
     }
 
     @Test

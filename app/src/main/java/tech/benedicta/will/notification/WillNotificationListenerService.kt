@@ -1,6 +1,5 @@
 package tech.benedicta.will.notification
 
-import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import kotlinx.coroutines.CoroutineScope
@@ -35,31 +34,21 @@ class WillNotificationListenerService : NotificationListenerService() {
 
         if (processor.shouldIgnoreFlags(sbn.notification.flags)) return
 
-        val conversationKey = conversationKeyFor(sbn)
-
         val extras = sbn.notification.extras
         val title = extras.getCharSequence("android.title")?.toString()
         val text = extras.getCharSequence("android.text")?.toString()
         val task = processor.process(
             title, text, sbn.packageName, sbn.postTime,
-            notificationKey = sbn.key,
-            conversationKey = conversationKey
+            notificationKey = sbn.key
         ) ?: return
 
         scope.launch {
             if (!appFilterRepository.isEnabled(sbn.packageName)) return@launch
-            repository.insertTask(task)
+            repository.upsertByConversationKey(task)
         }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {}
-
-    private fun conversationKeyFor(sbn: StatusBarNotification): String? {
-        val shortcutId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            sbn.notification.shortcutId
-        } else null
-        return if (shortcutId != null) "${sbn.packageName}:$shortcutId" else null
-    }
 
     override fun onListenerConnected() { instance = this }
 

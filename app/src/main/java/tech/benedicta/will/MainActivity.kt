@@ -1,14 +1,13 @@
 package tech.benedicta.will
 
-import android.content.ComponentName
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -166,11 +165,8 @@ class MainActivity : ComponentActivity() {
         ActiveTaskOverlayService.hide(this)
     }
 
-    private fun isNotificationListenerEnabled(): Boolean {
-        val componentName = ComponentName(this, WillNotificationListenerService::class.java)
-        val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        return enabledListeners?.contains(componentName.flattenToString()) == true
-    }
+    private fun isNotificationListenerEnabled(): Boolean =
+        NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 
     private fun openNotificationListenerSettings() {
         startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
@@ -178,15 +174,10 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun launchTask(context: android.content.Context, task: Task) {
-    val shortcutId = task.conversationKey?.removePrefix("${task.sourcePackage}:")
-    if (shortcutId != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {
-        val launcherApps = context.getSystemService(android.content.Context.LAUNCHER_APPS_SERVICE)
-            as android.content.pm.LauncherApps
-        runCatching {
-            launcherApps.startShortcut(task.sourcePackage, shortcutId, null, null, android.os.Process.myUserHandle())
-        }.onSuccess { return }
-    }
-    launchAppByPackage(context, task.sourcePackage)
+    val active = WillNotificationListenerService.instance?.activeNotifications
+        ?.firstOrNull { it.key == task.notificationKey }
+    val sent = active?.notification?.contentIntent?.runCatching { send() }?.isSuccess == true
+    if (!sent) launchAppByPackage(context, task.sourcePackage)
 }
 
 private fun launchAppByPackage(context: android.content.Context, packageName: String) {
@@ -271,6 +262,7 @@ private fun WillScreen(
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
         scope.launch {
+            currentScreen = Screen.Home
             if (pinnedAppsVm.isPinned(app.packageName)) {
                 pinnedAppsVm.unpin(app.packageName)
                 snackbarHostState.showSnackbar("Unpinned ${app.name}")

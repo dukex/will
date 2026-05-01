@@ -8,8 +8,10 @@
 - separate "done" screen accessible from top bar — completed tasks live off the main feed
 - apps button in top bar — no need to discover the swipe-up gesture
 - conversation dedup via database unique index — same conversation never creates duplicate tasks, even after app restart
+- unread counter on tasks — when more than one notification piles up for the same conversation, the task shows "N new" so you know how many messages are waiting
 
 ### fixed
+- WhatsApp and other messengers no longer spam the feed — repeated notifications from the same chat collapse into a single task and the tap always opens the most recent message
 - tapping a task now opens the specific conversation (WhatsApp, Calendar, etc.) instead of the app's home screen — notification key persisted in database
 - notification filter toggle now updates the UI reactively
 - replace broadcast with SharedFlow for overlay→activity communication

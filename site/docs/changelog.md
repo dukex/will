@@ -10,6 +10,9 @@
 - conversation dedup via database unique index — same conversation never creates duplicate tasks, even after app restart
 - unread counter on tasks — when more than one notification piles up for the same conversation, the task shows "N new" so you know how many messages are waiting
 
+### changed
+- pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
+
 ### fixed
 - WhatsApp and other messengers no longer spam the feed — repeated notifications from the same chat collapse into a single task and the tap always opens the most recent message
 - tapping a task now opens the specific conversation (WhatsApp, Calendar, etc.) instead of the app's home screen — notification key persisted in database

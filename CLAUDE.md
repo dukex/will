@@ -46,7 +46,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | PT-02: Core Architecture | ✅ done | Task model (Room entity), TaskDao, RoomTaskRepository, TaskViewModel |
 | US-01: Basic Launcher | ✅ done | app grid + launch works; recent apps deferred (API restricted) |
 | US-02: Notification Capture | ✅ done | NotificationListenerService → Task → Room; PendingIntent fired on tap; removal synced via NotificationKeyTracker; per-app filter moved to US-08 |
-| US-Pin-01: Pin up to 5 apps | ✅ done | long-press in app drawer toggles pin; PinnedAppsRow renders above TaskFeed; persisted via SharedPreferences |
+| US-Pin-01: Pin up to 5 apps | ✅ done | long-press in app drawer toggles pin; pinned apps render as the header of TaskFeed's `LazyColumn` so they share the scroll with tasks; persisted via SharedPreferences |
 | US-03: Voice/Text Input | 🟡 partial | text input via `IntentInputSheet` works; voice (SpeechRecognizer) + NLP pipeline pending |
 | US-04: Lifecycle Tracking | 🟡 partial | Task fields (`startedAt`/`completedAt`/`contextSwitchCount`/`status`) + `TaskStatusIndicator` + manual completion done; AccessibilityService for auto-detection pending |
 | US-05: Focus Dashboard | 🟡 partial | `FocusDashboard` + `FocusDashboardViewModel` (focus score, time-on-task bar chart, context switches — today only); date-range filtering and trends pending |
@@ -90,12 +90,12 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | **Overlay** | |
 | `overlay/ActiveTaskOverlayService.kt` | TYPE_APPLICATION_OVERLAY bubble; draggable; expands to panel with done/later/delete |
 | **UI** | |
-| `ui/TaskFeed.kt` | LazyColumn of TaskCards; tap opens source app; visible checkbox marks done |
+| `ui/TaskFeed.kt` | LazyColumn of TaskCards with optional `header: (LazyListScope.() -> Unit)?` slot for prepending content (used by pinned apps); tap opens source app; visible checkbox marks done; subtitle shows `N new` when `unreadCount > 1` |
 | `ui/DoneTasksScreen.kt` | separate screen for completed tasks — reopen or delete |
 | `ui/TaskActionSheet.kt` | bottom sheet for task actions (legacy — unused) |
 | `ui/HomeTopBar.kt` | minimal top bar with date/time; done count badge; nav to filters/dashboard/done |
 | `ui/AppGrid.kt` | adaptive grid composable, icon + name, tap to launch, long-press to toggle pin |
-| `ui/PinnedAppsRow.kt` | vertical list of up to 5 pinned apps shown above the TaskFeed; same row layout as TaskItem (48dp dot + name + packageName); tap to launch, long-press to unpin (haptic feedback) |
+| `ui/PinnedAppsRow.kt` | exposes `LazyListScope.pinnedAppsItems(...)` extension consumed by `TaskFeed`'s header slot, so up to 5 pinned apps scroll together with the feed; same row layout as TaskItem (48dp dot + name + packageName); tap to launch, long-press to unpin (haptic feedback) |
 | `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
 | **Tests** | |

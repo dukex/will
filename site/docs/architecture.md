@@ -22,8 +22,8 @@ Will follows domain/infrastructure separation.
 ```
 notification posted
   → WillNotificationListenerService.onNotificationPosted()
-  → NotificationProcessor.process() — maps notification to Task (or null)
-  → TaskDao.insert() — persists to Room
+  → NotificationProcessor.process() — maps notification to Task (or null), derives conversationKey from packageName + normalized title
+  → TaskDao.upsertByConversationKey() — refreshes existing open task (notificationKey, createdAt, unreadCount++) or inserts a new one
   → TaskFeed recomposes — StateFlow emits new list
 ```
 

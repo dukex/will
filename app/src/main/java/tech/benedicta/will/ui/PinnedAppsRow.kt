@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +44,18 @@ fun PinnedAppsRow(
             PinnedAppItem(app = app, onUnpin = onUnpin)
             HorizontalDivider(color = WillBorder, thickness = 1.dp)
         }
+    }
+}
+
+fun LazyListScope.pinnedAppsItems(
+    pinnedApps: List<LauncherApp>,
+    onUnpin: (LauncherApp) -> Unit
+) {
+    if (pinnedApps.isEmpty()) return
+
+    items(pinnedApps, key = { "pinned:${it.packageName}" }) { app ->
+        PinnedAppItem(app = app, onUnpin = onUnpin)
+        HorizontalDivider(color = WillBorder, thickness = 1.dp)
     }
 }
 

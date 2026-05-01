@@ -60,7 +60,7 @@ import tech.benedicta.will.ui.DoneTasksScreen
 import tech.benedicta.will.ui.FocusDashboard
 import tech.benedicta.will.ui.HomeTopBar
 import tech.benedicta.will.ui.IntentInputSheet
-import tech.benedicta.will.ui.PinnedAppsRow
+import tech.benedicta.will.ui.pinnedAppsItems
 import tech.benedicta.will.ui.SettingsScreen
 import tech.benedicta.will.ui.NotificationPermissionPrompt
 import tech.benedicta.will.ui.PrivacySettings
@@ -328,15 +328,22 @@ private fun WillScreen(
                 onOpenApps = { appDrawerOpen = true },
                 doneCount = doneTasks.size
             )
-            PinnedAppsRow(
-                pinnedApps = pinnedApps,
-                onUnpin = { app -> pinnedAppsVm.unpin(app.packageName) }
-            )
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
+
+                val pinnedHeader: (androidx.compose.foundation.lazy.LazyListScope.() -> Unit)? =
+                    if (pinnedApps.isNotEmpty()) {
+                        {
+                            pinnedAppsItems(
+                                pinnedApps = pinnedApps,
+                                onUnpin = { app -> pinnedAppsVm.unpin(app.packageName) }
+                            )
+                        }
+                    } else null
+
                 TaskFeed(
                     tasks = tasks,
                     onTap = { task ->
@@ -347,6 +354,7 @@ private fun WillScreen(
                     onMarkDone = { task ->
                         taskVm.markDone(task)
                     },
+                    header = pinnedHeader,
                     modifier = Modifier.fillMaxSize()
                 )
 

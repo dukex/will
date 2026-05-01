@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.HorizontalDivider
@@ -50,40 +51,37 @@ fun TaskFeed(
     tasks: List<Task>,
     onTap: (Task) -> Unit = {},
     onMarkDone: (Task) -> Unit = {},
+    header: (LazyListScope.() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
 
     val activeTasks = tasks.filter { it.status == TaskStatus.IN_PROGRESS }
     val pendingTasks = tasks.filter { it.status == TaskStatus.PENDING }
+    val hasTasks = activeTasks.isNotEmpty() || pendingTasks.isNotEmpty()
 
-    if (activeTasks.isEmpty() && pendingTasks.isEmpty()) {
-        val todayDone = tasks.filter {
-            it.status == TaskStatus.DONE && isToday(it.completedAt ?: 0L)
-        }
-        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                if (todayDone.isNotEmpty()) {
-                    val focusMinutes = todayDone.sumOf { task ->
-                        val start = task.startedAt ?: task.createdAt
-                        val end = task.completedAt ?: System.currentTimeMillis()
-                        (end - start) / 60_000L
-                    }.toInt()
-                    val focusLabel = "%02d:%02d focused today".format(focusMinutes / 60, focusMinutes % 60)
-                    Text(
-                        text = "clear",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = WillTextSecondary,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = focusLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WillTextTertiary,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = Spacing.xs)
-                    )
-                } else {
+    if (header == null && !hasTasks) {
+        EmptyState(tasks = tasks, modifier = modifier)
+        return
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = insets.calculateTopPadding() + 8.dp,
+            bottom = insets.calculateBottomPadding() + 8.dp
+        )
+    ) {
+        if (header != null) header()
+
+        if (!hasTasks) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = Spacing.xl),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text = "no tasks yet",
                         style = MaterialTheme.typography.bodyLarge,
@@ -99,17 +97,9 @@ fun TaskFeed(
                     )
                 }
             }
+            return@LazyColumn
         }
-        return
-    }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            top = insets.calculateTopPadding() + 8.dp,
-            bottom = insets.calculateBottomPadding() + 8.dp
-        )
-    ) {
         if (activeTasks.isNotEmpty()) {
             items(activeTasks, key = { it.id }) { task ->
                 TaskItem(
@@ -133,6 +123,55 @@ fun TaskFeed(
                     onMarkDone = onMarkDone
                 )
                 HorizontalDivider(color = WillBorder, thickness = 1.dp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(
+    tasks: List<Task>,
+    modifier: Modifier = Modifier
+) {
+    val todayDone = tasks.filter {
+        it.status == TaskStatus.DONE && isToday(it.completedAt ?: 0L)
+    }
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (todayDone.isNotEmpty()) {
+                val focusMinutes = todayDone.sumOf { task ->
+                    val start = task.startedAt ?: task.createdAt
+                    val end = task.completedAt ?: System.currentTimeMillis()
+                    (end - start) / 60_000L
+                }.toInt()
+                val focusLabel = "%02d:%02d focused today".format(focusMinutes / 60, focusMinutes % 60)
+                Text(
+                    text = "clear",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = WillTextSecondary,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = focusLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WillTextTertiary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = Spacing.xs)
+                )
+            } else {
+                Text(
+                    text = "no tasks yet",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = WillTextSecondary,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = "notifications will appear here",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WillTextTertiary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = Spacing.xs)
+                )
             }
         }
     }

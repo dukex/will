@@ -36,22 +36,21 @@ fun OnboardingScreen(
     viewModel: OnboardingViewModel,
     onSetDefaultLauncher: () -> Unit,
     onGrantOverlay: () -> Unit,
-    onGrantNotificationListener: () -> Unit,
-    onCompleted: () -> Unit
+    onGrantNotificationListener: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
-    if (state.isComplete) {
-        onCompleted()
-        return
-    }
+    // The host (MainActivity) observes state.isComplete and the persisted flag
+    // separately and re-renders to WillScreen when either flips. No callback is
+    // required here, which keeps the composable side-effect-free.
+    if (state.isComplete) return
 
     val copy = stepCopy(state.step)
     val action: () -> Unit = when (state.step) {
         OnboardingStep.DefaultLauncher -> onSetDefaultLauncher
         OnboardingStep.Overlay -> onGrantOverlay
         OnboardingStep.Notifications -> onGrantNotificationListener
-        OnboardingStep.Done -> onCompleted
+        OnboardingStep.Done -> { -> }
     }
 
     Surface(

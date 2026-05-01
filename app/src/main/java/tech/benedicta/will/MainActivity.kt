@@ -123,8 +123,7 @@ class MainActivity : ComponentActivity() {
                         viewModel = onboardingViewModel,
                         onSetDefaultLauncher = { openDefaultLauncherSettings() },
                         onGrantOverlay = { openOverlayPermissionSettings() },
-                        onGrantNotificationListener = { openNotificationListenerSettings() },
-                        onCompleted = { onboardingViewModel.refresh() }
+                        onGrantNotificationListener = { openNotificationListenerSettings() }
                     )
                     return@WillTheme
                 }

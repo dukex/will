@@ -174,8 +174,9 @@ private fun TaskItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            val unreadSuffix = if (task.unreadCount > 1) " · ${task.unreadCount} new" else ""
             Text(
-                text = "$appName · ${formatTimestamp(task.createdAt)}",
+                text = "$appName · ${formatTimestamp(task.createdAt)}$unreadSuffix",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp)

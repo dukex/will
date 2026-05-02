@@ -131,11 +131,11 @@ Subtasks:
 Subtasks:
 - [x] Replace the default `ic_launcher` / `ic_launcher_round` with the Will mark (adaptive icon vectors at `res/drawable/ic_launcher_*`)
 - [x] Provide an adaptive icon (foreground layer + `#000000` background per `will.yml`)
-- [ ] Generate density variants (mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi) — legacy webps still default; needs raster tooling
+- [x] Generate density variants (mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi) — rasterised from the vector via `scripts/render-icons.sh`
 - [x] Provide a monochrome icon for Android 13+ themed icons (`ic_launcher_monochrome.xml`)
-- [ ] Replace the splash drawable so it matches the icon, not the platform default
-- [ ] Verify icon legibility on light, dark, and patterned wallpapers
-- [ ] Document the icon spec under `.design/branding/will/` so future revisions stay consistent
+- [x] Replace the splash drawable so it matches the icon, not the platform default — `values-v31/themes.xml` overrides `windowSplashScreenBackground` to true black
+- [ ] Verify icon legibility on light, dark, and patterned wallpapers (manual visual audit)
+- [x] Document the icon spec under `.design/branding/will/identity/launcher-icon.md` so future revisions stay consistent
 
 ### US-10: First-run Onboarding for Default Launcher and Permissions ✅ (core)
 **As a user installing Will for the first time, I want a guided path to make Will my default launcher and grant only the permissions I want, without being dropped into a wall of system dialogs.**

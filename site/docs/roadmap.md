@@ -11,10 +11,10 @@ snapshot of what is shipped, what is in flight, and what is intentionally deferr
 - **US-Pin-01 — pin up to 5 apps**: long-press to pin or unpin, pinned row scrolls with the feed
 - **US-08 — notification filter**: `SettingsScreen` with per-app toggles backed by `SharedPreferences`
 - **US-10 — first-run onboarding (core)**: guided three-step flow (default launcher, overlay, notification listener), lifecycle-aware auto-advance, persisted completion flag, re-run from settings. Instrumented end-to-end test deferred.
+- **US-09 — brand-aligned Android icon set**: adaptive icon vectors, Android 13+ monochrome variant, density-specific raster mipmaps regenerated from a single ImageMagick render, true-black splash on Android 12+. Manual wallpaper-legibility audit is the only open subtask.
 
 ## in flight
 
-- **US-09 — brand-aligned Android icon set**: adaptive icon vectors and the Android 13+ monochrome variant ship. Density-specific raster mipmaps for API 24-25 fallback, the splash drawable, and a wallpaper-legibility audit are still pending.
 - **US-03 — voice and text input**: text input through `IntentInputSheet` is shipped. voice (SpeechRecognizer) and the NLP pipeline are pending.
 - **US-04 — lifecycle tracking**: domain fields, manual completion, and `TaskStatusIndicator` are shipped. AccessibilityService for automatic detection is pending.
 - **US-05 — focus dashboard**: today's focus score, time-on-task chart, and context switches are shipped. date-range filtering and trends are pending.

@@ -89,14 +89,9 @@ class MainActivity : ComponentActivity() {
     private var pendingActiveTask: Task? = null
     private var onboardingVm: OnboardingViewModel? = null
 
-    // Role-request intents only show the system dialog when launched via the
-    // ActivityResult API; plain startActivity silently no-ops. Registered as a
-    // field so it is wired before the activity reaches STARTED.
-    private val roleRequestLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            onboardingVm?.refresh()
-        }
-
+    // Settings intents do not return useful data, but we still need a launcher so
+    // we get the activity-result callback to refresh onboarding state when the
+    // user returns from the system page.
     private val systemSettingsLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             onboardingVm?.refresh()
@@ -220,24 +215,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openDefaultLauncherSettings() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            val rm = getSystemService(android.app.role.RoleManager::class.java)
-            if (rm != null &&
-                rm.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME) &&
-                !rm.isRoleHeld(android.app.role.RoleManager.ROLE_HOME)
-            ) {
-                runCatching {
-                    roleRequestLauncher.launch(
-                        rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME)
-                    )
-                }.onFailure { fallbackHomeSettings() }
-                return
-            }
-        }
-        fallbackHomeSettings()
-    }
-
-    private fun fallbackHomeSettings() {
         runCatching {
             systemSettingsLauncher.launch(Intent(Settings.ACTION_HOME_SETTINGS))
         }

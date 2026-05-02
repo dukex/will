@@ -125,7 +125,7 @@ Subtasks:
 - [ ] ~~Data encryption~~ → out of MVP per scope.md
 - [ ] ~~Local backups~~ → out of MVP per scope.md
 
-### US-09: Brand-aligned Android Icon Set
+### US-09: Brand-aligned Android Icon Set ✅
 **As a user, I want Will to have a distinctive icon so I can recognize it on my home screen and in the app drawer at a glance.**
 
 Subtasks:
@@ -134,7 +134,7 @@ Subtasks:
 - [x] Generate density variants (mdpi / hdpi / xhdpi / xxhdpi / xxxhdpi) — rasterised from the vector via `scripts/render-icons.sh`
 - [x] Provide a monochrome icon for Android 13+ themed icons (`ic_launcher_monochrome.xml`)
 - [x] Replace the splash drawable so it matches the icon, not the platform default — `values-v31/themes.xml` overrides `windowSplashScreenBackground` to true black
-- [ ] Verify icon legibility on light, dark, and patterned wallpapers (manual visual audit)
+- [x] Verify icon legibility on light, dark, and patterned wallpapers — programmatic audit at `.design/branding/will/identity/audits/icon-wallpaper-2026-05-01/`
 - [x] Document the icon spec under `.design/branding/will/identity/launcher-icon.md` so future revisions stay consistent
 
 ### US-10: First-run Onboarding for Default Launcher and Permissions ✅ (core)

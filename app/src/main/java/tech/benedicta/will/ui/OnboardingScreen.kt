@@ -3,14 +3,14 @@ package tech.benedicta.will.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -21,7 +21,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -45,13 +44,23 @@ fun OnboardingScreen(
     // required here, which keeps the composable side-effect-free.
     if (state.isComplete) return
 
-    val copy = stepCopy(state.step)
-    val action: () -> Unit = when (state.step) {
+    val grantedHere = when (state.step) {
+        OnboardingStep.DefaultLauncher -> state.isDefaultLauncher
+        OnboardingStep.Overlay -> state.hasOverlayPermission
+        OnboardingStep.Notifications -> state.hasNotificationListener
+        OnboardingStep.Done -> true
+    }
+    val copy = stepCopy(state.step, grantedHere)
+    val action: () -> Unit = if (grantedHere) {
+        viewModel::next
+    } else when (state.step) {
         OnboardingStep.DefaultLauncher -> onSetDefaultLauncher
         OnboardingStep.Overlay -> onGrantOverlay
         OnboardingStep.Notifications -> onGrantNotificationListener
         OnboardingStep.Done -> { -> }
     }
+
+    val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -60,7 +69,12 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = Spacing.screenHorizontal, vertical = Spacing.xxl),
+                .padding(
+                    start = Spacing.screenHorizontal,
+                    end = Spacing.screenHorizontal,
+                    top = safeDrawing.calculateTopPadding(),
+                    bottom = safeDrawing.calculateBottomPadding()
+                ),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             StepIndicator(state)
@@ -101,7 +115,7 @@ fun OnboardingScreen(
 
 @Composable
 private fun StepIndicator(state: OnboardingState) {
-    val total = OnboardingStep.values().count { it != OnboardingStep.Done }
+    val total = OnboardingStep.entries.toTypedArray().count { it != OnboardingStep.Done }
     val index = when (state.step) {
         OnboardingStep.DefaultLauncher -> 1
         OnboardingStep.Overlay -> 2
@@ -156,21 +170,21 @@ private fun SkipAction(onClick: () -> Unit) {
 
 private data class StepCopy(val title: String, val body: String, val actionLabel: String)
 
-private fun stepCopy(step: OnboardingStep): StepCopy = when (step) {
+private fun stepCopy(step: OnboardingStep, grantedHere: Boolean): StepCopy = when (step) {
     OnboardingStep.DefaultLauncher -> StepCopy(
         title = "make Will your home",
         body = "Will replaces the home screen with a task feed. set it as default so the home button opens Will instead of the stock launcher.",
-        actionLabel = "set as default"
+        actionLabel = if (grantedHere) "continue" else "set as default"
     )
     OnboardingStep.Overlay -> StepCopy(
         title = "allow the active-task overlay",
         body = "when you tap a task, Will shows a small floating bubble on top of the source app so you can mark it done, snooze it, or delete it without leaving the app you opened.",
-        actionLabel = "open overlay settings"
+        actionLabel = if (grantedHere) "continue" else "open overlay settings"
     )
     OnboardingStep.Notifications -> StepCopy(
         title = "let Will read your notifications",
         body = "this is the core feature: every notification becomes an actionable task in your feed. it is optional — Will still works as a launcher without it, you just lose the auto-task pipeline.",
-        actionLabel = "open listener settings"
+        actionLabel = if (grantedHere) "continue" else "open listener settings"
     )
     OnboardingStep.Done -> StepCopy(
         title = "ready",

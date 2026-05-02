@@ -59,7 +59,7 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `next advances when the required grant is in`() = runTest {
+    fun `refresh advances when the required grant just transitioned to true`() = runTest {
         val inspector = MutablePermissionInspector(default = false, overlay = false, listener = false)
         val vm = OnboardingViewModel(
             repository = MemoryOnboardingRepository(),
@@ -126,34 +126,6 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `refresh auto-advances when the user grants a step in Settings`() = runTest {
-        val inspector = MutablePermissionInspector(default = false, overlay = false, listener = false)
-        val vm = OnboardingViewModel(
-            repository = MemoryOnboardingRepository(),
-            inspector = inspector,
-            dispatcher = testDispatcher
-        )
-        assertEquals(OnboardingStep.DefaultLauncher, vm.state.value.step)
-
-        inspector.default = true
-        vm.refresh()
-
-        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
-    }
-
-    @Test
-    fun `rerun clears the persisted flag and re-anchors to first ungranted step`() = runTest {
-        val repo = MemoryOnboardingRepository(initial = true)
-        val inspector = MutablePermissionInspector(default = true, overlay = false, listener = false)
-        val vm = OnboardingViewModel(repo, inspector, dispatcher = testDispatcher)
-
-        vm.rerun()
-
-        assertFalse(repo.isCompleted().first())
-        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
-    }
-
-    @Test
     fun `consecutive refreshes do not skip ungranted steps`() = runTest {
         val inspector = MutablePermissionInspector(default = false, overlay = false, listener = false)
         val vm = OnboardingViewModel(
@@ -168,40 +140,80 @@ class OnboardingViewModelTest {
         vm.refresh()
         vm.refresh()
 
-        // overlay is still ungranted, so the flow must hold on Overlay
-        // instead of cascading into Notifications.
+        // overlay is still ungranted, so the flow must hold on Overlay.
         assertEquals(OnboardingStep.Overlay, vm.state.value.step)
     }
 
     @Test
-    fun `refresh skips a step the user already granted out-of-band`() = runTest {
-        // listener was granted from a prior install, and the user grants
-        // overlay during this onboarding run. Refresh should land on Done
-        // instead of forcing the user through the redundant Notifications step.
-        val inspector = MutablePermissionInspector(default = true, overlay = false, listener = true)
+    fun `consecutive refreshes hold the step when the user has prior grants on later steps`() = runTest {
+        // Simulates the prior-install scenario that originally triggered "finish
+        // after step 1": overlay and listener were granted previously, the user
+        // is freshly running onboarding and just granted default. Refresh should
+        // advance one step (DL -> Overlay) and stop, even though Overlay's grant
+        // is already in.
+        val inspector = MutablePermissionInspector(default = false, overlay = true, listener = true)
         val vm = OnboardingViewModel(
             repository = MemoryOnboardingRepository(),
             inspector = inspector,
             dispatcher = testDispatcher
         )
-        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
+        assertEquals(OnboardingStep.DefaultLauncher, vm.state.value.step)
 
-        inspector.overlay = true
+        inspector.default = true
+        vm.refresh()
         vm.refresh()
 
-        assertEquals(OnboardingStep.Done, vm.state.value.step)
+        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
     }
 
     @Test
-    fun `rerun lands on Done when every grant is already in`() = runTest {
+    fun `next advances when the current step's grant is already in`() = runTest {
+        // The screen calls vm.next() when the user taps the action button on a
+        // step they have already cleared (re-run scenario, or grant was in
+        // before they reached the step).
+        val inspector = MutablePermissionInspector(default = true, overlay = true, listener = false)
+        val vm = OnboardingViewModel(
+            repository = MemoryOnboardingRepository(),
+            inspector = inspector,
+            dispatcher = testDispatcher
+        )
+        assertEquals(OnboardingStep.Notifications, vm.state.value.step)
+
+        // simulate the user being on Overlay even though it is granted: rerun
+        // anchored at DL
+        vm.rerun()
+        assertEquals(OnboardingStep.DefaultLauncher, vm.state.value.step)
+
+        vm.next() // grant in, advance DL -> Overlay
+        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
+
+        vm.next() // grant in, advance Overlay -> Notifications
+        assertEquals(OnboardingStep.Notifications, vm.state.value.step)
+    }
+
+    @Test
+    fun `rerun anchors the user back at step 1 even with all permissions granted`() = runTest {
         val repo = MemoryOnboardingRepository(initial = true)
         val inspector = MutablePermissionInspector(default = true, overlay = true, listener = true)
         val vm = OnboardingViewModel(repo, inspector, dispatcher = testDispatcher)
 
         vm.rerun()
 
-        assertEquals(OnboardingStep.Done, vm.state.value.step)
+        assertEquals(OnboardingStep.DefaultLauncher, vm.state.value.step)
         assertFalse(repo.isCompleted().first())
+    }
+
+    @Test
+    fun `rerun resets observed grants so refresh does not skip steps`() = runTest {
+        val repo = MemoryOnboardingRepository(initial = true)
+        val inspector = MutablePermissionInspector(default = true, overlay = true, listener = true)
+        val vm = OnboardingViewModel(repo, inspector, dispatcher = testDispatcher)
+
+        vm.rerun()
+        vm.refresh() // simulates the user returning from settings without changing anything
+
+        // No grant transition happened, so the flow must not auto-advance.
+        assertEquals(OnboardingStep.DefaultLauncher, vm.state.value.step)
     }
 }
 

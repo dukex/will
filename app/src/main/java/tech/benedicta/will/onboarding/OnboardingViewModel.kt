@@ -16,28 +16,51 @@ class OnboardingViewModel(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(inspector.snapshot().advanceToFirstUngranted())
+    /**
+     * Most recent grant snapshot we have observed. Used to detect
+     * `false → true` transitions in [refresh] so we only auto-advance when
+     * the user *just* granted the current step's permission, not when it
+     * was already granted (e.g. left over from a prior install or held
+     * across a rerun).
+     */
+    private var lastObserved: OnboardingState = inspector.snapshot()
+
+    private val _state = MutableStateFlow(lastObserved.advanceToFirstUngranted())
     val state: StateFlow<OnboardingState> = _state.asStateFlow()
 
     /**
-     * Re-read the system grants and re-anchor to the first ungranted step.
-     * Idempotent: the activity onResume hook AND the ActivityResultLauncher
-     * callback both fire after a settings round-trip, so this method must
-     * converge regardless of how many times it is called per resume cycle.
+     * Re-read system grants. Auto-advances by one step iff the current
+     * step's grant transitioned `false → true` since the last observation.
+     * Idempotent under double-fire (onResume + ActivityResult callback).
      */
     fun refresh() {
         val snapshot = inspector.snapshot()
-        _state.value = _state.value.copy(
+        val current = _state.value
+        val refreshed = current.copy(
             isDefaultLauncher = snapshot.isDefaultLauncher,
             hasOverlayPermission = snapshot.hasOverlayPermission,
             hasNotificationListener = snapshot.hasNotificationListener
-        ).advanceToFirstUngranted()
+        )
+
+        val grantJustObtained = when (current.step) {
+            OnboardingStep.DefaultLauncher ->
+                !lastObserved.isDefaultLauncher && snapshot.isDefaultLauncher
+            OnboardingStep.Overlay ->
+                !lastObserved.hasOverlayPermission && snapshot.hasOverlayPermission
+            OnboardingStep.Notifications ->
+                !lastObserved.hasNotificationListener && snapshot.hasNotificationListener
+            OnboardingStep.Done -> false
+        }
+
+        lastObserved = snapshot
+        _state.value = if (grantJustObtained) refreshed.next() else refreshed
         persistIfDone()
     }
 
     /**
-     * Advance manually after the user taps "next" on a step that has been
-     * cleared. Required steps refuse to advance unless the grant is in.
+     * Advance to the next step. Called by the screen's primary action when
+     * the current step's grant is already in (e.g. mid-rerun) — the user is
+     * acknowledging they have done what the step asks for.
      */
     fun next() {
         val current = _state.value
@@ -47,8 +70,7 @@ class OnboardingViewModel(
     }
 
     /**
-     * Skip the current step. Only legal on optional steps; required steps
-     * (default launcher, overlay) cannot be skipped.
+     * Skip the current step. Only legal on optional steps.
      */
     fun skip() {
         val current = _state.value
@@ -58,12 +80,14 @@ class OnboardingViewModel(
     }
 
     /**
-     * Force the user back through onboarding from settings. Resets the
-     * persisted completion flag and re-anchors the in-memory state at the
-     * first ungranted step.
+     * Walk the user back through the entire flow. Anchors at the first step
+     * regardless of what is already granted, so the user can review every
+     * screen and hit "continue" through the ones they have already cleared.
      */
     fun rerun() {
-        _state.value = inspector.snapshot().advanceToFirstUngranted()
+        val snapshot = inspector.snapshot()
+        lastObserved = snapshot
+        _state.value = snapshot.copy(step = OnboardingStep.DefaultLauncher)
         viewModelScope.launch(dispatcher) { repository.reset() }
     }
 

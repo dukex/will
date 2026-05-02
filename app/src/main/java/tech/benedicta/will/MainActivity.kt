@@ -129,7 +129,19 @@ class MainActivity : ComponentActivity() {
                     .collectAsState(initial = false)
                 val onboardingState by onboardingViewModel.state.collectAsState()
 
-                if (!onboardingDone && !onboardingState.isComplete) {
+                // Gate the launcher on the actual required grants, not just the
+                // persisted "user has seen onboarding once" flag. If Will is no
+                // longer the default launcher or the overlay permission has been
+                // revoked, redirect the user back through onboarding for the
+                // missing step. The notification listener is optional and only
+                // gated by the first-walkthrough flag — we don't nag for it on
+                // every cold start once the user has either granted or skipped it.
+                val needsRequiredGrants =
+                    !onboardingState.isDefaultLauncher ||
+                    !onboardingState.hasOverlayPermission
+                val firstWalkthroughActive = !onboardingDone && !onboardingState.isComplete
+
+                if (needsRequiredGrants || firstWalkthroughActive) {
                     OnboardingScreen(
                         viewModel = onboardingViewModel,
                         onSetDefaultLauncher = { openDefaultLauncherSettings() },

@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -85,6 +87,19 @@ class MainActivity : ComponentActivity() {
     private lateinit var taskVm: TaskViewModel
     private var pendingActiveTask: Task? = null
     private var onboardingVm: OnboardingViewModel? = null
+
+    // Role-request intents only show the system dialog when launched via the
+    // ActivityResult API; plain startActivity silently no-ops. Registered as a
+    // field so it is wired before the activity reaches STARTED.
+    private val roleRequestLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            onboardingVm?.refresh()
+        }
+
+    private val systemSettingsLauncher: ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            onboardingVm?.refresh()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -188,24 +203,31 @@ class MainActivity : ComponentActivity() {
         NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
 
     private fun openNotificationListenerSettings() {
-        startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        systemSettingsLauncher.launch(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
     }
 
     private fun openOverlayPermissionSettings() {
         val uri = android.net.Uri.parse("package:$packageName")
+        val withPackage = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, uri)
         runCatching {
-            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, uri))
+            systemSettingsLauncher.launch(withPackage)
         }.onFailure {
-            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
+            systemSettingsLauncher.launch(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION))
         }
     }
 
     private fun openDefaultLauncherSettings() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            val roleManager = getSystemService(android.app.role.RoleManager::class.java)
-            val intent = roleManager?.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME)
-            if (intent != null) {
-                runCatching { startActivity(intent) }.onFailure { fallbackHomeSettings() }
+            val rm = getSystemService(android.app.role.RoleManager::class.java)
+            if (rm != null &&
+                rm.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME) &&
+                !rm.isRoleHeld(android.app.role.RoleManager.ROLE_HOME)
+            ) {
+                runCatching {
+                    roleRequestLauncher.launch(
+                        rm.createRequestRoleIntent(android.app.role.RoleManager.ROLE_HOME)
+                    )
+                }.onFailure { fallbackHomeSettings() }
                 return
             }
         }
@@ -213,7 +235,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun fallbackHomeSettings() {
-        runCatching { startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) }
+        runCatching {
+            systemSettingsLauncher.launch(Intent(Settings.ACTION_HOME_SETTINGS))
+        }
     }
 }
 

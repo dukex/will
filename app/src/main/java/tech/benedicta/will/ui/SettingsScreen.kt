@@ -16,11 +16,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -44,7 +42,6 @@ import tech.benedicta.will.ui.theme.Spacing
 import tech.benedicta.will.ui.theme.WillAccent
 import tech.benedicta.will.ui.theme.WillBorder
 import tech.benedicta.will.ui.theme.WillTextPrimary
-import tech.benedicta.will.ui.theme.WillTextSecondary
 import tech.benedicta.will.ui.theme.WillTextTertiary
 
 @Composable
@@ -63,29 +60,11 @@ fun SettingsScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(top = safeDrawing.calculateTopPadding())
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.xl, vertical = Spacing.sm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.semantics { contentDescription = "back to home" }
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = "settings",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = Spacing.sm)
-            )
-        }
+        ScreenTopBar(
+            title = "settings",
+            onBack = onBack,
+            backContentDescription = "back to home"
+        )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
 
         if (filters.isEmpty()) {

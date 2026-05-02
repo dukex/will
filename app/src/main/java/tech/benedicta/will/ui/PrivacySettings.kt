@@ -13,11 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,29 +58,11 @@ fun PrivacySettings(
             .background(MaterialTheme.colorScheme.background)
             .padding(top = safeDrawing.calculateTopPadding())
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Spacing.xl, vertical = Spacing.sm),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.semantics { contentDescription = "back to notifications" }
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = "data & privacy",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = Spacing.sm)
-            )
-        }
+        ScreenTopBar(
+            title = "data & privacy",
+            onBack = onBack,
+            backContentDescription = "back to settings"
+        )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
 
         LazyColumn(Modifier.fillMaxSize()) {

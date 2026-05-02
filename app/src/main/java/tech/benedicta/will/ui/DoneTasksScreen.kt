@@ -50,33 +50,24 @@ fun DoneTasksScreen(
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = insets.calculateTopPadding() + 8.dp, start = 8.dp, end = Spacing.xl, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                    contentDescription = "back",
-                    tint = WillTextSecondary,
-                    modifier = Modifier.size(24.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = insets.calculateTopPadding())
+    ) {
+        ScreenTopBar(
+            title = "done",
+            onBack = onBack,
+            titleStyle = MaterialTheme.typography.bodyMedium,
+            titleColor = WillTextSecondary,
+            trailing = {
+                Text(
+                    text = "${doneTasks.size}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WillTextTertiary
                 )
             }
-            Text(
-                text = "done",
-                style = MaterialTheme.typography.bodyMedium,
-                color = WillTextSecondary,
-                modifier = Modifier.weight(1f)
-            )
-            Text(
-                text = "${doneTasks.size}",
-                style = MaterialTheme.typography.labelSmall,
-                color = WillTextTertiary
-            )
-        }
+        )
 
         HorizontalDivider(color = WillBorder, thickness = 1.dp)
 

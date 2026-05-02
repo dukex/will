@@ -334,6 +334,7 @@ private fun WillScreen(
         scope.launch {
             currentScreen = Screen.Home
             appDrawerOpen = false
+            onAppSearchQueryChange("")
             if (pinnedAppsVm.isPinned(app.packageName)) {
                 pinnedAppsVm.unpin(app.packageName)
                 snackbarHostState.showSnackbar("Unpinned ${app.name}")

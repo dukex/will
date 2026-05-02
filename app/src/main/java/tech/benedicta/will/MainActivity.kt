@@ -125,8 +125,6 @@ class MainActivity : ComponentActivity() {
                     )
                 )
                 onboardingVm = onboardingViewModel
-                val onboardingDone by app.onboardingRepository.isCompleted()
-                    .collectAsState(initial = false)
                 val onboardingState by onboardingViewModel.state.collectAsState()
 
                 // Gate the launcher on the actual required grants, not just the
@@ -139,7 +137,7 @@ class MainActivity : ComponentActivity() {
                 val needsRequiredGrants =
                     !onboardingState.isDefaultLauncher ||
                     !onboardingState.hasOverlayPermission
-                val firstWalkthroughActive = !onboardingDone && !onboardingState.isComplete
+                val firstWalkthroughActive = !onboardingState.isComplete
 
                 if (needsRequiredGrants || firstWalkthroughActive) {
                     OnboardingScreen(

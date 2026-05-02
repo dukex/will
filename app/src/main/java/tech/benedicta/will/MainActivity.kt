@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.net.toUri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -207,8 +208,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openOverlayPermissionSettings() {
-        val uri = android.net.Uri.parse("package:$packageName")
-        val withPackage = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, uri)
+        val withPackage = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            "package:$packageName".toUri()
+        )
         runCatching {
             systemSettingsLauncher.launch(withPackage)
         }.onFailure {

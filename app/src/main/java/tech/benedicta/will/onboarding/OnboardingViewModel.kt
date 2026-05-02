@@ -20,18 +20,18 @@ class OnboardingViewModel(
     val state: StateFlow<OnboardingState> = _state.asStateFlow()
 
     /**
-     * Re-read the system grants. Call from the host's onResume — the user may
-     * have flipped a toggle in Settings while the onboarding screen was paused.
+     * Re-read the system grants and re-anchor to the first ungranted step.
+     * Idempotent: the activity onResume hook AND the ActivityResultLauncher
+     * callback both fire after a settings round-trip, so this method must
+     * converge regardless of how many times it is called per resume cycle.
      */
     fun refresh() {
         val snapshot = inspector.snapshot()
-        val current = _state.value
-        val refreshed = current.copy(
+        _state.value = _state.value.copy(
             isDefaultLauncher = snapshot.isDefaultLauncher,
             hasOverlayPermission = snapshot.hasOverlayPermission,
             hasNotificationListener = snapshot.hasNotificationListener
-        )
-        _state.value = if (refreshed.isStepSatisfied()) refreshed.next() else refreshed
+        ).advanceToFirstUngranted()
         persistIfDone()
     }
 

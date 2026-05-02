@@ -154,6 +154,45 @@ class OnboardingViewModelTest {
     }
 
     @Test
+    fun `consecutive refreshes do not skip ungranted steps`() = runTest {
+        val inspector = MutablePermissionInspector(default = false, overlay = false, listener = false)
+        val vm = OnboardingViewModel(
+            repository = MemoryOnboardingRepository(),
+            inspector = inspector,
+            dispatcher = testDispatcher
+        )
+
+        // user grants only the default-launcher role and returns;
+        // both onResume and the ActivityResultLauncher fire refresh().
+        inspector.default = true
+        vm.refresh()
+        vm.refresh()
+
+        // overlay is still ungranted, so the flow must hold on Overlay
+        // instead of cascading into Notifications.
+        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
+    }
+
+    @Test
+    fun `refresh skips a step the user already granted out-of-band`() = runTest {
+        // listener was granted from a prior install, and the user grants
+        // overlay during this onboarding run. Refresh should land on Done
+        // instead of forcing the user through the redundant Notifications step.
+        val inspector = MutablePermissionInspector(default = true, overlay = false, listener = true)
+        val vm = OnboardingViewModel(
+            repository = MemoryOnboardingRepository(),
+            inspector = inspector,
+            dispatcher = testDispatcher
+        )
+        assertEquals(OnboardingStep.Overlay, vm.state.value.step)
+
+        inspector.overlay = true
+        vm.refresh()
+
+        assertEquals(OnboardingStep.Done, vm.state.value.step)
+    }
+
+    @Test
     fun `rerun lands on Done when every grant is already in`() = runTest {
         val repo = MemoryOnboardingRepository(initial = true)
         val inspector = MutablePermissionInspector(default = true, overlay = true, listener = true)

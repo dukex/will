@@ -32,6 +32,12 @@ interface TaskDao {
     @Query("UPDATE tasks SET isActive = 1 WHERE id = :taskId")
     suspend fun setActive(taskId: Long)
 
+    @Transaction
+    suspend fun setActiveAtomically(taskId: Long) {
+        clearAllActive()
+        setActive(taskId)
+    }
+
     @Query("DELETE FROM tasks")
     suspend fun deleteAll()
 

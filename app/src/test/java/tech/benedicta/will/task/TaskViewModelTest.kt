@@ -197,6 +197,22 @@ class TaskViewModelTest {
     }
 
     @Test
+    fun `addTaskAndStart does not insert with isActive=true (avoids transient double-active)`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        val viewModel = TaskViewModel(repo, testDispatcher)
+
+        viewModel.addTaskAndStart(
+            Task(title = "X", text = "", sourcePackage = "p", createdAt = 0L)
+        )
+
+        assertEquals(
+            "insertTask must receive isActive=false; setActiveTask owns activation",
+            false,
+            repo.lastInsertedActive
+        )
+    }
+
+    @Test
     fun `addTaskAndStart deactivates any previously active task`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(
@@ -231,10 +247,12 @@ private class FakeViewModelTaskRepository : TaskRepository {
     private val _tasks = MutableStateFlow<List<Task>>(emptyList())
     private var nextId = 1L
     var lastUpdated: Long? = null
+    var lastInsertedActive: Boolean? = null
     val all: List<Task> get() = _tasks.value
 
     override suspend fun insertTask(task: Task): Long {
         val id = nextId++
+        lastInsertedActive = task.isActive
         _tasks.value = _tasks.value + task.copy(id = id)
         return id
     }

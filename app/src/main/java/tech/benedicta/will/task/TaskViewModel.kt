@@ -61,7 +61,7 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) {
             val now = System.currentTimeMillis()
             val id = repository.insertTask(
-                task.copy(isActive = true, startedAt = task.startedAt ?: now)
+                task.copy(startedAt = task.startedAt ?: now)
             )
             repository.setActiveTask(id)
         }

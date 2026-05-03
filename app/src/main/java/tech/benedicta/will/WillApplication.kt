@@ -1,9 +1,18 @@
 package tech.benedicta.will
 
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import tech.benedicta.will.infrastructure.AndroidPermissionInspector
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.infrastructure.SharedPrefsOnboardingRepository
@@ -11,14 +20,20 @@ import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskRepository
 import tech.benedicta.will.infrastructure.room.WillDatabase
 import tech.benedicta.will.launcher.PinnedAppsRepository
+import tech.benedicta.will.lifecycle.TaskLifecycleApplier
+import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.onboarding.OnboardingRepository
 import tech.benedicta.will.onboarding.PermissionInspector
+import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskRepository
 
 data class OverlayEvent(val action: String, val taskId: Long)
 
 class WillApplication : Application() {
+
+    private val applicationScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     val taskRepository: TaskRepository by lazy {
         RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
     }
@@ -35,6 +50,20 @@ class WillApplication : Application() {
         AndroidPermissionInspector(this)
     }
 
+    val activeTaskFlow: StateFlow<Task?> by lazy {
+        taskRepository.getAllTasks()
+            .map { list -> list.firstOrNull { it.isActive } }
+            .stateIn(applicationScope, SharingStarted.Eagerly, null)
+    }
+
+    val taskLifecycleApplier: TaskLifecycleApplier by lazy {
+        TaskLifecycleApplier(
+            coordinator = TaskLifecycleCoordinator(launcherPackage = packageName),
+            activeTaskProvider = { activeTaskFlow.value },
+            repository = taskRepository
+        )
+    }
+
     private val _overlayEvents = MutableSharedFlow<OverlayEvent>(
         extraBufferCapacity = 8,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -43,5 +72,18 @@ class WillApplication : Application() {
 
     fun emitOverlayEvent(event: OverlayEvent) {
         _overlayEvents.tryEmit(event)
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        // Reset the lifecycle coordinator whenever the active task id flips so
+        // the previous task's "last seen foreground" memory does not leak into
+        // measurements for the new task.
+        applicationScope.launch {
+            activeTaskFlow
+                .map { it?.id }
+                .distinctUntilChanged()
+                .collect { taskLifecycleApplier.resetForActiveTaskChange() }
+        }
     }
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Will lifecycle-tracking accessibility service config.
+
+  - Listens only for TYPE_WINDOW_STATE_CHANGED so we know which package
+    is in the foreground.
+  - canRetrieveWindowContent="false" — we never read view hierarchies,
+    only the event's packageName. Minimises the privacy surface.
+  - notificationTimeout=100ms — coalesce rapid foreground flips during
+    transitions.
+-->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="false"
+    android:notificationTimeout="100"
+    android:description="@string/accessibility_service_description" />

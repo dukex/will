@@ -55,22 +55,23 @@ Subtasks:
 
 Will treats the typed text as the task, exactly as the user wrote it.
 
-### US-04: Task Lifecycle Tracking and Completion Detection
-**As a user, I want Will to automatically track when I start and complete tasks so I can measure my productivity accurately.**
+### US-04: Task Lifecycle Tracking ✅ (auto-completion intentionally deferred)
+**As a user, I want Will to automatically track when I start a task and how often I switch context so I can measure my productivity accurately.**
 
 Subtasks:
 - [x] Add `startedAt`, `completedAt`, `contextSwitchCount`, `status` fields on Task/TaskEntity
 - [x] Provide visual feedback on task status (`TaskStatusIndicator` — pending / in-progress / done)
 - [x] Allow manual task completion marking (checkbox in TaskFeed; overlay actions)
 - [x] Show lifecycle context in `TaskActionSheet` (state-aware copy and actions)
-- [ ] Implement startedAt timestamp when user engages with a task (currently only via overlay activation — not via app launch detection)
-- [ ] Create AccessibilityService to monitor app usage
-- [ ] Detect when user switches between apps (context switching)
-- [ ] Increment contextSwitchCount for each app transition
-- [ ] Identify task completion signals in third-party apps (e.g., "Sent", "Success" buttons)
-- [ ] Automatically set completedAt when task completion is detected
-- [ ] Handle cases where automatic detection fails
-- [ ] Implement task expiration/stale task handling
+- [x] Implement startedAt timestamp when user engages with a task — set by `TaskViewModel.setActiveTask` and reaffirmed by the AccessibilityService when the source app surfaces; idempotent via `markStartedIfNeeded`
+- [x] Create AccessibilityService to monitor app usage (`WillAccessibilityService` + `accessibility_service_config.xml`, opt-in under system Accessibility settings, exposes only `event.packageName`)
+- [x] Detect when user switches between apps (`TaskLifecycleCoordinator` + `TaskLifecycleApplier`, eleven unit tests cover the rule matrix)
+- [x] Increment contextSwitchCount for each app transition — handled by the coordinator/applier pair against `TaskRepository.incrementContextSwitch`
+- [x] Settings entry to enable lifecycle tracking — `SettingsScreen` row reflects `PermissionInspector.hasAccessibilityService` and opens `Settings.ACTION_ACCESSIBILITY_SETTINGS`
+- [ ] ~~Identify task completion signals in third-party apps~~ → out of scope. Reading window content per-app would require `canRetrieveWindowContent=true`, which expands the privacy surface beyond what the brand promise allows. Manual completion via the checkbox / overlay action remains the supported path.
+- [ ] ~~Automatically set completedAt~~ → out of scope, see above.
+- [ ] ~~Handle cases where automatic detection fails~~ → moot once auto-completion is out of scope.
+- [ ] Implement task expiration / stale-task handling — deferred to post-MVP; no clear UX motivation yet.
 
 ### US-05: Productivity Metrics Dashboard
 **As a user, I want to see visualizations of my task completion patterns so I can understand and improve my productivity.**

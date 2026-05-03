@@ -48,7 +48,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-02: Notification Capture | ✅ done | NotificationListenerService → Task → Room; PendingIntent fired on tap; removal synced via NotificationKeyTracker; per-app filter moved to US-08 |
 | US-Pin-01: Pin up to 5 apps | ✅ done | long-press in app drawer toggles pin; pinned apps render as the header of TaskFeed's `LazyColumn` so they share the scroll with tasks; persisted via SharedPreferences |
 | US-03: Manual Task Creation | ✅ done | text input via `IntentInputSheet` creates a Task with the typed text. |
-| US-04: Lifecycle Tracking | 🟡 partial | Task fields (`startedAt`/`completedAt`/`contextSwitchCount`/`status`) + `TaskStatusIndicator` + manual completion done; AccessibilityService for auto-detection pending |
+| US-04: Lifecycle Tracking | ✅ done (auto-completion deferred) | Task fields, `TaskStatusIndicator`, manual completion, `WillAccessibilityService` + `TaskLifecycleCoordinator`/`Applier` set `startedAt` on first source-app surface and increment `contextSwitchCount` on every non-launcher / non-source jump. Per-app window-content scraping for auto-completion is out of scope (privacy cost). |
 | US-05: Focus Dashboard | 🟡 partial | `FocusDashboard` + `FocusDashboardViewModel` (focus score, time-on-task bar chart, context switches — today only); date-range filtering and trends pending |
 | US-06: Reactive Feed + Deep Linking | 🟡 partial | StateFlow feed, lifecycle ordering, PendingIntent deep linking shipped; swipe actions, search, deep-link feedback pending |
 | US-07: Privacy-First | 🟡 partial | `PrivacySettings` + delete-all + permissions rationale shipped; selective deletion and accessibility on-device guarantees still to enforce |

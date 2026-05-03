@@ -27,6 +27,19 @@ class AndroidPermissionInspector(private val context: Context) : PermissionInspe
             .getEnabledListenerPackages(context)
             .contains(context.packageName)
 
+    override fun hasAccessibilityService(): Boolean {
+        val enabled = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        ) ?: return false
+        // Format: "package/full.qualified.ServiceName:another/...". We match
+        // the prefix against our package + service class so a partial pkg
+        // collision does not produce a false positive.
+        val target = "${context.packageName}/" +
+            "tech.benedicta.will.lifecycle.WillAccessibilityService"
+        return enabled.split(':').any { it == target }
+    }
+
     private fun resolveLauncherByPackageManager(): Boolean {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val resolved = context.packageManager.resolveActivity(intent, 0) ?: return false

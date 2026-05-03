@@ -24,7 +24,14 @@ class TaskViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     fun setActiveTask(task: Task) {
-        viewModelScope.launch(dispatcher) { repository.setActiveTask(task.id) }
+        viewModelScope.launch(dispatcher) {
+            repository.setActiveTask(task.id)
+            // Capture the moment of engagement up-front so time-on-task is
+            // recorded even when the user does not have the optional
+            // AccessibilityService enabled. Idempotent — the service-driven
+            // path also calls this and the second call is a no-op.
+            repository.markStartedIfNeeded(task.id, System.currentTimeMillis())
+        }
     }
 
     fun handleOverlayAction(action: String, taskId: Long) {

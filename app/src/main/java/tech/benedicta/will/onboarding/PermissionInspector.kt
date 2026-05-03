@@ -11,6 +11,13 @@ interface PermissionInspector {
     fun hasOverlayPermission(): Boolean
     fun hasNotificationListener(): Boolean
 
+    /**
+     * Whether Will's optional `WillAccessibilityService` is enabled by the
+     * user. Used to render a status row in settings; not required for the
+     * launcher to work, so it is not part of the onboarding gate.
+     */
+    fun hasAccessibilityService(): Boolean = false
+
     fun snapshot(): OnboardingState = OnboardingState(
         isDefaultLauncher = isDefaultLauncher(),
         hasOverlayPermission = hasOverlayPermission(),

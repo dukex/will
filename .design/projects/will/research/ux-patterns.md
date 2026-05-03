@@ -61,14 +61,6 @@ Pattern: `ModalBottomSheet` with `skipPartiallyExpanded = false` so the sheet st
 
 Source: [Android Bottom Sheets docs](https://developer.android.com/develop/ui/compose/components/bottom-sheets)
 
-### NLP state feedback inside the sheet
-After user submits text, the sheet should not dismiss immediately. It transitions through states inline:
-1. `idle` — BasicTextField focused
-2. `processing` — field disabled, animated label "processing..." in Geist Mono below field
-3. `suggestion` — action chip(s) appear below field showing mapped intent
-
-This matches the pattern from Google Assistant's inline suggestion pattern: show suggestions in-context, don't navigate away.
-
 ### Sheet dismiss behavior
 `onDismissRequest` must set the boolean state to false. Use `sheetState.hide().invokeOnCompletion { if (!sheetState.isVisible) showSheet = false }` to avoid the sheet being removed from composition mid-animation.
 

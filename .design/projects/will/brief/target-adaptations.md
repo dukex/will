@@ -47,8 +47,6 @@ These are semantic reads from existing tokens — no new color values needed.
 
 - Use `ModalBottomSheet` — `WillShapes.large` (8dp) applied automatically via theme
 - `BasicTextField` with `WillTextPrimary` cursor, `WillBorder` bottom-only stroke (not box border)
-- Mic icon button: `IconButton` wrapped in 48dp touch target, `WillTextSecondary` tint when idle, `WillAccent` when listening
-- NLP state indicator: `labelSmall` (GeistMono) row below field — "Analysing…" / "→ Open WhatsApp" / ""
 - → Brand ref: `.design/branding/will/patterns/will.yml` (patterns.input, patterns.bottom-sheet)
 
 ### FocusDashboard — new screen

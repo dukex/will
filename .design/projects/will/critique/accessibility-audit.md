@@ -122,7 +122,7 @@
 | Check | Status | Notes |
 |-------|--------|-------|
 | Name, role, value available for all UI components | PASS | All interactive elements have `contentDescription`, `role`, or are wrapped in `semantics` blocks as specified per-screen. |
-| Status messages via live regions | PARTIAL | The "history cleared" message in Screen 06 requires `announceForAccessibility()` — specified in the design. The NlpStateRow state changes should also use `liveRegion = LiveRegionMode.Polite` to announce to TalkBack without moving focus. Not specified in Screen 03 design. |
+| Status messages via live regions | PARTIAL | The "history cleared" message in Screen 06 requires `announceForAccessibility()` — specified in the design. |
 
 ---
 
@@ -179,22 +179,13 @@
 **WCAG:** 1.4.3 Contrast (Minimum) — AA
 **Screens affected:** [HomeScreen](../design/screen-01-home-screen.md) (TaskStatusIndicator dot placeholder rendering), [IntentInputSheet](../design/screen-03-intent-input-sheet.md) (BasicTextField placeholder `#505050` on `#161616`), [FocusDashboard](../design/screen-05-focus-dashboard.md) (section labels in WillTextTertiary at `labelSmall` 11sp).
 
+
+
 `#505050` on `#000000` = 3.10:1 — meets AA for large text (≥ 18sp regular or ≥ 14sp bold) but fails for normal text at 11–13sp.
 
 Critical usage: BasicTextField placeholder `#505050` on `#161616` (IntentInputSheet) = ~2.6:1 — fails even large text AA.
 
 **Remediation:** For placeholder text in IntentInputSheet: change placeholder color to `#888888` (WillTextSecondary, 4.61:1 on `#161616` ✓ AA). Update the `decorationBox` placeholder `Text` to use `WillTextSecondary` not `WillTextTertiary`. For section headers at 11sp in WillTextTertiary: change to `WillTextSecondary (#888888)` at `labelSmall` size, or increase size to `type-md` (13sp, FontWeight.Medium) to meet large text threshold.
-
----
-
-### A-02 — Missing live region announcements on NlpStateRow [MAJOR]
-
-**WCAG:** 4.1.3 Status Messages — AA
-**Screen affected:** [IntentInputSheet](../design/screen-03-intent-input-sheet.md)
-
-The NlpStateRow transitions from idle → "processing..." → "→ open slack · reply to marcos" without announcing the state change to TalkBack. A user with a screen reader will type text, hear nothing, and have no signal that an NLP suggestion appeared.
-
-**Remediation:** Add `Modifier.semantics { liveRegion = LiveRegionMode.Polite }` to the NlpStateRow `Text` composable. When the content changes, TalkBack will announce the new text without moving focus. Set `contentDescription` dynamically: `""` when idle, `"processing"` when processing, `"suggested action: {text}"` when suggestion visible.
 
 ---
 
@@ -215,22 +206,19 @@ The design correctly specifies `customActions` for TalkBack (mark done, delete).
 |----------|------|------|-----|
 | Perceivable | 9 | 1 (A-01 contrast) | 1 |
 | Operable | 11 | 0 | 1 |
-| Understandable | 6 | 1 (A-02 live regions) | 1 |
+| Understandable | 6 | 0 | 1 |
 | Robust | 3 | 0 | 0 |
 | Mobile | 4 | 0 | 1 |
 | Cognitive | 5 | 0 | 0 |
-| **Total** | **38** | **2** | **4** |
+| **Total** | **38** | **1** | **4** |
 
-**Overall conformance level:** Conditional AA — two issues require remediation before claiming WCAG 2.2 AA compliance.
+**Overall conformance level:** Conditional AA — one issue requires remediation before claiming WCAG 2.2 AA compliance.
 - A-01 (contrast) is Critical — affects all users with visual impairment and baseline readability.
-- A-02 (live regions) is Major — affects screen reader users who are using IntentInputSheet.
 
 ---
 
 ## Accessibility Statement Draft
 
 > Will is designed to work with Android accessibility services, including TalkBack. All task actions are accessible via custom accessibility actions in the TalkBack menu without requiring swipe gestures. All text meets WCAG 2.2 AA contrast requirements. Touch targets are a minimum of 48dp on all interactive elements.
->
-> Known limitations: NLP suggestion state changes in the task creation sheet do not currently announce to TalkBack. This will be addressed in an upcoming update.
 >
 > Will uses on-device processing only. No data is shared with external services.

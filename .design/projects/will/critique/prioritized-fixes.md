@@ -45,15 +45,6 @@
 
 ---
 
-### I-04 — NLP suggestion is informational only — no tap action
-
-**Screen:** [IntentInputSheet](../design/screen-03-intent-input-sheet.md)
-**Problem:** The NlpStateRow shows `"→ open slack · reply to marcos"` but the user cannot tap it to adopt the suggestion. The typed text and the suggestion remain separate. This misses the efficiency benefit of the NLP feature.
-**Fix:** Make the NlpStateRow tappable. On tap: replace the `BasicTextField` content with the NLP suggestion text. Add `Modifier.clickable` with `flat-press` effect and update `contentDescription` to `"tap to use suggested action: {suggestion text}"`. This is a design addition, not a constraint violation — tapping a suggestion is an interaction, not decoration.
-**Why important:** If the suggestion cannot be adopted, the NLP feature is a display-only element — it uses screen real estate without providing efficiency. The research specifically recommends NLP as an efficiency tool (Recommendations → Adopt → Regex pipeline).
-
----
-
 ### I-05 — NotificationFilterSettings has no search / filter for long app lists
 
 **Screen:** [NotificationFilterSettings](../design/screen-04-notification-filter-settings.md)

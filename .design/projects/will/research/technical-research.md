@@ -171,27 +171,3 @@ val tasks by viewModel.tasks.collectAsStateWithLifecycle()
 **Will-specific note:** The existing `TaskViewModel` already uses this pattern. For US-03 (IntentInputSheet creating tasks), the new task will appear in the feed reactively without any additional wiring — Room emits a new Flow value on insert.
 
 Source: [Compose UI state with Flow — valueof.io](https://www.valueof.io/blog/compose-ui-state-flow-offline-first-repository), [StateFlow vs MutableState — ProAndroidDev](https://proandroiddev.com/bridging-the-gap-between-jetpack-compose-state-and-stateflow-for-reactive-ui-163efeb1d0d9)
-
----
-
-## ML Kit Entity Extraction vs Regex NLP
-
-**ML Kit Entity Extraction:**
-- SDK: `com.google.mlkit:entity-extraction`
-- Model download: ~5.6MB, on-demand, stored on device after first download
-- Supported entity types: address, date/time, email, flight number, IBAN, ISBN, money, payment card, phone, tracking number, URL
-- API level minimum: 23 (Will's minSdk is 24 — compatible)
-- Status: **beta** — not subject to SLA or deprecation policy, may break
-
-**Regex / rule-based NLP:**
-- Zero download size, zero latency, fully deterministic
-- Must be hand-crafted for each intent type (phone numbers, app names, contacts)
-- Handles Will-specific patterns that ML Kit doesn't: "respond to [name]", "pay [amount] for [app]"
-- No machine learning — won't handle paraphrasing or natural variation
-
-**Decision point for Will MVP:**
-ML Kit handles dates, money, and phone numbers well out of the box, but Will's primary task intents ("message João", "pay the bill") are outside the 11 supported entity types. ML Kit entity extraction doesn't do intent classification — it annotates entities, not actions.
-
-For MVP: regex pipeline for intent classification, ML Kit for entity enrichment (dates, amounts) if needed. The regex pipeline is faster to build and produces predictable, debuggable results. ML Kit can be layered in later for richer entity resolution.
-
-Source: [ML Kit Entity Extraction Android](https://developers.google.com/ml-kit/language/entity-extraction/android), [ProAndroidDev ML Kit entity extraction](https://proandroiddev.com/entity-extraction-using-googles-ml-kit-on-android-71e3b9ec2b44)

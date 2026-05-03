@@ -46,20 +46,14 @@ Subtasks:
 - [x] Handle notification removal/updates from system
 - [ ] Provide settings to filter notifications by app or priority → moved to US-08
 
-### US-03: Active Intent Processing via Text Input
-**As a user, I want to create tasks by typing commands so I can quickly capture intentions without navigating apps.**
+### US-03: Manual Task Creation via Text Input ✅
+**As a user, I want to create tasks by typing them so I can capture intentions without navigating apps.**
 
 Subtasks:
-- [x] Implement text input field for manual command entry (`IntentInputSheet`)
-- [x] For internal actions: create reminder/task in Will
-- [ ] Display processing feedback during NLP analysis (idle/processing/suggestion states in sheet)
-- [ ] Create NLP pipeline for intent classification
-- [ ] Implement tokenization and Named Entity Recognition (NER)
-- [ ] Map recognized intents to appropriate actions (internal/external)
-- [ ] For external actions: generate appropriate deep links or intents
-- [ ] Show suggested actions based on recognized intent
-- [ ] Allow editing/correcting recognized commands
-- [ ] ~~Learn from user corrections~~ → out of MVP per `.design/projects/will/brief/scope.md`
+- [x] Implement text input field for manual task entry (`IntentInputSheet`)
+- [x] Store the typed text as a Task in Will
+
+Will treats the typed text as the task, exactly as the user wrote it.
 
 ### US-04: Task Lifecycle Tracking and Completion Detection
 **As a user, I want Will to automatically track when I start and complete tasks so I can measure my productivity accurately.**
@@ -118,7 +112,6 @@ Subtasks:
 - [x] Implement transparent privacy settings explaining data usage (`PrivacySettings`)
 - [x] Provide option to delete all task history (with confirm-then-execute pattern)
 - [x] Provide clear explanation of required permissions and why
-- [ ] Ensure all NLP processing happens on-device (no network calls) → enforce when US-03 NLP lands
 - [ ] Ensure accessibility service data is not logged or transmitted → enforce when US-04 AccessibilityService lands
 - [ ] Allow selective deletion of tasks by time range or app
 - [ ] ~~Data encryption~~ → out of MVP per scope.md

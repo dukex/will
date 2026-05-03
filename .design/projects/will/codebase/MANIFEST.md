@@ -49,7 +49,6 @@ See `.design/projects/will/review/issues.md` for full detail.
 |----|----------|---------|
 | R-01 | critical | SectionHeader contrast fails WCAG AA |
 | R-02 | critical | IntentInputSheet placeholder contrast fails WCAG AA |
-| R-03 | critical | NlpStateRow missing liveRegion (WCAG 4.1.3) |
 | R-04 | critical | "history cleared" missing liveRegion (WCAG 4.1.3) |
 | R-05 | important | TaskItem missing mergeDescendants + customActions |
 | R-06 | minor | bodySmall uses GeistSans instead of GeistMono |

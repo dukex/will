@@ -101,16 +101,6 @@ Add a Room migration for these nullable columns: `ALTER TABLE tasks ADD COLUMN s
 
 ---
 
-## ML Kit On-Device Entity Extraction
-
-**URL:** https://developers.google.com/ml-kit/language/entity-extraction/android
-
-**Key takeaway:** `~5.6MB` model download on first use. Supported entities include date/time, money, phone, email, address, URL. The API is in beta — no SLA. `downloadModelIfNeeded()` must be called before `annotate()`. Requires API level 23+.
-
-**Will application:** Not recommended for MVP. The 5.6MB download impacts cold start UX, the beta status introduces instability risk, and the supported entity types don't cover Will's primary intent patterns ("respond to X", "open Y app"). Use regex pipeline for MVP, add ML Kit as an enhancement layer in a later sprint if precision on date/money entities proves insufficient.
-
----
-
 ## Android 48dp Touch Target Specification
 
 **URL:** https://m3.material.io/foundations/accessible-design/accessibility-basics

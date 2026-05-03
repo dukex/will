@@ -25,12 +25,9 @@ O conceito central do **Will** inverte a hierarquia tradicional. Em vez de ser u
 
 Através do NotificationListenerService, as notificações são interceptadas e desserializadas . O lançador extrai metadados como título, texto e, fundamentalmente, as PendingIntents associadas. Isso permite que um alerta de mensagem se transforme na tarefa "Responder Contato", mantendo o gatilho de execução pronto no feed principal sem que o usuário precise navegar pela gaveta de notificações .
 
-### **2\. Mapeamento de Intenções Ativas via NLP**
+### **2\. Captura Manual de Intenções Ativas**
 
-Para intenções criadas ativamente (ex: "pagar boleto", "mandar mensagem para minha mãe"), o sistema utiliza processamento de linguagem natural (NLP) local . O processo envolve:
-
-* **Tokenização e NER (Named Entity Recognition):** Identificação de entidades como nomes de contatos, valores monetários ou horários .  
-* **Mapeamento Semântico:** Classificação probabilística para decidir se o comando exige uma ação interna (lembrete) ou externa (despacho para outro app via deep link) .
+Para intenções criadas ativamente (ex: "pagar boleto", "responder mensagem"), o usuário digita o título da Task em uma bottom sheet e a tarefa é inserida diretamente no feed. Não há processamento automático de linguagem natural — a intenção é tratada exatamente como o usuário a escreveu, mantendo o sistema previsível, auditável e totalmente *on-device*.
 
 ## **Rastreabilidade Total: O Laboratório de Performance Pessoal**
 

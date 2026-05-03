@@ -15,7 +15,7 @@ Screen 02 (TaskActionSheet) and Screen 06 (PrivacySettings) both implement confi
 
 ### 3. Geist Mono as semantic signal — execution is exact
 
-The Mono/Sans split is applied correctly on every screen without exception: timestamps, source labels, package names, NLP state, chart axis labels — all Mono. Task titles, action labels, section headers, explanatory copy — all Sans. This is a structural decision that makes the product legible to the target persona the same way syntax highlighting makes code legible to a developer. It is the design's most architecturally interesting choice.
+The Mono/Sans split is applied correctly on every screen without exception: timestamps, source labels, package names, chart axis labels — all Mono. Task titles, action labels, section headers, explanatory copy — all Sans. This is a structural decision that makes the product legible to the target persona the same way syntax highlighting makes code legible to a developer. It is the design's most architecturally interesting choice.
 
 ### 4. Empty states
 

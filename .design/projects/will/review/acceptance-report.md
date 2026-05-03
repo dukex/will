@@ -16,7 +16,7 @@ All six screens are implemented and navigable. Brand tokens are applied consiste
 |---|--------|------|--------|-------|
 | 01 | HomeScreen | `ui/TaskFeed.kt` + `MainActivity.kt` | pass | Sections, swipe actions, snackbar undo, icon nav all present |
 | 02 | TaskActionSheet | `ui/TaskActionSheet.kt` | pass | Lifecycle context line, status-based actions, confirm-delete implemented |
-| 03 | IntentInputSheet | `ui/IntentInputSheet.kt` | pass | BasicTextField, mic stub, NLP debounce, add/cancel rows present |
+| 03 | IntentInputSheet | `ui/IntentInputSheet.kt` | pass | BasicTextField, add/cancel rows present |
 | 04 | NotificationFilterSettings | `ui/NotificationFilterSettings.kt` | pass | AppToggleRow with Switch overrides, privacy navigation, empty state |
 | 05 | FocusDashboard | `ui/FocusDashboard.kt` | pass | Canvas bar chart, focus score, context switch count, empty state |
 | 06 | PrivacySettings | `ui/PrivacySettings.kt` | pass | Permissions list, confirm-delete 1.5s pattern, "history cleared" state |
@@ -38,7 +38,7 @@ All six screens are implemented and navigable. Brand tokens are applied consiste
 | `WillSuccess` | `#4CAF74` | Swipe-done background, task done indicator | pass |
 | `WillTextPrimary` | `#F0F0F0` | `darkColorScheme(onBackground/onSurface)` | pass |
 | `WillTextSecondary` | `#888888` | `darkColorScheme(onSurfaceVariant)` — metadata, top-bar date | pass |
-| `WillTextTertiary` | `#505050` | SectionHeader, cancel row, NLP "processing" state | **issue: contrast** |
+| `WillTextTertiary` | `#505050` | SectionHeader, cancel row | **issue: contrast** |
 
 ### Typography Tokens
 
@@ -87,7 +87,7 @@ All six screens are implemented and navigable. Brand tokens are applied consiste
 | TaskStatusIndicator | `ui/TaskStatusIndicator.kt` | yes | 8dp canvas dot, animated color |
 | SectionHeader | `ui/SectionHeader.kt` | yes | labelSmall + `heading()` semantics |
 | TaskActionSheet | `ui/TaskActionSheet.kt` | yes | Lifecycle line, status-aware actions |
-| IntentInputSheet | `ui/IntentInputSheet.kt` | yes | BasicTextField, NLP, mic stub |
+| IntentInputSheet | `ui/IntentInputSheet.kt` | yes | BasicTextField for typed task creation |
 | NotificationFilterSettings | `ui/NotificationFilterSettings.kt` | yes | AppToggleRow, privacy link |
 | AppToggleRow | `ui/NotificationFilterSettings.kt` (inline) | yes | Switch with brand colors |
 | FocusDashboard | `ui/FocusDashboard.kt` | yes | Canvas bar chart, focus score |
@@ -111,7 +111,6 @@ All six screens are implemented and navigable. Brand tokens are applied consiste
 |-----------|--------|-------|
 | WCAG 1.4.3 Contrast (Normal text) | **fail** | `WillTextTertiary` (#505050) used at 11sp in `SectionHeader` — 3.10:1 on `#000000`, below 4.5:1 AA threshold. Affects all 6 screens. Issue AF-02 from critique not resolved. |
 | WCAG 1.4.3 Contrast (IntentInputSheet placeholder) | **fail** | Placeholder `WillTextTertiary` (#505050) on `WillSurface2` (#161616) = ~2.6:1. Below AA. Issue AF-01 from critique not resolved. (`IntentInputSheet.kt` line 126) |
-| WCAG 4.1.3 Status Messages — NlpStateRow | **fail** | No `liveRegion` on NlpStateRow text. State transitions (processing → suggestion) are invisible to TalkBack. Issue AF-03 from critique not resolved. |
 | WCAG 4.1.3 Status Messages — "history cleared" | **fail** | No `liveRegion` on "history cleared" text in `PrivacySettings.kt`. Issue AF-04 from critique not resolved. |
 | WCAG 1.3.1 Info and Relationships — section headings | pass | `SectionHeader` applies `semantics { heading() }` |
 | WCAG 1.3.1 — TaskItem merged semantics | **partial** | `combinedClickable` used but no `mergeDescendants = true` / `customActions` on TaskItem Row. Design spec required these for custom TalkBack actions (mark done, delete). |

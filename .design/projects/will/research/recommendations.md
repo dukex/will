@@ -10,11 +10,6 @@ The Material3 `SwipeToDismissBox` is the correct component. The 40% width thresh
 
 See: [reference-specs.md — SwipeToDismissBox API](./reference-specs.md)
 
-### Regex pipeline for MVP NLP
-ML Kit EntityExtraction adds 5.6MB download, is in beta, and does not cover Will's primary intent categories (respond, pay, open, call). A hand-crafted regex pipeline over the transcript is faster to build, fully deterministic, and zero-cost at runtime. Precision improves per intent added. ML Kit can be layered later for date/money entity enrichment.
-
-See: [technical-research.md — ML Kit vs Regex](./technical-research.md)
-
 ### Custom Canvas bar chart (no library)
 For a single bar chart showing time-on-task, there is no reason to add a charting library dependency. The `Canvas` composable with `drawRect()` for bars and `nativeCanvas.drawText()` for labels is sufficient and takes under 50 lines. Use `drawWithCache` to avoid per-frame object allocation. Libraries add 200KB–500KB and introduce their own theming systems that conflict with Will's OLED black aesthetic.
 
@@ -55,11 +50,6 @@ See: [competitor-ux.md — Niagara Launcher](./competitor-ux.md)
 
 ## Avoid
 
-### ML Kit EntityExtraction for the MVP sprint
-Beta API, 5.6MB model download, poor coverage of Will's intent space. The download happens on first use — a new user would experience a visible delay. Avoid until the regex pipeline is proven insufficient for date and money entity resolution.
-
-See: [technical-research.md — ML Kit vs Regex](./technical-research.md), [reference-specs.md — ML Kit](./reference-specs.md)
-
 ### Charting libraries (Vico, MPAndroidChart, any third party)
 All charting libraries for Android are designed for light-background, Material-primary-color aesthetics. Overriding them to produce OLED-black, accent-only bars requires fighting the library's theming system. The effort exceeds writing a custom Canvas composable from scratch. For Will's single bar chart use case, libraries are over-engineered.
 
@@ -71,7 +61,7 @@ See: [technical-research.md — AccessibilityService Architecture](./technical-r
 ### Wellness language and engagement mechanics in copy
 Minimalist Phone's wellness framing (screen time guilt, app blockers) and typical productivity app mechanics (streaks, badges, congratulatory empty states) are both explicitly out of scope per STYLE.md. Any copy that congratulates, motivates, or gamifies should be rejected. The interface is a neutral execution layer.
 
-See: [content-strategy.md — Voice Adaptation Principles](./content-strategy.md)
+See: [content-strategy.md](./content-strategy.md)
 
 ### Two-tap navigation to reach NotificationFilterSettings
 Settings must be reachable in one action from the home screen. Any pattern requiring: home screen → some intermediate screen → settings is too deep for a launcher. The settings icon or entry point must be directly on the top bar or accessible via a single long-press gesture.

@@ -34,7 +34,7 @@ Checking all six screens against STYLE.md `Never:` and `Always:` rules.
 - Rounded corners on task cards — 0dp confirmed
 - Accent on non-interactive elements — only interactive
 - Font weight — max 500 throughout
-- Geist Mono usage — timestamps, source labels, package names, NLP state only
+- Geist Mono usage — timestamps, source labels, package names only
 - Engagement mechanics — absent across all screens
 - Wellness language — absent
 - Exclamation marks — absent
@@ -86,13 +86,13 @@ Density: 8/10 — Tight line heights (1.45–1.50), 8dp gaps, 1dp dividers. Conf
 
 ### 1. Visibility of system status — 4/5
 
-Task lifecycle states (pending/in_progress/done) are communicated via colored dot (TaskStatusIndicator) with `animateColorAsState`. Swipe backgrounds lerp to WillSuccess/WillDestructive as the user drags. NLP processing state in IntentInputSheet shows "processing..." then suggestion.
+Task lifecycle states (pending/in_progress/done) are communicated via colored dot (TaskStatusIndicator) with `animateColorAsState`. Swipe backgrounds lerp to WillSuccess/WillDestructive as the user drags.
 
 **Deduction:** Loading state on initial Room query is "show nothing" — a blank screen for up to 100ms. This is defensible (the design rationale is sound and the interval is short), but it creates a moment where the user has no system status signal. Not critical, but noted.
 
 ### 2. Match between system and real world — 5/5
 
-Terminology is precise and non-jargon: "mark done," "pause," "delete," "focus score." The NLP suggestion format ("→ open slack · reply to marcos") mirrors how a developer would think about the action. Package names in FilterSettings (com.slack.android) are expected by the target persona. Timestamp format (14:32, "2m ago") matches Android conventions.
+Terminology is precise and non-jargon: "mark done," "pause," "delete," "focus score." Package names in FilterSettings (com.slack.android) are expected by the target persona. Timestamp format (14:32, "2m ago") matches Android conventions.
 
 ### 3. User control and freedom — 3/5
 

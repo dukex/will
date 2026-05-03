@@ -90,53 +90,7 @@ Update the design specs in screens 01, 04, and 05 to reflect this change. Update
 
 ## Major Violations
 
-### AF-03 — NlpStateRow state changes not announced to TalkBack
 
-| Field | Value |
-|-------|-------|
-| **Issue** | When NlpStateRow transitions from idle → "processing..." → suggestion, TalkBack users receive no announcement. Focus does not move to the row, and no live region is specified. |
-| **Severity** | Major |
-| **WCAG Criterion** | 4.1.3 Status Messages — Level AA |
-| **Affected Screen** | [IntentInputSheet](../design/screen-03-intent-input-sheet.md) |
-
-**Remediation:**
-
-Add `liveRegion = LiveRegionMode.Polite` to the NlpStateRow `Text` and ensure `contentDescription` updates dynamically:
-
-```kotlin
-@Composable
-fun NlpStateRow(state: NlpState) {
-    val description = when (state) {
-        NlpState.Idle -> ""
-        NlpState.Processing -> "processing"
-        is NlpState.Suggestion -> "suggested action: ${state.text}"
-    }
-    
-    Text(
-        text = when (state) {
-            NlpState.Idle -> ""
-            NlpState.Processing -> "processing..."
-            is NlpState.Suggestion -> "→ ${state.text}"
-        },
-        style = MaterialTheme.typography.labelSmall,
-        color = when (state) {
-            NlpState.Idle -> Color.Transparent
-            NlpState.Processing -> WillTextTertiary
-            is NlpState.Suggestion -> WillTextSecondary
-        },
-        modifier = Modifier
-            .animateContentSize()
-            .semantics {
-                liveRegion = LiveRegionMode.Polite
-                contentDescription = description
-            }
-    )
-}
-```
-
-Update [screen-03-intent-input-sheet.md](../design/screen-03-intent-input-sheet.md) Accessibility section to include the `liveRegion` specification.
-
----
 
 ### AF-04 — "History cleared" feedback not announced to TalkBack
 
@@ -190,4 +144,3 @@ Update the design spec in [screen-06-privacy-settings.md](../design/screen-06-pr
 ## Cross-references
 
 - Priority alignment with [prioritized-fixes.md](./prioritized-fixes.md): AF-01 and AF-02 are not listed as Critical in the design critique (they are brand-detail issues there), but they are accessibility-Critical — fix before build regardless of design critique priority.
-- AF-03 (NlpStateRow live region) — affects the IntentInputSheet accessibility model.

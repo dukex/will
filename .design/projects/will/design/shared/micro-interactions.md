@@ -28,9 +28,6 @@ Transition timing: `100ms ease-out` on all state changes. Responsive, not animat
 | Press down on HomeTopBar icon | Icon | `flat-press` — opacity 0.6 | 100ms ease-out | `IconButton` default ripple (no-bounds) |
 | Press down on action button (TaskActionSheet) | Button | `flat-press` — opacity 0.65 | 100ms ease-out | `Modifier.clickable` |
 | Delete first tap → confirm state | Delete button text | `opacity-dim` — "delete?" label replaces "delete", `WillDestructive` | Instant | State toggle |
-| Mic button: idle → listening | Mic icon tint | `WillTextSecondary` → `WillAccent` | 100ms ease-out | `animateColorAsState` |
-| NLP: idle → processing | Label row | "" → "processing..." | Instant, no animation | State change |
-| NLP: processing → suggestion | Label row | "processing..." → "→ {action}" | 100ms ease-out | `animateContentSize()` on the row |
 | Switch toggle (FilterSettings) | Switch track | `uncheckedTrackColor` → `checkedTrackColor` (`WillAccent`) | System-defined | M3 Switch built-in |
 | Screen enter (FilterSettings, Dashboard) | Whole screen | No animation — hard cut | Instant | `ActivityOptions.makeCustomAnimation` with no anim |
 | Sheet open (IntentInputSheet) | Bottom sheet | Slide up from bottom | System M3 ModalBottomSheet | Default |

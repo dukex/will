@@ -42,21 +42,6 @@ Do not add a label like "Open in [AppName]" — the app name is already visible 
 
 ---
 
-## NLP State Labels (IntentInputSheet)
-
-These appear below the BasicTextField in Geist Mono at small size (12sp), WillTextTertiary color.
-
-| State | Label |
-|-------|-------|
-| Idle (keyboard open, no text) | *(empty — no label visible)* |
-| Processing | `processing...` |
-| Suggestion ready | *(label hidden, action chips appear)* |
-| No intent recognized | `not sure what to do with this` |
-
-All in lowercase. Ellipsis ("...") for in-progress states — not animated spinner text. The ellipsis is a typographic convention for "working", not a loader.
-
----
-
 ## Empty States
 
 ### Task feed — first launch, no notifications captured yet

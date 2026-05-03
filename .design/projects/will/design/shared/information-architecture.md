@@ -23,8 +23,7 @@ Will Launcher
 │   └── AppRow (alphabetical)
 │
 ├── IntentInputSheet (bottom sheet — gesture or tap)
-│   ├── BasicTextField (typed input)
-│   └── NLPStateRow (idle / processing / suggestion)
+│   └── BasicTextField (typed input)
 │
 ├── TaskActionSheet (bottom sheet — long-press or overlay)
 │   ├── LifecycleContextLine (timestamp + state label)
@@ -90,8 +89,6 @@ NotificationListenerService
 
 ```
 BasicTextField
-    → IntentInputViewModel (NlpState)
-    → NLP pipeline (regex → action suggestion)
     → TaskViewModel.addTask()
     → Room DB
 ```

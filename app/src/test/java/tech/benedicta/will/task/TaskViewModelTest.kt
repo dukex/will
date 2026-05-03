@@ -128,6 +128,31 @@ class TaskViewModelTest {
     }
 
     @Test
+    fun `handleOverlayAction ACTION_LATER preserves conversationKey for dedup`() = runTest {
+        val repo = FakeViewModelTaskRepository()
+        repo.insertTask(
+            Task(
+                title = "Maria",
+                text = "",
+                sourcePackage = "com.whatsapp",
+                createdAt = 0L,
+                conversationKey = "com.whatsapp:maria"
+            )
+        )
+        val viewModel = TaskViewModel(repo, testDispatcher)
+        val taskId = viewModel.tasks.value[0].id
+
+        viewModel.handleOverlayAction("tech.benedicta.will.TASK_LATER", taskId)
+
+        val task = repo.all.find { it.id == taskId }
+        assertEquals(
+            "Later must keep conversationKey so future messages dedup",
+            "com.whatsapp:maria",
+            task?.conversationKey
+        )
+    }
+
+    @Test
     fun `handleOverlayAction with unknown taskId is a no-op`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))

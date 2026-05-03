@@ -37,7 +37,6 @@ class TaskViewModel(
     fun handleOverlayAction(action: String, taskId: Long) {
         val task = tasks.value.find { it.id == taskId } ?: return
         viewModelScope.launch(dispatcher) {
-            repository.clearConversationKey(taskId)
             when (action) {
                 ACTION_DONE -> repository.updateTask(
                     task.copy(completedAt = System.currentTimeMillis(), isActive = false, conversationKey = null)

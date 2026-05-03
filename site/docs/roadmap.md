@@ -15,7 +15,7 @@ snapshot of what is shipped, what is in flight, and what is intentionally deferr
 
 ## in flight
 
-- **US-03 — voice and text input**: text input through `IntentInputSheet` is shipped. voice (SpeechRecognizer) and the NLP pipeline are pending.
+- **US-03 — text input**: text input through `IntentInputSheet` is shipped. the NLP pipeline that turns free-form input into deep links / actions is pending.
 - **US-04 — lifecycle tracking**: domain fields, manual completion, and `TaskStatusIndicator` are shipped. AccessibilityService for automatic detection is pending.
 - **US-05 — focus dashboard**: today's focus score, time-on-task chart, and context switches are shipped. date-range filtering and trends are pending.
 - **US-06 — reactive feed and deep linking**: StateFlow feed, lifecycle ordering, and deep linking are shipped. swipe actions, search, and deep-link feedback are pending.
@@ -23,6 +23,7 @@ snapshot of what is shipped, what is in flight, and what is intentionally deferr
 
 ## explicitly deferred
 
+- voice / speech-to-text input — out of scope; will not be built. Will is for typing-and-tapping users; speech recognition pulls in cloud-leaning APIs that conflict with the on-device privacy story.
 - light mode — dark only on MVP
 - recent-apps view — the API is restricted on Android 5+
 - notification grouping by source — collapsing already happens by conversation, broader grouping has not earned its complexity yet

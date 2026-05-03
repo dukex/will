@@ -44,7 +44,7 @@ selective deletion (for example, "wipe everything older than 30 days") is on the
 
 the privacy story has gaps that the project is closing:
 
-- on-device guarantees for voice and accessibility-driven features once they ship — neither will be allowed to leave the device
+- on-device guarantees for accessibility-driven features once they ship — they will not be allowed to leave the device
 - explicit user consent dialogs before any feature with broader permission scope is enabled
 
 these are tracked under US-07 in `docs/99-TASKS.md`.

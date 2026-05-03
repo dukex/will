@@ -46,13 +46,12 @@ Subtasks:
 - [x] Handle notification removal/updates from system
 - [ ] Provide settings to filter notifications by app or priority → moved to US-08
 
-### US-03: Active Intent Processing via Voice/Text Input
-**As a user, I want to create tasks by speaking or typing commands so I can quickly capture intentions without navigating apps.**
+### US-03: Active Intent Processing via Text Input
+**As a user, I want to create tasks by typing commands so I can quickly capture intentions without navigating apps.**
 
 Subtasks:
 - [x] Implement text input field for manual command entry (`IntentInputSheet`)
 - [x] For internal actions: create reminder/task in Will
-- [ ] Implement voice input functionality (Speech-to-Text via `SpeechRecognizer`)
 - [ ] Display processing feedback during NLP analysis (idle/processing/suggestion states in sheet)
 - [ ] Create NLP pipeline for intent classification
 - [ ] Implement tokenization and Named Entity Recognition (NER)
@@ -60,6 +59,7 @@ Subtasks:
 - [ ] For external actions: generate appropriate deep links or intents
 - [ ] Show suggested actions based on recognized intent
 - [ ] Allow editing/correcting recognized commands
+- [ ] ~~Voice / Speech-to-Text input~~ → out of scope, will not be built
 - [ ] ~~Learn from user corrections~~ → out of MVP per `.design/projects/will/brief/scope.md`
 
 ### US-04: Task Lifecycle Tracking and Completion Detection

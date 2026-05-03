@@ -23,7 +23,6 @@
 
 | Item | Decision |
 |------|----------|
-| Voice recognition is a stub (toggles UI only) | Accepted — documented in BUILD-LOG.md as deferred to US-03. Not an implementation error. |
 | NLP pipeline is regex-only | Accepted — MVP scope. No ML intent extraction required for this phase. |
 | FocusDashboard bar chart uses `WillAccent` for fill | Accepted — deliberate brand stretch documented in critique P-03. Chart bars are the only color in the chart; visual clarity justifies the exception at MVP. |
 | Snackbar undo re-adds task with new Room ID (PendingIntent association lost) | Accepted — documented in BUILD-LOG.md. Undo path restores data correctly for user experience; PendingIntent is ephemeral by design. |

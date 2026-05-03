@@ -57,13 +57,13 @@ Long-press on a TaskItem opens the `ActiveTaskOverlayService`. This is already i
 ### Input sheet as a drawer, not a dialog
 IntentInputSheet is triggered by a gesture or button from the home screen. It should feel like pulling up a drawer from the floor of the interface, not a dialog that blocks the background.
 
-Pattern: `ModalBottomSheet` with `skipPartiallyExpanded = false` so the sheet starts at a half-expanded state showing just the text field + mic icon. Full expansion on keyboard open.
+Pattern: `ModalBottomSheet` with `skipPartiallyExpanded = false` so the sheet starts at a half-expanded state showing just the text field. Full expansion on keyboard open.
 
 Source: [Android Bottom Sheets docs](https://developer.android.com/develop/ui/compose/components/bottom-sheets)
 
 ### NLP state feedback inside the sheet
-After user submits text or voice, the sheet should not dismiss immediately. It transitions through states inline:
-1. `idle` — BasicTextField focused, mic icon available
+After user submits text, the sheet should not dismiss immediately. It transitions through states inline:
+1. `idle` — BasicTextField focused
 2. `processing` — field disabled, animated label "processing..." in Geist Mono below field
 3. `suggestion` — action chip(s) appear below field showing mapped intent
 

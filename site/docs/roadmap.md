@@ -23,7 +23,6 @@ snapshot of what is shipped, what is in flight, and what is intentionally deferr
 
 ## explicitly deferred
 
-- voice / speech-to-text input — out of scope; will not be built. Will is for typing-and-tapping users; speech recognition pulls in cloud-leaning APIs that conflict with the on-device privacy story.
 - light mode — dark only on MVP
 - recent-apps view — the API is restricted on Android 5+
 - notification grouping by source — collapsing already happens by conversation, broader grouping has not earned its complexity yet

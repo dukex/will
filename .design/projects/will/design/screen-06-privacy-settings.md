@@ -51,9 +51,6 @@ Second-level full-screen destination. Navigated to from NotificationFilterSettin
 │  accessibility service                   │
 │  to detect when tasks are completed      │
 ├──────────────────────────────────────────┤
-│  microphone (optional)                   │
-│  for voice task input                    │
-├──────────────────────────────────────────┤
 │  draw over other apps                    │
 │  for the active task overlay             │
 │                                          │

@@ -1,12 +1,12 @@
 # Screen 03 — IntentInputSheet
 > Phase: design | Project: Will | Generated: 2026-04-16
-> US: US-03 (manual task creation — text + voice)
+> US: US-03 (manual task creation — text)
 
 ---
 
 ## Purpose
 
-Bottom sheet for manual task creation. User types or speaks a task description. NLP pipeline extracts intent and suggests an action. On confirm, task is added to the feed.
+Bottom sheet for manual task creation. User types a task description. NLP pipeline extracts intent and suggests an action. On confirm, task is added to the feed.
 
 ---
 
@@ -25,7 +25,7 @@ Secondary surface over HomeScreen. Opens via tap on add trigger (HomeTopBar or a
 │  what do you need to do?                 │  ← BasicTextField placeholder (bodyMedium, WillTextTertiary)
 │  reply to marcos about deploy_           │  ← typed content (bodyMedium, WillTextPrimary)
 │                                          │
-│  ──────────────────────────────────── ●  │  ← bottom-only 1dp WillBorder stroke + mic IconButton (right)
+│  ────────────────────────────────────    │  ← bottom-only 1dp WillBorder stroke
 │                                          │
 │  → open slack · reply to marcos          │  ← NlpStateRow (labelSmall, GeistMono, WillTextSecondary)
 │                                          │
@@ -47,7 +47,6 @@ Secondary surface over HomeScreen. Opens via tap on add trigger (HomeTopBar or a
 
 - `ModalBottomSheet` (M3, `skipPartiallyExpanded = false`, `shape = WillShapes.large`)
 - `BasicTextField` (not `TextField` — no M3 box decoration)
-- `IconButton` (mic icon, 48dp touch target)
 - `NlpStateRow` composable (inline, text label)
 - `HorizontalDivider(color = WillBorder)`
 - Background: `WillSurface2` (`#161616`)
@@ -97,42 +96,13 @@ NLP suggestion is informational only — the user adds the task as typed, not as
 
 ---
 
-## Mic button
-
-`IconButton` (48dp built-in touch target).
-
-| Voice state | Icon | Tint |
-|-------------|------|------|
-| idle | `Icons.Outlined.Mic` | WillTextSecondary |
-| listening | `Icons.Outlined.Mic` | WillAccent |
-| processing | `Icons.Outlined.Mic` (disabled) | WillTextTertiary |
-
-When listening: `animateColorAsState(WillAccent, tween(100))` on icon tint. No pulse animation — motion intensity is 2/10.
-
-**Tap mic:**
-1. Request `RECORD_AUDIO` permission if not granted (system dialog)
-2. `SpeechRecognizer.startListening()` via ViewModel
-3. On result: populate `BasicTextField` with transcript, trigger NLP pipeline
-4. NLP runs synchronously on main thread (regex, < 1ms)
-
----
-
 ## States
 
 ### Default — idle, empty field
-Sheet half-expanded. Field empty, placeholder visible. Mic idle. NlpStateRow empty.
+Sheet half-expanded. Field empty, placeholder visible. NlpStateRow empty.
 
 ### Typing in progress
 Field shows cursor. NLP pipeline runs on each text change (debounced 300ms). NlpStateRow shows suggestion if any rule matches.
-
-### Voice listening
-Mic tint transitions to WillAccent. No animation beyond tint change.
-
-### Processing (after voice result arrives)
-Field populated with transcript. NlpStateRow shows "processing..." for the synchronous NLP duration (< 5ms). Then switches to suggestion.
-
-### Voice permission denied
-System dialog handles permission. If denied: mic button `flat-press` → opacity-dim. Keyboard-only input still works. No banner, no error message.
 
 ### Add task — success
 `addTask()` called on ViewModel → Room insert. Sheet dismisses. HomeScreen updates reactively via Flow.
@@ -148,8 +118,6 @@ System dialog handles permission. If denied: mic button `flat-press` → opacity
 |---------|--------|
 | Sheet opens | Field auto-focused (`FocusRequester.requestFocus()`), keyboard appears |
 | Type text | NLP pipeline runs (debounced 300ms), NlpStateRow updates |
-| Tap mic | Voice listening starts, tint → WillAccent |
-| Voice result | Field populated, NLP runs, NlpStateRow updates |
 | Tap "add task" | `flat-press` → `addTask()` → sheet dismisses |
 | Tap "cancel" | `flat-press` → sheet dismisses, field cleared |
 | Swipe down | Sheet dismisses, field cleared |
@@ -159,10 +127,6 @@ System dialog handles permission. If denied: mic button `flat-press` → opacity
 ## Accessibility
 
 **Field:** `contentDescription = "task description"`. Hint text read by TalkBack as placeholder.
-
-**Mic button:**
-- idle: `contentDescription = "start voice input"`
-- listening: `contentDescription = "listening, tap to stop"`
 
 **NlpStateRow:** `contentDescription = "suggested action: {suggestion text}"` when suggestion visible, `""` when idle.
 
@@ -175,5 +139,4 @@ System dialog handles permission. If denied: mic button `flat-press` → opacity
 ## Image resources
 
 None. Icons from Material Symbols:
-- `Icons.Outlined.Mic` (mic, 24dp)
 - `Icons.Outlined.Add` (add trigger on HomeTopBar, 24dp)

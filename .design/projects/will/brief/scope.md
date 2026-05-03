@@ -16,7 +16,7 @@ Target: single APK, minSdk 24, portrait only, dark-only, OLED black.
 | P1 | **HomeScreen** — task feed improvements | US-06 | enhance | Swipe actions, priority ordering, task lifecycle states, reactive real-time updates |
 | P1 | **TaskActionSheet** — polish | US-04 | enhance | Task lifecycle context (pending / in-progress / done label), confirm-on-delete |
 | P2 | **NotificationFilterSettings** | US-08 | new | Per-app toggle list, persisted in Room/SharedPrefs, accessible from HomeScreen |
-| P3 | **IntentInputSheet** | US-03 | new | Bottom sheet — text + voice input, NLP processing feedback, action suggestions |
+| P3 | **IntentInputSheet** | US-03 | new | Bottom sheet — text input, NLP processing feedback, action suggestions |
 | P4 | **TaskLifecycle indicators** | US-04 | enhance | Visual status on TaskItem (dot or prefix), startedAt / completedAt timestamps |
 | P5 | **ProductivityDashboard** | US-05 | new | Focus score, time-on-task chart, context switch count — accessible via gesture or action |
 | P6 | **PrivacySettings** | US-07 | new | On-device data explanation, delete-all history, permission rationale |
@@ -34,7 +34,7 @@ Out of scope: light theme, landscape, cloud sync, widget, tablet layout.
 | `HomeTopBar` | enhance | 48dp touch targets on inline Done/Later/Delete, semantic roles |
 | `TaskActionSheet` | enhance | Add lifecycle context line, confirm-delete pattern |
 | `NotificationFilterSettings` | new | Screen — toggle list of apps that have sent notifications |
-| `IntentInputSheet` | new | Bottom sheet — `BasicTextField` + mic icon + NLP state (idle / processing / suggestion) |
+| `IntentInputSheet` | new | Bottom sheet — `BasicTextField` + NLP state (idle / processing / suggestion) |
 | `TaskStatusIndicator` | new | Small composable — colored dot or prefix showing pending/active/done |
 | `FocusDashboard` | new | Screen — focus score card, time-on-task bar chart (custom Canvas drawing) |
 | `PrivacySettingsScreen` | new | Screen — data usage explanation + destructive delete action |
@@ -46,7 +46,7 @@ Out of scope: light theme, landscape, cloud sync, widget, tablet layout.
 
 ## Success Criteria
 
-1. User can create a task manually via IntentInputSheet — voice or text
+1. User can create a task manually via IntentInputSheet (typed)
 2. Task feed shows live status (pending → in-progress → done) without requiring manual refresh
 3. User can configure per-app notification filtering
 4. User sees their daily focus score on the dashboard
@@ -60,7 +60,6 @@ Out of scope: light theme, landscape, cloud sync, widget, tablet layout.
 
 | Dependency | Type | Notes |
 |------------|------|-------|
-| `SpeechRecognizer` | Android API | Required for voice input in US-03 — no library needed |
 | `AccessibilityService` | Android API | Required for task lifecycle completion detection (US-04) |
 | `Room` | Already installed | Needs `startedAt`, `completedAt`, `contextSwitchCount` fields on TaskEntity |
 | `ComposeCharts` or custom Canvas | TBD | Dashboard charts — evaluate before implementing US-05 |
@@ -74,7 +73,7 @@ Out of scope: light theme, landscape, cloud sync, widget, tablet layout.
 |----|-------|-------------|
 | PR-1 | Feed improvements + task lifecycle states | US-04 (partial), US-06 (partial) |
 | PR-2 | Notification filter settings | US-08 |
-| PR-3 | Intent input sheet (text only first, voice as follow-up) | US-03 (partial) |
+| PR-3 | Intent input sheet (text input + NLP feedback) | US-03 (partial) |
 | PR-4 | Full task lifecycle tracking (AccessibilityService + timestamps) | US-04 |
 | PR-5 | Productivity dashboard | US-05 |
 | PR-6 | Privacy settings screen | US-07 |

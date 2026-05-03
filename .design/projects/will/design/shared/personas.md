@@ -31,7 +31,6 @@
 | Wants zero maintenance | Notification → task must be automatic, zero-touch |
 | Trusts open source, distrusts dark patterns | OLED black is the engineering argument made visible — not aesthetic choice |
 | "Pick up, do the thing, put it down" | Launcher must disappear. No chrome, no decorative surfaces, no app promotion |
-| Voice input matters for hands-free capture | IntentInputSheet voice path must be inline — no system dialog that breaks immersion |
 | Wants retrospective data | FocusDashboard accessible in one gesture, data-dense, no gamification |
 | Pixel/Samsung OLED device | `#000000` background is observable — competing launchers use `#1B1B1F` |
 | No onboarding tolerance | Zero first-run flows, no tooltips, assumes intelligence |

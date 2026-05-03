@@ -11,7 +11,7 @@ Brand system is complete. Codebase has the foundation (US-01, US-02). The gaps b
 
 | Component | Brand ref | Priority | Notes |
 |-----------|-----------|----------|-------|
-| `IntentInputSheet` | will.yml patterns.input | P3 | Bottom sheet for text/voice task creation |
+| `IntentInputSheet` | will.yml patterns.input | P3 | Bottom sheet for typed task creation |
 | `TaskStatusIndicator` | will.yml tokens.color.success/accent/tertiary | P1 | Dot composable — pending / in-progress / done |
 | `NotificationFilterSettings` | will.yml patterns.layout | P2 | Full-screen toggle list |
 | `FocusDashboard` | will.yml tokens.color.accent | P5 | Canvas-based chart screen |

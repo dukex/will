@@ -49,12 +49,9 @@ These appear below the BasicTextField in Geist Mono at small size (12sp), WillTe
 | State | Label |
 |-------|-------|
 | Idle (keyboard open, no text) | *(empty — no label visible)* |
-| Idle (mic active, listening) | `listening...` |
 | Processing | `processing...` |
 | Suggestion ready | *(label hidden, action chips appear)* |
 | No intent recognized | `not sure what to do with this` |
-| Error (no mic permission) | `microphone access required` |
-| Error (speech recognition failed) | `could not hear that` |
 
 All in lowercase. Ellipsis ("...") for in-progress states — not animated spinner text. The ellipsis is a typographic convention for "working", not a loader.
 
@@ -142,7 +139,6 @@ Do not write "Are you sure?" — that's a rhetorical question, not useful inform
 | Scenario | Copy |
 |----------|------|
 | NotificationListenerService not granted | `Notification access required. Tap to open settings.` |
-| RECORD_AUDIO not granted | `Microphone access required for voice input.` |
 | AccessibilityService not enabled | `Accessibility access required to track task completion.` |
 | Room insert failure | *(silent — do not surface DB errors to user in MVP)* |
 

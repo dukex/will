@@ -77,53 +77,6 @@ Source: [Android Bottom Sheets docs](https://developer.android.com/develop/ui/co
 
 ---
 
-## SpeechRecognizer Integration in Compose
-
-**Architecture:** SpeechRecognizer is not a Compose-native API. It must live in a ViewModel or a helper class that exposes state to Compose via StateFlow. The ViewModel implements `RecognitionListener`.
-
-**Permission requirement:** `android.permission.RECORD_AUDIO` — must request at runtime before any SpeechRecognizer call.
-
-**ViewModel pattern:**
-```kotlin
-class IntentInputViewModel : ViewModel(), RecognitionListener {
-    private val _voiceState = MutableStateFlow<VoiceState>(VoiceState.Idle)
-    val voiceState: StateFlow<VoiceState> = _voiceState
-
-    private var recognizer: SpeechRecognizer? = null
-
-    fun startListening(context: Context) {
-        recognizer = SpeechRecognizer.createSpeechRecognizer(context)
-        recognizer?.setRecognitionListener(this)
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-        }
-        recognizer?.startListening(intent)
-        _voiceState.value = VoiceState.Listening
-    }
-
-    override fun onResults(bundle: Bundle?) {
-        val text = bundle?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-        _voiceState.value = if (text != null) VoiceState.Result(text) else VoiceState.Idle
-    }
-
-    override fun onError(error: Int) {
-        _voiceState.value = VoiceState.Error(error)
-    }
-}
-```
-
-**Key behavior notes:**
-- `SpeechRecognizer.createSpeechRecognizer(context)` must be called on the main thread
-- The `RecognitionListener` callbacks fire on the main thread — safe to update StateFlow directly
-- Destroy the recognizer in `onCleared()` to avoid leaks
-- Offline speech recognition works on supported devices but requires `EXTRA_PREFER_OFFLINE` extra and is not guaranteed on all minSdk 24 devices
-- The mic `IconButton` color should be `WillAccent` when `voiceState == Listening`, `WillTextTertiary` otherwise
-
-Source: [Adding speech recognition to Compose — Medium](https://christopherward.medium.com/adding-speech-recognition-to-your-jetpack-compose-android-app-the-minimum-effort-guide-b7e3446a2482), [Voice to Text Compose — Medium](https://medium.com/@daniel.atitienei/voice-to-text-in-jetpack-compose-android-c1e077627abe), [GeeksForGeeks STT guide](https://www.geeksforgeeks.org/kotlin/speech-to-text-application-in-android-using-jetpack-compose/)
-
----
-
 ## AccessibilityService Architecture for Task Lifecycle
 
 **Setup requirements:**

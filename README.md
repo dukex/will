@@ -1,23 +1,23 @@
 # Will
 
-> A task-centric Android launcher. Notifications, calendar entries, and voice
-> commands are turned into **Tasks** in a single reactive feed — no icon grid as
+> A task-centric Android launcher. Notifications, calendar entries, and typed
+> intents are turned into **Tasks** in a single reactive feed — no icon grid as
 > the front door, no badges, no infinite scroll. The phone serves your intent,
 > not the other way around.
 
 **Status:** early/alpha. The launcher boots, captures notifications, pins apps,
-and tracks task lifecycle. Voice input, accessibility-driven auto-completion,
-and the full focus dashboard are still in progress — see
+and tracks task lifecycle. Accessibility-driven auto-completion and the full
+focus dashboard are still in progress — see
 [`docs/99-TASKS.md`](docs/99-TASKS.md).
 
 ## Why
 
 Most launchers are app launchers. Will is an *intent* launcher. Every passive
-input (a notification, a calendar event) and every active input (text or voice)
-becomes a `Task` in a Room database. The home screen is that feed. Tap a task
-to fire its underlying `PendingIntent` — no app drawer detour. Lifecycle
-fields (`startedAt`, `completedAt`, `contextSwitchCount`) feed a focus
-dashboard so you can measure how the device actually spends your attention.
+input (a notification, a calendar event) and every typed intent becomes a
+`Task` in a Room database. The home screen is that feed. Tap a task to fire
+its underlying `PendingIntent` — no app drawer detour. Lifecycle fields
+(`startedAt`, `completedAt`, `contextSwitchCount`) feed a focus dashboard so
+you can measure how the device actually spends your attention.
 
 The full design rationale lives in [`docs/01-IDEA.md`](docs/01-IDEA.md).
 

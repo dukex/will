@@ -95,6 +95,6 @@ Source: [Linear Mobile](https://linear.app/mobile), [Linear design refresh artic
 
 2. **No competitor tracks task lifecycle across apps.** Linear does lifecycle tracking but only within its own data. No launcher tracks "I tapped the WhatsApp task, spent 8 minutes, and then closed WhatsApp" as a meaningful unit of work.
 
-3. **No competitor provides a voice/text creation surface at the launcher level.** Google Assistant comes close but is a separate app, not integrated into the home screen task feed.
+3. **No competitor provides a typed-intent creation surface at the launcher level.** The closest analogues live in productivity apps (Things, Linear), which are separate from the home screen.
 
 4. **Swipe gestures on competitor launchers are underused at the home screen level.** Niagara explicitly reserves horizontal swipes for notifications. Will can own the right-swipe pattern at the task item level without conflicting with global OS gestures.

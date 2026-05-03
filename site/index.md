@@ -104,4 +104,4 @@ Will follows a published [design system](/docs/design-system). a few rules show 
 
 ## status
 
-basic launcher, notification capture, conversation dedup, pinned apps, manual text input, per-app filter, and the today-only focus dashboard are shipped. voice input, accessibility-driven lifecycle tracking, deeper privacy controls, and trend charts are in flight. see the [roadmap](/docs/roadmap) for the full breakdown.
+basic launcher, notification capture, conversation dedup, pinned apps, manual text input, per-app filter, and the today-only focus dashboard are shipped. accessibility-driven lifecycle tracking, deeper privacy controls, and trend charts are in flight. see the [roadmap](/docs/roadmap) for the full breakdown.

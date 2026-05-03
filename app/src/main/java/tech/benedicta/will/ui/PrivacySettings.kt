@@ -41,7 +41,6 @@ private data class PermissionItem(val name: String, val rationale: String)
 private val permissionsList = listOf(
     PermissionItem("notification listener", "to capture notifications as tasks"),
     PermissionItem("accessibility service", "to detect when tasks are completed"),
-    PermissionItem("microphone (optional)", "for voice task input"),
     PermissionItem("draw over other apps", "for the active task overlay"),
 )
 

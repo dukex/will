@@ -128,9 +128,8 @@ This is the standout heuristic. Every screen contains only what is necessary. Em
 
 ### 9. Error recovery — 3/5
 
-**Gap:** Error states are mostly "log and show nothing." Room delete failures, voice permission denials, and Room query errors all result in silent failure or logging only. The target user (developer) is more tolerant of silent failures than a general consumer audience, but:
+**Gap:** Error states are mostly "log and show nothing." Room delete failures and Room query errors all result in silent failure or logging only. The target user (developer) is more tolerant of silent failures than a general consumer audience, but:
 
-- If the voice input fails entirely (SpeechRecognizer error), the user sees... nothing. The mic button dims. No explanation.
 - If notification permission is denied, the `NotificationPermissionPrompt` banner is shown — this is the one well-specified error state.
 - If FocusDashboard computation fails, the screen shows "log and show nothing" — the user is left with a blank screen and no indication of why.
 
@@ -210,5 +209,5 @@ Will's design phase produces a coherent, disciplined, and brand-consistent set o
 The key risks going into build:
 1. Swipe-to-delete irreversibility
 2. IntentInputSheet entry point not visible on HomeScreen
-3. Silent failure states for voice input and dashboard
+3. Silent failure state for the dashboard
 4. Cross-screen data dependency for HomeScreen empty state

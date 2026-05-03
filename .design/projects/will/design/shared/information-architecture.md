@@ -24,7 +24,6 @@ Will Launcher
 │
 ├── IntentInputSheet (bottom sheet — gesture or tap)
 │   ├── BasicTextField (typed input)
-│   ├── MicButton (voice input)
 │   └── NLPStateRow (idle / processing / suggestion)
 │
 ├── TaskActionSheet (bottom sheet — long-press or overlay)
@@ -90,8 +89,8 @@ NotificationListenerService
 ```
 
 ```
-SpeechRecognizer / BasicTextField
-    → IntentInputViewModel (VoiceState, NlpState)
+BasicTextField
+    → IntentInputViewModel (NlpState)
     → NLP pipeline (regex → action suggestion)
     → TaskViewModel.addTask()
     → Room DB

@@ -27,15 +27,6 @@
 
 ## Important (High Priority)
 
-### I-01 — Voice input failure state is silent
-
-**Screen:** [IntentInputSheet](../design/screen-03-intent-input-sheet.md)
-**Problem:** If `SpeechRecognizer` returns an error (network unavailable, mic hardware error, no speech detected), the design specifies the mic button dims to opacity-dim. No error message. The user has no signal about what happened or what to do.
-**Fix:** On `onError()` from `RecognitionListener`: show a one-line message in the `NlpStateRow` position. Content: `"voice unavailable"` (labelSmall, GeistMono, WillTextTertiary). Reset after 2 seconds. Keyboard-only input remains the fallback — do not block the sheet.
-**Why important:** Silent failure leaves the user stranded. The fix costs < 10 lines of implementation.
-
----
-
 ### I-02 — FocusDashboard error state leaves blank screen
 
 **Screen:** [FocusDashboard](../design/screen-05-focus-dashboard.md)

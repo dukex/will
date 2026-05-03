@@ -59,7 +59,6 @@ Subtasks:
 - [ ] For external actions: generate appropriate deep links or intents
 - [ ] Show suggested actions based on recognized intent
 - [ ] Allow editing/correcting recognized commands
-- [ ] ~~Voice / Speech-to-Text input~~ → out of scope, will not be built
 - [ ] ~~Learn from user corrections~~ → out of MVP per `.design/projects/will/brief/scope.md`
 
 ### US-04: Task Lifecycle Tracking and Completion Detection

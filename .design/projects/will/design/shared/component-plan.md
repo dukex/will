@@ -44,7 +44,7 @@
 |-----------|---------------|--------|
 | `NotificationFilterSettings` composable | `ui/NotificationFilterSettings.kt` | Filter settings screen (US-08) |
 | `AppToggleRow` | (inline in NotificationFilterSettings) | Per-app toggle row composable |
-| `IntentInputSheet` composable | `ui/IntentInputSheet.kt` | Text + voice task creation sheet (US-03) |
+| `IntentInputSheet` composable | `ui/IntentInputSheet.kt` | Text task creation sheet (US-03) |
 | `NlpStateRow` | (inline in IntentInputSheet) | Idle/processing/suggestion label row |
 | `FocusDashboard` composable / screen | `ui/FocusDashboard.kt` | Focus score + bar chart screen (US-05) |
 | `TaskTimeChart` | (inline in FocusDashboard) | Canvas bar chart composable |
@@ -56,7 +56,7 @@
 
 | Class | File to create | Purpose |
 |-------|---------------|---------|
-| `IntentInputViewModel` | `task/IntentInputViewModel.kt` | Voice state, NLP state, addTask delegation |
+| `IntentInputViewModel` | `task/IntentInputViewModel.kt` | NLP state, addTask delegation |
 | `NlpPipeline` | `task/NlpPipeline.kt` | Regex intent extraction from transcript |
 | `FilterSettingsViewModel` | `notification/FilterSettingsViewModel.kt` | App list + per-app enabled state (Room or SharedPrefs) |
 | `FocusDashboardViewModel` | `task/FocusDashboardViewModel.kt` | Compute focus score, context switch count |

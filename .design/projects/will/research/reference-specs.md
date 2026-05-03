@@ -34,33 +34,6 @@
 
 ---
 
-## SpeechRecognizer API
-
-**URL:** https://developer.android.com/reference/android/speech/SpeechRecognizer
-
-**Key takeaway:** `SpeechRecognizer.createSpeechRecognizer(context)` must be called on the main thread. The `RecognitionListener` callbacks fire on the main thread. Call `destroy()` when done to free resources. Requires `RECORD_AUDIO` permission at runtime.
-
-**Key methods:**
-- `startListening(Intent)` — begin recognition session
-- `stopListening()` — stop capturing, process what was recorded
-- `cancel()` — abort session, no result
-- `destroy()` — release all resources
-
-**Intent configuration:**
-```kotlin
-Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-}
-```
-
-**Will application:** ViewModel implements `RecognitionListener`, exposes `StateFlow<VoiceState>`. UI observes state and changes mic icon color. Voice result feeds into the NLP pipeline as text input, identical to typed input.
-
-**Reference implementation:** [Voice to Text in Compose — Medium](https://medium.com/@daniel.atitienei/voice-to-text-in-jetpack-compose-android-c1e077627abe)
-
----
-
 ## AccessibilityService Implementation Guide
 
 **URL:** https://developer.android.com/guide/topics/ui/accessibility/service

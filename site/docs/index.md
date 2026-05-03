@@ -26,6 +26,6 @@ Will is an Android launcher that treats your phone as a work surface, not an att
 
 ## status
 
-Will is under active development. the basic launcher, notification capture, pinned apps, manual text input, per-app filter, and the today-only focus dashboard are shipped. accessibility-driven lifecycle tracking, deeper privacy controls, and trend charts are pending. voice input is explicitly out of scope.
+Will is under active development. the basic launcher, notification capture, pinned apps, manual text input, per-app filter, and the today-only focus dashboard are shipped. accessibility-driven lifecycle tracking, deeper privacy controls, and trend charts are pending.
 
 see the [roadmap](/docs/roadmap) for a detailed breakdown.

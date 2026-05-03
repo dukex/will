@@ -45,4 +45,4 @@
 | File | Purpose |
 |------|---------|
 | `app/src/main/java/tech/benedicta/will/MainActivity.kt` | Wires ViewModels, broadcasts; add routing to new screens |
-| `app/src/main/AndroidManifest.xml` | Add new service declarations for AccessibilityService (US-04), SpeechRecognizer permissions |
+| `app/src/main/AndroidManifest.xml` | Add new service declarations for AccessibilityService (US-04) |

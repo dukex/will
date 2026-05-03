@@ -109,7 +109,7 @@
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Errors identified in text | PARTIAL | Voice input failure and FocusDashboard errors show nothing (see fixes I-01 and I-02 in [prioritized-fixes.md](./prioritized-fixes.md)). |
+| Errors identified in text | PARTIAL | FocusDashboard errors show nothing (see fix I-02 in [prioritized-fixes.md](./prioritized-fixes.md)). |
 | Labels and instructions provided for inputs | PASS | BasicTextField has placeholder "what do you need to do?" as its effective label. |
 | No cognitive test for authentication | PASS | No authentication in scope. |
 

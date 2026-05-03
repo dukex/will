@@ -15,11 +15,6 @@ ML Kit EntityExtraction adds 5.6MB download, is in beta, and does not cover Will
 
 See: [technical-research.md — ML Kit vs Regex](./technical-research.md)
 
-### `SpeechRecognizer` via ViewModel with `RecognitionListener`
-Do not use `ActivityResultLauncher` with `ACTION_RECOGNIZE_SPEECH` — it opens a system dialog that breaks the launcher's immersive UI. Instead, use `SpeechRecognizer.createSpeechRecognizer(context)` with a ViewModel-owned `RecognitionListener`. This gives full control over the listening UI state and integrates cleanly with the IntentInputSheet's inline NLP feedback states.
-
-See: [technical-research.md — SpeechRecognizer Integration](./technical-research.md)
-
 ### Custom Canvas bar chart (no library)
 For a single bar chart showing time-on-task, there is no reason to add a charting library dependency. The `Canvas` composable with `drawRect()` for bars and `nativeCanvas.drawText()` for labels is sufficient and takes under 50 lines. Use `drawWithCache` to avoid per-frame object allocation. Libraries add 200KB–500KB and introduce their own theming systems that conflict with Will's OLED black aesthetic.
 
@@ -61,7 +56,7 @@ See: [competitor-ux.md — Niagara Launcher](./competitor-ux.md)
 ## Avoid
 
 ### ML Kit EntityExtraction for the MVP sprint
-Beta API, 5.6MB model download, poor coverage of Will's intent space. The download happens on first use — a new user would experience a visible delay before voice input works. Avoid until the regex pipeline is proven insufficient for date and money entity resolution.
+Beta API, 5.6MB model download, poor coverage of Will's intent space. The download happens on first use — a new user would experience a visible delay. Avoid until the regex pipeline is proven insufficient for date and money entity resolution.
 
 See: [technical-research.md — ML Kit vs Regex](./technical-research.md), [reference-specs.md — ML Kit](./reference-specs.md)
 
@@ -83,7 +78,3 @@ Settings must be reachable in one action from the home screen. Any pattern requi
 
 See: [ux-patterns.md — Settings Screen Patterns](./ux-patterns.md)
 
-### `ACTION_RECOGNIZE_SPEECH` activity intent for voice input
-Launching a system speech recognition dialog breaks the full-screen launcher experience. The system dialog has its own UI, its own animation, and does not respect Will's OLED aesthetic. Use `SpeechRecognizer` directly with a ViewModel-owned listener and render the listening state inline in the IntentInputSheet.
-
-See: [technical-research.md — SpeechRecognizer Integration](./technical-research.md)

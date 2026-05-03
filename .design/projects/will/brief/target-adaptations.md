@@ -83,7 +83,6 @@ These are semantic reads from existing tokens — no new color values needed.
 | Bottom sheets | `ModalBottomSheet` | Theme applies 8dp corners automatically |
 | Swipe actions | `SwipeToDismissBox` (M3) | Threshold 40% width |
 | Text input | `BasicTextField` | Not `TextField` — avoids M3 box decoration |
-| Voice input | `SpeechRecognizer` (Android API) | No Compose wrapper needed |
 | Charts | `Canvas` | No library in MVP — custom draw |
 | Toggle | `Switch` | Override colors (see above) |
 | Icon buttons | `IconButton` | Guarantees 48dp touch target |

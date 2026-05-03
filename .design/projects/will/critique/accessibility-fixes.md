@@ -190,4 +190,4 @@ Update the design spec in [screen-06-privacy-settings.md](../design/screen-06-pr
 ## Cross-references
 
 - Priority alignment with [prioritized-fixes.md](./prioritized-fixes.md): AF-01 and AF-02 are not listed as Critical in the design critique (they are brand-detail issues there), but they are accessibility-Critical — fix before build regardless of design critique priority.
-- AF-03 (NlpStateRow live region) aligns with I-01 (voice failure state) in [prioritized-fixes.md](./prioritized-fixes.md) — both affect the IntentInputSheet accessibility model.
+- AF-03 (NlpStateRow live region) — affects the IntentInputSheet accessibility model.

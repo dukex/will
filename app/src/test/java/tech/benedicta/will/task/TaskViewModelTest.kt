@@ -240,6 +240,16 @@ private class FakeViewModelTaskRepository : TaskRepository {
         }
     }
     override suspend fun deleteAllTasks() { _tasks.value = emptyList() }
+    override suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long) {
+        _tasks.value = _tasks.value.map {
+            if (it.id == taskId && it.startedAt == null) it.copy(startedAt = startedAt) else it
+        }
+    }
+    override suspend fun incrementContextSwitch(taskId: Long) {
+        _tasks.value = _tasks.value.map {
+            if (it.id == taskId) it.copy(contextSwitchCount = it.contextSwitchCount + 1) else it
+        }
+    }
     override suspend fun upsertByConversationKey(task: Task): Long {
         val key = task.conversationKey
         if (key != null) {

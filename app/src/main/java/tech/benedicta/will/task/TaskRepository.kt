@@ -13,4 +13,10 @@ interface TaskRepository {
     suspend fun deleteAllTasks()
     suspend fun clearConversationKey(taskId: Long)
     suspend fun upsertByConversationKey(task: Task): Long
+
+    /** Set [Task.startedAt] only if currently null. No-op if already set. */
+    suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long)
+
+    /** Increment [Task.contextSwitchCount] by one. */
+    suspend fun incrementContextSwitch(taskId: Long)
 }

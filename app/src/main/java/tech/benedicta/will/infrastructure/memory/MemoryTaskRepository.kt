@@ -45,6 +45,26 @@ class MemoryTaskRepository : TaskRepository {
         _tasks.update { list -> list.map { if (it.id == taskId) it.copy(conversationKey = null) else it } }
     }
 
+    override suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long) {
+        _tasks.update { list ->
+            list.map { task ->
+                if (task.id == taskId && task.startedAt == null) {
+                    task.copy(startedAt = startedAt)
+                } else task
+            }
+        }
+    }
+
+    override suspend fun incrementContextSwitch(taskId: Long) {
+        _tasks.update { list ->
+            list.map { task ->
+                if (task.id == taskId) {
+                    task.copy(contextSwitchCount = task.contextSwitchCount + 1)
+                } else task
+            }
+        }
+    }
+
     override suspend fun upsertByConversationKey(task: Task): Long {
         val key = task.conversationKey
         if (key != null) {

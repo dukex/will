@@ -20,4 +20,8 @@ class RoomTaskRepository(private val dao: TaskDao) : TaskRepository {
     override suspend fun clearConversationKey(taskId: Long) = dao.clearConversationKey(taskId)
     override suspend fun upsertByConversationKey(task: Task): Long =
         dao.upsertByConversationKey(task.toEntity())
+    override suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long) =
+        dao.markStartedIfNeeded(taskId, startedAt)
+    override suspend fun incrementContextSwitch(taskId: Long) =
+        dao.incrementContextSwitch(taskId)
 }

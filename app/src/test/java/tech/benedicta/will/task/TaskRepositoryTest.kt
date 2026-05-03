@@ -268,6 +268,22 @@ private class FakeTaskRepository : TaskRepository {
         if (index != -1) tasks[index] = tasks[index].copy(conversationKey = null)
     }
 
+    override suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long) {
+        val index = tasks.indexOfFirst { it.id == taskId }
+        if (index != -1 && tasks[index].startedAt == null) {
+            tasks[index] = tasks[index].copy(startedAt = startedAt)
+        }
+    }
+
+    override suspend fun incrementContextSwitch(taskId: Long) {
+        val index = tasks.indexOfFirst { it.id == taskId }
+        if (index != -1) {
+            tasks[index] = tasks[index].copy(
+                contextSwitchCount = tasks[index].contextSwitchCount + 1
+            )
+        }
+    }
+
     override suspend fun upsertByConversationKey(task: Task): Long {
         val key = task.conversationKey
         if (key != null) {

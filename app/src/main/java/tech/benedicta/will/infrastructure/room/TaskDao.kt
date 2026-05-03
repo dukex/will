@@ -38,6 +38,12 @@ interface TaskDao {
     @Query("UPDATE tasks SET conversationKey = NULL WHERE id = :taskId")
     suspend fun clearConversationKey(taskId: Long)
 
+    @Query("UPDATE tasks SET startedAt = :startedAt WHERE id = :taskId AND startedAt IS NULL")
+    suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long)
+
+    @Query("UPDATE tasks SET contextSwitchCount = contextSwitchCount + 1 WHERE id = :taskId")
+    suspend fun incrementContextSwitch(taskId: Long)
+
     @Query("SELECT * FROM tasks WHERE conversationKey = :key AND completedAt IS NULL LIMIT 1")
     suspend fun findOpenByConversationKey(key: String): TaskEntity?
 

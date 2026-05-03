@@ -60,7 +60,13 @@ class TaskLifecycleCoordinator(
             events += LifecycleEvent.StartTask(taskId = activeTask.id, startedAt = now())
         }
 
+        // A context switch needs a *previous* foreground to count as a
+        // transition. Without one (fresh coordinator, just after reset, or the
+        // first event after the service reconnects) we are only establishing
+        // the baseline, not observing the user moving away from the task.
+        val isTransition = previous != null
         val movedAwayFromTaskBoundary =
+            isTransition &&
             newForeground != sourcePackage &&
             newForeground != launcherPackage &&
             activeTask.startedAt != null

@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [TaskEntity::class], version = 6)
+@Database(entities = [TaskEntity::class], version = 6, exportSchema = false)
 abstract class WillDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 

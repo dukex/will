@@ -181,9 +181,11 @@ class MainActivity : ComponentActivity() {
                     pinnedApps = pinnedApps,
                     pinnedAppsVm = pinnedAppsVm,
                     notificationPermissionGranted = notificationPermissionGranted,
+                    accessibilityServiceGranted = app.permissionInspector.hasAccessibilityService(),
                     onGrantPermission = { openNotificationListenerSettings() },
                     onSetPendingActiveTask = { task -> pendingActiveTask = task },
-                    onRerunOnboarding = { onboardingViewModel.rerun() }
+                    onRerunOnboarding = { onboardingViewModel.rerun() },
+                    onOpenAccessibilitySettings = { openAccessibilitySettings() }
                 )
             }
         }
@@ -210,6 +212,12 @@ class MainActivity : ComponentActivity() {
 
     private fun openNotificationListenerSettings() {
         systemSettingsLauncher.launch(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+    }
+
+    private fun openAccessibilitySettings() {
+        runCatching {
+            systemSettingsLauncher.launch(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        }
     }
 
     private fun openOverlayPermissionSettings() {
@@ -319,9 +327,11 @@ private fun WillScreen(
     pinnedApps: List<LauncherApp>,
     pinnedAppsVm: PinnedAppsViewModel,
     notificationPermissionGranted: Boolean,
+    accessibilityServiceGranted: Boolean = false,
     onGrantPermission: () -> Unit,
     onSetPendingActiveTask: (Task) -> Unit = {},
-    onRerunOnboarding: () -> Unit = {}
+    onRerunOnboarding: () -> Unit = {},
+    onOpenAccessibilitySettings: () -> Unit = {}
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
@@ -375,6 +385,8 @@ private fun WillScreen(
                 onBack = { currentScreen = Screen.Home },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
+                accessibilityServiceGranted = accessibilityServiceGranted,
+                onOpenAccessibilitySettings = onOpenAccessibilitySettings,
                 viewModel = appFilterVm
             )
             return

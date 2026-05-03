@@ -49,6 +49,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onNavigateToPrivacy: () -> Unit,
     onRerunOnboarding: () -> Unit = {},
+    accessibilityServiceGranted: Boolean = false,
+    onOpenAccessibilitySettings: () -> Unit = {},
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -147,6 +149,45 @@ fun SettingsScreen(
                             color = WillTextTertiary,
                             modifier = Modifier.weight(1f)
                         )
+                        Icon(
+                            Icons.Outlined.ChevronRight,
+                            contentDescription = null,
+                            tint = WillTextTertiary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                item {
+                    val statusLabel = if (accessibilityServiceGranted) "on" else "off"
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenAccessibilitySettings() }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Button
+                                contentDescription =
+                                    "lifecycle tracking is $statusLabel; open system settings"
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "lifecycle tracking",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = if (accessibilityServiceGranted) {
+                                    "on — measures time-on-task and context switches"
+                                } else {
+                                    "off — turn on under Accessibility for accurate metrics"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
                         Icon(
                             Icons.Outlined.ChevronRight,
                             contentDescription = null,

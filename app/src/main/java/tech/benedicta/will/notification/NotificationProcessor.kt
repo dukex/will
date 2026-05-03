@@ -57,7 +57,8 @@ class NotificationProcessor {
         )
 
         private val NOISE_PATTERNS: List<Regex> = listOf(
-            Regex("^Downloading \\d+ (video|file|image|photo)", RegexOption.IGNORE_CASE),
+            Regex("^Downloading (\\d+ )?(video|file|image|photo)", RegexOption.IGNORE_CASE),
+            Regex("^WhatsApp$", RegexOption.IGNORE_CASE),
             Regex("^Charging complete$", RegexOption.IGNORE_CASE),
             Regex("^Update complete$", RegexOption.IGNORE_CASE),
             Regex("^Could not connect to", RegexOption.IGNORE_CASE),

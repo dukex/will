@@ -288,7 +288,9 @@ class NotificationProcessorTest {
     @Test
     fun `returns null for system noise titles`() {
         val noiseTitles = listOf(
+            "Downloading video",
             "Downloading 2 videos",
+            "Downloading file",
             "Charging complete",
             "Update complete",
             "Could not connect to Wi-Fi network",
@@ -300,5 +302,10 @@ class NotificationProcessorTest {
             val result = processor.process(title, "body", "com.example", 0L)
             assertNull("Expected null for noise title: $title", result)
         }
+    }
+
+    @Test
+    fun `bare app-name title is treated as noise summary`() {
+        assertNull(processor.process("WhatsApp", null, "com.whatsapp", 0L))
     }
 }

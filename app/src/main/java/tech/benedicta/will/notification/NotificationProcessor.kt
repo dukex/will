@@ -26,6 +26,7 @@ class NotificationProcessor {
 
         val resolvedText = if (!title.isNullOrBlank() && !text.isNullOrBlank()) text else ""
         val keySource = conversationTitle?.takeIf { it.isNotBlank() } ?: resolvedTitle
+        val normalizedKey = MESSAGE_COUNT_SUFFIX.replace(keySource, "").trim().lowercase()
 
         return Task(
             title = resolvedTitle,
@@ -33,7 +34,7 @@ class NotificationProcessor {
             sourcePackage = sourcePackage,
             createdAt = timestamp,
             notificationKey = notificationKey,
-            conversationKey = "$sourcePackage:${keySource.trim().lowercase()}",
+            conversationKey = "$sourcePackage:$normalizedKey",
             shortcutId = shortcutId
         )
     }
@@ -47,6 +48,9 @@ class NotificationProcessor {
         private const val FLAG_GROUP_SUMMARY = 0x00000200
         private const val FLAG_FOREGROUND_SERVICE = 0x00000040
         private const val FLAG_ONGOING_EVENT = 0x00000002
+
+        private val MESSAGE_COUNT_SUFFIX =
+            Regex("\\s*\\(\\d+ messages?\\).*$", RegexOption.IGNORE_CASE)
 
         val IGNORED_PACKAGES: Set<String> = setOf(
             "com.google.android.apps.wellbeing",

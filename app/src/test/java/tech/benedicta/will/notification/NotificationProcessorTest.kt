@@ -308,4 +308,37 @@ class NotificationProcessorTest {
     fun `bare app-name title is treated as noise summary`() {
         assertNull(processor.process("WhatsApp", null, "com.whatsapp", 0L))
     }
+
+    @Test
+    fun `messenger grouped-conversation message-count suffix is stripped from key`() {
+        val first = processor.process("Group A", "msg", "com.whatsapp", 1000L)
+        val second = processor.process(
+            "Group A (2 messages): Sender X",
+            "msg",
+            "com.whatsapp",
+            2000L
+        )
+        val later = processor.process(
+            "Group A (28 messages): Sender X",
+            "msg",
+            "com.whatsapp",
+            3000L
+        )
+
+        assertEquals(first?.conversationKey, second?.conversationKey)
+        assertEquals(second?.conversationKey, later?.conversationKey)
+    }
+
+    @Test
+    fun `singular message suffix is also stripped`() {
+        val first = processor.process("Contact One", "msg", "com.whatsapp", 1000L)
+        val second = processor.process(
+            "Contact One (1 message): Contact One",
+            "msg",
+            "com.whatsapp",
+            2000L
+        )
+
+        assertEquals(first?.conversationKey, second?.conversationKey)
+    }
 }

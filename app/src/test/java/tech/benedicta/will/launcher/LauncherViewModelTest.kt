@@ -96,8 +96,30 @@ class LauncherViewModelTest {
 
         assertEquals(apps, viewModel.filteredApps.value)
     }
+
+    // Regression: pinned apps still showed an uninstalled package because the
+    // installed-apps list was loaded once in init and never refreshed.
+    @Test
+    fun `refresh re-queries the repository so uninstalled apps disappear`() = runTest {
+        val whatsapp = LauncherApp("com.whatsapp", "WhatsApp")
+        val telegram = LauncherApp("org.telegram.messenger", "Telegram")
+        val repository = MutableFakeAppRepository(listOf(whatsapp, telegram))
+        val viewModel = LauncherViewModel(repository, testDispatcher)
+        assertEquals(listOf(whatsapp, telegram), viewModel.apps.value)
+
+        repository.setApps(listOf(whatsapp))
+        viewModel.refresh()
+
+        assertEquals(listOf(whatsapp), viewModel.apps.value)
+    }
 }
 
 private class FakeAppRepository(private val apps: List<LauncherApp>) : AppRepository {
+    override fun getInstalledApps(): List<LauncherApp> = apps
+}
+
+private class MutableFakeAppRepository(initial: List<LauncherApp>) : AppRepository {
+    private var apps: List<LauncherApp> = initial
+    fun setApps(next: List<LauncherApp>) { apps = next }
     override fun getInstalledApps(): List<LauncherApp> = apps
 }

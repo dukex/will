@@ -88,6 +88,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var taskVm: TaskViewModel
     private var pendingActiveTask: Task? = null
     private var onboardingVm: OnboardingViewModel? = null
+    private var launcherVm: LauncherViewModel? = null
 
     // Settings intents do not return useful data, but we still need a launcher so
     // we get the activity-result callback to refresh onboarding state when the
@@ -152,6 +153,7 @@ class MainActivity : ComponentActivity() {
                 val launcherVm: LauncherViewModel = viewModel(
                     factory = LauncherViewModel.factory(appRepository)
                 )
+                this@MainActivity.launcherVm = launcherVm
                 taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
 
                 val appFilterVm: AppFilterViewModel = viewModel(
@@ -205,6 +207,7 @@ class MainActivity : ComponentActivity() {
         pendingActiveTask = null
         ActiveTaskOverlayService.hide(this)
         onboardingVm?.refresh()
+        launcherVm?.refresh()
     }
 
     private fun isNotificationListenerEnabled(): Boolean =

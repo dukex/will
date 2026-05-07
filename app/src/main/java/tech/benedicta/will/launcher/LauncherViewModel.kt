@@ -31,6 +31,10 @@ class LauncherViewModel(
     fun setQuery(query: String) { _query.value = query }
 
     init {
+        refresh()
+    }
+
+    fun refresh() {
         viewModelScope.launch(ioDispatcher) {
             _apps.value = repository.getInstalledApps()
         }

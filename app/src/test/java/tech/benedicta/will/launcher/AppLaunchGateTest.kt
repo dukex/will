@@ -27,7 +27,7 @@ class AppLaunchGateTest {
             text = "",
             sourcePackage = "com.whatsapp",
             createdAt = 0L,
-            isActive = true
+            startedAt = 100L
         )
 
         val action = AppLaunchGate.decide(
@@ -46,7 +46,7 @@ class AppLaunchGateTest {
             text = "",
             sourcePackage = "com.google.android.gm",
             createdAt = 0L,
-            isActive = true
+            startedAt = 100L
         )
 
         val action = AppLaunchGate.decide(active, "com.spotify.music", "Spotify")

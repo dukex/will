@@ -57,7 +57,9 @@ fun TaskFeed(
     val insets = WindowInsets.safeDrawing.asPaddingValues()
 
     val activeTasks = tasks.filter { it.status == TaskStatus.IN_PROGRESS }
-    val pendingTasks = tasks.filter { it.status == TaskStatus.PENDING }
+    val pendingTasks = tasks.filter {
+        it.status == TaskStatus.PAUSED || it.status == TaskStatus.PENDING
+    }
     val hasTasks = activeTasks.isNotEmpty() || pendingTasks.isNotEmpty()
 
     if (header == null && !hasTasks) {
@@ -229,6 +231,7 @@ private fun DoneCheckbox(
 ) {
     val borderColor = when (status) {
         TaskStatus.IN_PROGRESS -> WillAccent
+        TaskStatus.PAUSED -> WillTextTertiary
         TaskStatus.PENDING -> WillTextTertiary
         TaskStatus.DONE -> WillTextTertiary
     }

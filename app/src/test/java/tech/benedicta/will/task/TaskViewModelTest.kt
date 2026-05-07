@@ -216,7 +216,7 @@ class TaskViewModelTest {
     fun `addTaskAndStart deactivates any previously active task`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(
-            Task(title = "Old", text = "", sourcePackage = "com.old", createdAt = 0L, isActive = true)
+            Task(title = "Old", text = "", sourcePackage = "com.old", createdAt = 0L, startedAt = 500L)
         )
         val viewModel = TaskViewModel(repo, testDispatcher)
 
@@ -272,10 +272,23 @@ private class FakeViewModelTaskRepository : TaskRepository {
         _tasks.value = _tasks.value.filter { it.id != taskId }
     }
     override suspend fun setActiveTask(taskId: Long) {
-        _tasks.value = _tasks.value.map { it.copy(isActive = it.id == taskId) }
+        val now = System.currentTimeMillis()
+        _tasks.value = _tasks.value.map { task ->
+            when {
+                task.id == taskId -> task.copy(
+                    startedAt = task.startedAt ?: now,
+                    pausedAt = null
+                )
+                task.isActive -> task.copy(pausedAt = now)
+                else -> task
+            }
+        }
     }
     override suspend fun clearActiveTask() {
-        _tasks.value = _tasks.value.map { it.copy(isActive = false) }
+        val now = System.currentTimeMillis()
+        _tasks.value = _tasks.value.map { task ->
+            if (task.isActive) task.copy(pausedAt = now) else task
+        }
     }
     override suspend fun clearConversationKey(taskId: Long) {
         _tasks.value = _tasks.value.map {

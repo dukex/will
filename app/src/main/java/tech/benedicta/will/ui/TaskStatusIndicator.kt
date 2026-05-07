@@ -14,6 +14,7 @@ import tech.benedicta.will.task.TaskStatus
 import tech.benedicta.will.ui.theme.WillAccent
 import tech.benedicta.will.ui.theme.WillDestructive
 import tech.benedicta.will.ui.theme.WillSuccess
+import tech.benedicta.will.ui.theme.WillTextSecondary
 import tech.benedicta.will.ui.theme.WillTextTertiary
 
 @Composable
@@ -21,6 +22,7 @@ fun TaskStatusIndicator(status: TaskStatus, modifier: Modifier = Modifier) {
     val targetColor = when (status) {
         TaskStatus.PENDING -> WillTextTertiary
         TaskStatus.IN_PROGRESS -> WillAccent
+        TaskStatus.PAUSED -> WillTextSecondary
         TaskStatus.DONE -> WillSuccess
     }
     val color by animateColorAsState(

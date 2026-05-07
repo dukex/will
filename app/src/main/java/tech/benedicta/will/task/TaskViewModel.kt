@@ -26,11 +26,6 @@ class TaskViewModel(
     fun setActiveTask(task: Task) {
         viewModelScope.launch(dispatcher) {
             repository.setActiveTask(task.id)
-            // Capture the moment of engagement up-front so time-on-task is
-            // recorded even when the user does not have the optional
-            // AccessibilityService enabled. Idempotent — the service-driven
-            // path also calls this and the second call is a no-op.
-            repository.markStartedIfNeeded(task.id, System.currentTimeMillis())
         }
     }
 
@@ -39,7 +34,7 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) {
             when (action) {
                 ACTION_DONE -> repository.updateTask(
-                    task.copy(completedAt = System.currentTimeMillis(), isActive = false, conversationKey = null)
+                    task.copy(completedAt = System.currentTimeMillis(), conversationKey = null)
                 )
                 ACTION_DELETE -> repository.deleteTask(task)
             }
@@ -59,10 +54,7 @@ class TaskViewModel(
 
     fun addTaskAndStart(task: Task) {
         viewModelScope.launch(dispatcher) {
-            val now = System.currentTimeMillis()
-            val id = repository.insertTask(
-                task.copy(startedAt = task.startedAt ?: now)
-            )
+            val id = repository.insertTask(task)
             repository.setActiveTask(id)
         }
     }
@@ -78,14 +70,14 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) {
             repository.clearConversationKey(task.id)
             repository.updateTask(
-                task.copy(completedAt = System.currentTimeMillis(), isActive = false, conversationKey = null)
+                task.copy(completedAt = System.currentTimeMillis(), conversationKey = null)
             )
         }
     }
 
     fun reopenTask(task: Task) {
         viewModelScope.launch(dispatcher) {
-            repository.updateTask(task.copy(completedAt = null, isActive = false))
+            repository.updateTask(task.copy(completedAt = null, pausedAt = task.startedAt))
         }
     }
 

@@ -27,6 +27,7 @@ import tech.benedicta.will.onboarding.OnboardingRepository
 import tech.benedicta.will.onboarding.PermissionInspector
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskRepository
+import tech.benedicta.will.task.isActive
 
 data class OverlayEvent(val action: String, val taskId: Long)
 

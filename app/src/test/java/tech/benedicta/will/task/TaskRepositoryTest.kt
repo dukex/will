@@ -224,6 +224,96 @@ class TaskRepositoryTest {
         assertTrue(id1 != id2)
         assertEquals(2, repo.getAllTasks().first().size)
     }
+
+    // --- activation transaction (status derived from timestamps) ---
+
+    private fun newTask(title: String, createdAt: Long = 0L) =
+        Task(title = title, text = "", sourcePackage = "pkg", createdAt = createdAt)
+
+    @Test
+    fun `setActiveTask stamps startedAt on the new task and leaves it un-paused`() = runTest {
+        val repo = FakeTaskRepository()
+        val id = repo.insertTask(newTask("A"))
+
+        repo.setActiveTask(id)
+
+        val a = repo.getAllTasks().first().single { it.id == id }
+        assertEquals(TaskStatus.IN_PROGRESS, a.status)
+        assertEquals(null, a.pausedAt)
+        assertTrue("startedAt should be stamped", a.startedAt != null)
+    }
+
+    @Test
+    fun `setActiveTask pauses the previously active task`() = runTest {
+        val repo = FakeTaskRepository()
+        val a = repo.insertTask(newTask("A"))
+        val b = repo.insertTask(newTask("B"))
+
+        repo.setActiveTask(a)
+        repo.setActiveTask(b)
+
+        val tasks = repo.getAllTasks().first()
+        val taskA = tasks.single { it.id == a }
+        val taskB = tasks.single { it.id == b }
+        assertEquals("A must become PAUSED", TaskStatus.PAUSED, taskA.status)
+        assertEquals("B must become IN_PROGRESS", TaskStatus.IN_PROGRESS, taskB.status)
+    }
+
+    @Test
+    fun `at most one task is IN_PROGRESS at any time`() = runTest {
+        val repo = FakeTaskRepository()
+        val a = repo.insertTask(newTask("A"))
+        val b = repo.insertTask(newTask("B"))
+        val c = repo.insertTask(newTask("C"))
+
+        repo.setActiveTask(a)
+        repo.setActiveTask(b)
+        repo.setActiveTask(c)
+
+        val inProgress = repo.getAllTasks().first().count { it.status == TaskStatus.IN_PROGRESS }
+        assertEquals(1, inProgress)
+    }
+
+    @Test
+    fun `resuming a previously paused task preserves its original startedAt`() = runTest {
+        val repo = FakeTaskRepository()
+        val a = repo.insertTask(newTask("A"))
+        val b = repo.insertTask(newTask("B"))
+
+        repo.setActiveTask(a)
+        val originalStart = repo.getAllTasks().first().single { it.id == a }.startedAt
+        repo.setActiveTask(b)
+        repo.setActiveTask(a)
+
+        val resumed = repo.getAllTasks().first().single { it.id == a }
+        assertEquals("startedAt must not be reset on resume", originalStart, resumed.startedAt)
+        assertEquals(TaskStatus.IN_PROGRESS, resumed.status)
+    }
+
+    @Test
+    fun `completing the active task leaves no IN_PROGRESS row`() = runTest {
+        val repo = FakeTaskRepository()
+        val a = repo.insertTask(newTask("A"))
+        repo.setActiveTask(a)
+
+        val active = repo.getAllTasks().first().single { it.id == a }
+        repo.updateTask(active.copy(completedAt = 999L))
+
+        val tasks = repo.getAllTasks().first()
+        assertTrue(tasks.none { it.status == TaskStatus.IN_PROGRESS })
+    }
+
+    @Test
+    fun `clearActiveTask pauses the currently active task`() = runTest {
+        val repo = FakeTaskRepository()
+        val a = repo.insertTask(newTask("A"))
+        repo.setActiveTask(a)
+
+        repo.clearActiveTask()
+
+        val task = repo.getAllTasks().first().single { it.id == a }
+        assertEquals(TaskStatus.PAUSED, task.status)
+    }
 }
 
 private class FakeTaskRepository : TaskRepository {
@@ -255,11 +345,24 @@ private class FakeTaskRepository : TaskRepository {
         tasks.removeAll { it.id == taskId }
     }
     override suspend fun setActiveTask(taskId: Long) {
-        val updated = tasks.map { it.copy(isActive = it.id == taskId) }
+        val now = System.currentTimeMillis()
+        val updated = tasks.map { task ->
+            when {
+                task.id == taskId -> task.copy(
+                    startedAt = task.startedAt ?: now,
+                    pausedAt = null
+                )
+                task.isActive -> task.copy(pausedAt = now)
+                else -> task
+            }
+        }
         tasks.clear(); tasks.addAll(updated)
     }
     override suspend fun clearActiveTask() {
-        val updated = tasks.map { it.copy(isActive = false) }
+        val now = System.currentTimeMillis()
+        val updated = tasks.map { task ->
+            if (task.isActive) task.copy(pausedAt = now) else task
+        }
         tasks.clear(); tasks.addAll(updated)
     }
     override suspend fun deleteAllTasks() { tasks.clear() }

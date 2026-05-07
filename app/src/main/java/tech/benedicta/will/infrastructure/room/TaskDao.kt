@@ -26,17 +26,38 @@ interface TaskDao {
     @Query("DELETE FROM tasks WHERE id = :taskId")
     suspend fun deleteById(taskId: Long)
 
-    @Query("UPDATE tasks SET isActive = 0")
-    suspend fun clearAllActive()
+    @Query("""
+        UPDATE tasks
+        SET pausedAt = :now
+        WHERE startedAt IS NOT NULL
+          AND pausedAt IS NULL
+          AND completedAt IS NULL
+    """)
+    suspend fun pauseCurrentlyActive(now: Long)
 
-    @Query("UPDATE tasks SET isActive = 1 WHERE id = :taskId")
-    suspend fun setActive(taskId: Long)
+    @Query("""
+        UPDATE tasks
+        SET startedAt = COALESCE(startedAt, :now),
+            pausedAt = NULL
+        WHERE id = :taskId
+          AND completedAt IS NULL
+    """)
+    suspend fun activateById(taskId: Long, now: Long)
 
     @Transaction
-    suspend fun setActiveAtomically(taskId: Long) {
-        clearAllActive()
-        setActive(taskId)
+    suspend fun setActiveAtomically(taskId: Long, now: Long) {
+        pauseCurrentlyActive(now)
+        activateById(taskId, now)
     }
+
+    @Query("""
+        UPDATE tasks
+        SET pausedAt = :now
+        WHERE startedAt IS NOT NULL
+          AND pausedAt IS NULL
+          AND completedAt IS NULL
+    """)
+    suspend fun clearAllActive(now: Long)
 
     @Query("DELETE FROM tasks")
     suspend fun deleteAll()

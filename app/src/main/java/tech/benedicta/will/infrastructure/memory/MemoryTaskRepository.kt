@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskRepository
+import tech.benedicta.will.task.isActive
 
 class MemoryTaskRepository : TaskRepository {
     private var nextId = 1L
@@ -30,11 +31,28 @@ class MemoryTaskRepository : TaskRepository {
     }
 
     override suspend fun setActiveTask(taskId: Long) {
-        _tasks.update { list -> list.map { it.copy(isActive = it.id == taskId) } }
+        val now = System.currentTimeMillis()
+        _tasks.update { list ->
+            list.map { task ->
+                when {
+                    task.id == taskId -> task.copy(
+                        startedAt = task.startedAt ?: now,
+                        pausedAt = null
+                    )
+                    task.isActive -> task.copy(pausedAt = now)
+                    else -> task
+                }
+            }
+        }
     }
 
     override suspend fun clearActiveTask() {
-        _tasks.update { list -> list.map { it.copy(isActive = false) } }
+        val now = System.currentTimeMillis()
+        _tasks.update { list ->
+            list.map { task ->
+                if (task.isActive) task.copy(pausedAt = now) else task
+            }
+        }
     }
 
     override suspend fun deleteAllTasks() {

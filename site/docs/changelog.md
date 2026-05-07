@@ -16,6 +16,8 @@
 - pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
 
 ### fixed
+- only the task you are working on is highlighted as active — every other started-but-not-finished task now shows as paused, with its own muted dot, so the home screen reflects what you are actually doing right now
+- uninstalled apps no longer linger in the pinned row — the launcher refreshes its app list every time you return home, so pins for apps you removed disappear automatically
 - WhatsApp and other messengers no longer spam the feed — repeated notifications from the same chat collapse into a single task and the tap always opens the most recent message
 - tapping a task now opens the specific conversation (WhatsApp, Calendar, etc.) instead of the app's home screen — notification key persisted in database
 - notification filter toggle now updates the UI reactively

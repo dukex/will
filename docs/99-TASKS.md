@@ -197,19 +197,31 @@ Subtasks:
 - [x] `Task.isAuthoredElsewhere` for SHARED and AGENT
 - [ ] Show it in the feed — the data is there, `TaskFeed` does not render it yet
 
-### US-14: AppFunctions surface 🟡
+### US-14: AppFunctions surface ⬜ deferred
 **As a user, I want an assistant or agent on my phone to be able to put work on my home screen and see what I am holding, without anything leaving the device.**
 
-Subtasks:
-- [x] `WillTaskFunctions`: createTask, listOpenTasks, getTask, completeTask, free of AppFunctions types (16 tests)
-- [x] `WillAppFunctionService` as the `@AppFunctionServiceEntryPoint`, with agent-facing KDoc as the published description
-- [x] `@AppFunctionSerializable` params and returns
-- [x] Service declared with `BIND_APP_FUNCTION_SERVICE`; callers need `EXECUTE_APP_FUNCTIONS`
-- [x] Tasks an agent writes carry `TaskOrigin.AGENT`
-- [x] Generated function metadata verified present in the built APK (`assets/will_app_functions.xml`)
-- [ ] Verify a real agent can discover and execute the functions — needs an Android 16 device; `adb shell cmd app_function list-app-functions` is the check
-- [ ] Decide whether `PrivacySettings` should list which callers are allowed, which is the open US-07 question this raises
-- [ ] Reconsider when AppFunctions leaves beta: it forced `compileSdk 37` and adds ~1.8 MB of transitive dependencies
+Built once and reverted (`961682c`, reverted). It worked: four functions, 16 unit tests, and the generated metadata verified in the APK. It was reverted because the cost does not pay off yet:
+
+- `androidx.appfunctions:appfunctions:1.0.0-beta01` refuses to build against `compileSdk 36` and forces 37
+- about 1.8 MB of transitive dependencies (appsearch, guava) on a launcher that cares about size
+- beta API, explicitly allowed to break
+- the Gemini side of the pipeline was a private preview with trusted testers as of May 2026, so almost nothing can call it
+
+`will://task` from US-11 covers agent writes meanwhile, on `minSdk 24`, with none of that.
+
+**What the beta01 processor actually requires**, so the next attempt does not rediscover it. The published example at developer.android.com/ai/appfunctions is out of date:
+
+- the annotation is `@AppFunctionDeclaration`, not `@AppFunction` (that name is now an interface)
+- functions must be members of the class annotated `@AppFunctionServiceEntryPoint`; top-level functions are rejected
+- that class must be abstract and must hold at least one function
+- functions take **no** `AppFunctionContext` parameter, despite the processor carrying a message that reads "the first parameter of an app function must be"
+- parameter and return types must be annotated `@AppFunctionSerializable`
+- the AppFunctions exception types cannot be constructed in a JVM unit test (`NullPointerException: EMPTY must not be null`), so keep the behaviour in a plain class throwing plain Kotlin exceptions and translate at the service boundary. That also keeps framework types out of the task layer, which the architecture already requires
+- the service needs `android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"` plus the `android.app.appfunctions.AppFunctionService` action; a caller needs `android.permission.EXECUTE_APP_FUNCTIONS`
+- lint fails on the generated service without `tools:targetApi="36"`, since its platform superclass only exists there
+- verify registration with `adb shell cmd app_function list-app-functions`
+
+When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whichever comes first. Open question to settle before then: whether `PrivacySettings` should list which callers are allowed, which is the US-07 question this raises.
 
 ## Technical Debt and Improvement Tasks
 

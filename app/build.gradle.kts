@@ -14,7 +14,7 @@ val keystoreProps = Properties().apply {
 
 android {
     namespace = "tech.benedicta.will"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "tech.benedicta.will"
@@ -82,10 +82,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.livedata.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.androidx.lifecycle.runtime.compose)
-
-    // AppFunctions — lets on-device agents call Will (Android 16+)
-    implementation(libs.androidx.appfunctions)
-    ksp(libs.androidx.appfunctions.compiler)
 
     // Room
     implementation(libs.androidx.room.runtime)

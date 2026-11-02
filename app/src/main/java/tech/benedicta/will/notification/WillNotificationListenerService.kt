@@ -21,6 +21,9 @@ class WillNotificationListenerService : NotificationListenerService() {
     private val appFilterRepository by lazy {
         (application as WillApplication).appFilterRepository
     }
+    private val taskEvents by lazy {
+        (application as WillApplication).taskEventRecorder
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (sbn.packageName in NotificationProcessor.IGNORED_PACKAGES) return
@@ -51,7 +54,10 @@ class WillNotificationListenerService : NotificationListenerService() {
 
         scope.launch {
             if (!appFilterRepository.isEnabled(sbn.packageName)) return@launch
-            repository.upsertByConversationKey(task)
+            val upsert = repository.upsertByConversationKey(task)
+            // A further message on a conversation that already has an open task
+            // bumps that task; only a genuinely new one is a creation.
+            if (upsert.created) taskEvents.created(upsert.id)
         }
     }
 

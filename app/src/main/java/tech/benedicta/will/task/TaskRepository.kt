@@ -12,7 +12,7 @@ interface TaskRepository {
     suspend fun clearActiveTask()
     suspend fun deleteAllTasks()
     suspend fun clearConversationKey(taskId: Long)
-    suspend fun upsertByConversationKey(task: Task): Long
+    suspend fun upsertByConversationKey(task: Task): TaskUpsert
 
     /** Set [Task.startedAt] only if currently null. No-op if already set. */
     suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long)

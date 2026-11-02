@@ -475,7 +475,7 @@ private class FakeViewModelTaskRepository : TaskRepository {
             if (it.id == taskId) it.copy(contextSwitchCount = it.contextSwitchCount + 1) else it
         }
     }
-    override suspend fun upsertByConversationKey(task: Task): Long {
+    override suspend fun upsertByConversationKey(task: Task): TaskUpsert {
         val key = task.conversationKey
         if (key != null) {
             val existing = _tasks.value.firstOrNull {
@@ -491,9 +491,9 @@ private class FakeViewModelTaskRepository : TaskRepository {
                         unreadCount = it.unreadCount + 1
                     ) else it
                 }
-                return existing.id
+                return TaskUpsert(id = existing.id, created = false)
             }
         }
-        return insertTask(task.copy(unreadCount = 1))
+        return TaskUpsert(id = insertTask(task.copy(unreadCount = 1)), created = true)
     }
 }

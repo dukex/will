@@ -136,7 +136,7 @@ class TaskRepositoryTest {
             conversationKey = "com.whatsapp:maria"
         )
 
-        val id = repo.upsertByConversationKey(task)
+        val id = repo.upsertByConversationKey(task).id
         val tasks = repo.getAllTasks().first()
 
         assertEquals(1L, id)
@@ -158,8 +158,8 @@ class TaskRepositoryTest {
         )
         val second = first.copy(text = "How are you?", createdAt = 2000L, notificationKey = "key-2")
 
-        val id1 = repo.upsertByConversationKey(first)
-        val id2 = repo.upsertByConversationKey(second)
+        val id1 = repo.upsertByConversationKey(first).id
+        val id2 = repo.upsertByConversationKey(second).id
         val tasks = repo.getAllTasks().first()
 
         assertEquals(id1, id2)
@@ -202,11 +202,11 @@ class TaskRepositoryTest {
             notificationKey = "key-1",
             conversationKey = "com.whatsapp:maria"
         )
-        val id1 = repo.upsertByConversationKey(first)
+        val id1 = repo.upsertByConversationKey(first).id
         repo.updateTask(first.copy(id = id1, completedAt = 1500L, conversationKey = null))
 
         val second = first.copy(notificationKey = "key-2", createdAt = 2000L)
-        val id2 = repo.upsertByConversationKey(second)
+        val id2 = repo.upsertByConversationKey(second).id
 
         val tasks = repo.getAllTasks().first()
         assertEquals(2, tasks.size)
@@ -218,8 +218,8 @@ class TaskRepositoryTest {
         val repo = FakeTaskRepository()
         val task = Task(title = "Generic", text = "", sourcePackage = "com.whatsapp", createdAt = 1000L)
 
-        val id1 = repo.upsertByConversationKey(task)
-        val id2 = repo.upsertByConversationKey(task.copy(createdAt = 2000L))
+        val id1 = repo.upsertByConversationKey(task).id
+        val id2 = repo.upsertByConversationKey(task.copy(createdAt = 2000L)).id
 
         assertTrue(id1 != id2)
         assertEquals(2, repo.getAllTasks().first().size)
@@ -387,7 +387,7 @@ private class FakeTaskRepository : TaskRepository {
         }
     }
 
-    override suspend fun upsertByConversationKey(task: Task): Long {
+    override suspend fun upsertByConversationKey(task: Task): TaskUpsert {
         val key = task.conversationKey
         if (key != null) {
             val index = tasks.indexOfFirst {
@@ -402,11 +402,11 @@ private class FakeTaskRepository : TaskRepository {
                     text = task.text,
                     unreadCount = existing.unreadCount + 1
                 )
-                return existing.id
+                return TaskUpsert(id = existing.id, created = false)
             }
         }
         val id = nextId++
         tasks.add(task.copy(id = id, unreadCount = 1))
-        return id
+        return TaskUpsert(id = id, created = true)
     }
 }

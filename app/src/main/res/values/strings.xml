@@ -3,4 +3,7 @@
     <string name="welcome_message">Welcome to Will - Your Task-Centric Launcher</string>
     <string name="accessibility_service_label">Will lifecycle tracking</string>
     <string name="accessibility_service_description">Tracks which app you switch to so Will can measure time-on-task and context switches for the active task. Reads only the foreground package name. Nothing leaves the device.</string>
+    <string name="share_target_label">add to Will</string>
+    <string name="share_task_added">task added</string>
+    <string name="share_nothing_to_add">nothing to add</string>
 </resources>

@@ -26,9 +26,11 @@ import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.onboarding.OnboardingRepository
 import tech.benedicta.will.onboarding.PermissionInspector
+import tech.benedicta.will.share.SharedTask
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskEventRecorder
 import tech.benedicta.will.task.TaskEventRepository
+import tech.benedicta.will.task.TaskOrigin
 import tech.benedicta.will.task.TaskRepository
 import tech.benedicta.will.task.isActive
 
@@ -83,6 +85,30 @@ class WillApplication : Application() {
 
     fun emitOverlayEvent(event: OverlayEvent) {
         _overlayEvents.tryEmit(event)
+    }
+
+    /**
+     * Stores a task an outside caller asked for. Runs on the application scope
+     * because the caller is usually a no-UI activity that finishes
+     * immediately, which would cancel a scope tied to its lifecycle.
+     */
+    fun acceptTaskFromOutside(
+        shared: SharedTask,
+        origin: TaskOrigin,
+        sourcePackage: String
+    ) {
+        applicationScope.launch {
+            val id = taskRepository.insertTask(
+                Task(
+                    title = shared.title,
+                    text = shared.text,
+                    sourcePackage = sourcePackage,
+                    createdAt = System.currentTimeMillis(),
+                    origin = origin
+                )
+            )
+            taskEventRecorder.created(id)
+        }
     }
 
     override fun onCreate() {

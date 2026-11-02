@@ -82,9 +82,9 @@ Subtasks:
 - [x] Build dashboard using custom Canvas (no external chart lib)
 - [x] Display time-on-task distribution (bar chart, normalized per-task)
 - [x] Show context switch frequency (today's total)
-- [ ] Implement GOMS model to estimate "Carga Estranha" (cognitive load saved)
-- [ ] Visualize focus score trends across days (line graph)
-- [ ] Provide filtering by date range (week, month) — currently only today
+- [ ] Implement GOMS model to estimate "Carga Estranha" (cognitive load saved) — now has the data it needs (US-12)
+- [ ] Visualize focus score trends across days (line graph) — now has the data it needs (US-12)
+- [ ] Provide filtering by date range (week, month) — currently only today; `TaskEventRepository.eventsSince` is the input
 - [ ] ~~Export metrics~~ → out of MVP per scope.md
 - [ ] ~~Goal setting / progress tracking~~ → out of MVP per scope.md
 
@@ -160,6 +160,56 @@ Subtasks:
 - [x] Persist filter preferences (`SharedPrefsAppFilterRepository`)
 - [x] Apply filter in `WillNotificationListenerService` before creating tasks
 - [x] Link to data & privacy from the same screen (`onNavigateToPrivacy`)
+
+### US-11: Share-to-Will ✅
+**As a user, I want to send anything from any app into Will so an intention I notice elsewhere lands on my home screen without me retyping it.**
+
+Subtasks:
+- [x] Pure parser for the share-sheet extras and `will://task` links (`SharedIntentParser`, 21 unit tests)
+- [x] `ACTION_SEND` / `text/plain` intent filter so Will appears in the Android share sheet
+- [x] `will://task?title=…&text=…` scheme so a script, automation tool or on-device agent can create a task by firing an intent
+- [x] No-UI share target (`ShareTargetActivity`, translucent, `noHistory`) so sharing never pulls the user out of the app they were in
+- [x] Keep the sharing app as `sourcePackage` (via `referrer`) so tapping the task returns there
+- [x] Nothing is interpreted: the text arrives as written, only trimmed and split into title plus body
+- [x] An empty share creates nothing
+- [ ] Instrumented test for the share flow — deferred, same reason as US-10's e2e
+
+### US-12: Task event log ✅
+**As a user, I want Will to keep how a task went, not just where it ended up, so the dashboard can eventually tell me when I actually get things done.**
+
+Subtasks:
+- [x] `TaskEvent` + `TaskEventType` domain model, no Android deps
+- [x] `TaskEventRepository` append-only contract, chronological reads with ties by insertion order (13 contract tests)
+- [x] `TaskEventRecorder` deciding STARTED vs RESUMED (9 tests)
+- [x] Room table, DAO without `@Update`, repository impl, migration 8→9
+- [x] Fed from `TaskLifecycleApplier` (STARTED, SWITCHED_AWAY with the package jumped to) and `TaskViewModel` (CREATED, PAUSED, RESUMED, COMPLETED, REOPENED)
+- [x] Notification-created tasks logged once per conversation, not once per message (`TaskUpsert.created`)
+- [x] Deleting a task drops its events; clearing all data clears the log (US-07)
+- [ ] Surface it: US-05's trends, date ranges and cognitive-load estimate are what this unblocks, and none of it is built yet
+
+### US-13: Task origin ✅
+**As a user, I want to see which tasks I did not put there myself, now that other apps and agents can write to my home screen.**
+
+Subtasks:
+- [x] `TaskOrigin { NOTIFICATION, MANUAL, SHARED, AGENT }` on the domain model
+- [x] Column plus migration 7→8 backfilling from the `"manual"` source package
+- [x] Unknown stored value reads as NOTIFICATION rather than throwing
+- [x] `Task.isAuthoredElsewhere` for SHARED and AGENT
+- [ ] Show it in the feed — the data is there, `TaskFeed` does not render it yet
+
+### US-14: AppFunctions surface 🟡
+**As a user, I want an assistant or agent on my phone to be able to put work on my home screen and see what I am holding, without anything leaving the device.**
+
+Subtasks:
+- [x] `WillTaskFunctions`: createTask, listOpenTasks, getTask, completeTask, free of AppFunctions types (16 tests)
+- [x] `WillAppFunctionService` as the `@AppFunctionServiceEntryPoint`, with agent-facing KDoc as the published description
+- [x] `@AppFunctionSerializable` params and returns
+- [x] Service declared with `BIND_APP_FUNCTION_SERVICE`; callers need `EXECUTE_APP_FUNCTIONS`
+- [x] Tasks an agent writes carry `TaskOrigin.AGENT`
+- [x] Generated function metadata verified present in the built APK (`assets/will_app_functions.xml`)
+- [ ] Verify a real agent can discover and execute the functions — needs an Android 16 device; `adb shell cmd app_function list-app-functions` is the check
+- [ ] Decide whether `PrivacySettings` should list which callers are allowed, which is the open US-07 question this raises
+- [ ] Reconsider when AppFunctions leaves beta: it forced `compileSdk 37` and adds ~1.8 MB of transitive dependencies
 
 ## Technical Debt and Improvement Tasks
 

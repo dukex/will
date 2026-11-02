@@ -8,9 +8,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import tech.benedicta.will.task.TaskOrigin
 
-@Database(entities = [TaskEntity::class], version = 8, exportSchema = false)
+@Database(
+    entities = [TaskEntity::class, TaskEventEntity::class],
+    version = 9,
+    exportSchema = false
+)
 abstract class WillDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
+    abstract fun taskEventDao(): TaskEventDao
 
     companion object {
         @Volatile private var instance: WillDatabase? = null
@@ -111,6 +116,30 @@ abstract class WillDatabase : RoomDatabase() {
             }
         }
 
+        // DDL copied from Room's own exported schema so the migrated table is
+        // byte-for-byte what the entity declares; a hand-written variant fails
+        // Room's identity check at open time.
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `task_events` (" +
+                    "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                    "`taskId` INTEGER NOT NULL, " +
+                    "`type` TEXT NOT NULL, " +
+                    "`at` INTEGER NOT NULL, " +
+                    "`foregroundPackage` TEXT)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_task_events_taskId` " +
+                    "ON `task_events` (`taskId`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_task_events_at` " +
+                    "ON `task_events` (`at`)"
+                )
+            }
+        }
+
         fun getInstance(context: Context): WillDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -120,7 +149,7 @@ abstract class WillDatabase : RoomDatabase() {
                 ).addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4,
                     MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
-                    MIGRATION_7_8
+                    MIGRATION_7_8, MIGRATION_8_9
                 ).build().also { instance = it }
             }
     }

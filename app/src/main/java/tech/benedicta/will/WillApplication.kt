@@ -17,6 +17,7 @@ import tech.benedicta.will.infrastructure.AndroidPermissionInspector
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.infrastructure.SharedPrefsOnboardingRepository
 import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
+import tech.benedicta.will.infrastructure.room.RoomTaskEventRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskRepository
 import tech.benedicta.will.infrastructure.room.WillDatabase
 import tech.benedicta.will.launcher.PinnedAppsRepository
@@ -26,6 +27,8 @@ import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.onboarding.OnboardingRepository
 import tech.benedicta.will.onboarding.PermissionInspector
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskEventRecorder
+import tech.benedicta.will.task.TaskEventRepository
 import tech.benedicta.will.task.TaskRepository
 import tech.benedicta.will.task.isActive
 
@@ -37,6 +40,12 @@ class WillApplication : Application() {
 
     val taskRepository: TaskRepository by lazy {
         RoomTaskRepository(WillDatabase.getInstance(this).taskDao())
+    }
+    val taskEventRepository: TaskEventRepository by lazy {
+        RoomTaskEventRepository(WillDatabase.getInstance(this).taskEventDao())
+    }
+    val taskEventRecorder: TaskEventRecorder by lazy {
+        TaskEventRecorder(taskEventRepository)
     }
     val appFilterRepository: AppFilterRepository by lazy {
         SharedPrefsAppFilterRepository(this)

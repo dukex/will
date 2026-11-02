@@ -1,9 +1,11 @@
 package tech.benedicta.will.infrastructure.room
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskOrigin
 
 @Entity(
     tableName = "tasks",
@@ -22,7 +24,9 @@ data class TaskEntity(
     val notificationKey: String? = null,
     val conversationKey: String? = null,
     val unreadCount: Int = 1,
-    val shortcutId: String? = null
+    val shortcutId: String? = null,
+    @ColumnInfo(defaultValue = DEFAULT_ORIGIN)
+    val origin: String = DEFAULT_ORIGIN
 ) {
     fun toTask() = Task(
         id = id,
@@ -37,8 +41,13 @@ data class TaskEntity(
         notificationKey = notificationKey,
         conversationKey = conversationKey,
         unreadCount = unreadCount,
-        shortcutId = shortcutId
+        shortcutId = shortcutId,
+        origin = TaskOrigin.fromStored(origin)
     )
+
+    companion object {
+        const val DEFAULT_ORIGIN = "NOTIFICATION"
+    }
 }
 
 fun Task.toEntity() = TaskEntity(
@@ -54,5 +63,6 @@ fun Task.toEntity() = TaskEntity(
     notificationKey = notificationKey,
     conversationKey = conversationKey,
     unreadCount = unreadCount,
-    shortcutId = shortcutId
+    shortcutId = shortcutId,
+    origin = origin.name
 )

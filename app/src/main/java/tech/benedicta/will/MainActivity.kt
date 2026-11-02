@@ -56,6 +56,7 @@ import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskOrigin
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.TaskStatus
 import tech.benedicta.will.task.status
@@ -500,7 +501,8 @@ private fun WillScreen(
                         title = intent,
                         text = "",
                         sourcePackage = app.packageName,
-                        createdAt = System.currentTimeMillis()
+                        createdAt = System.currentTimeMillis(),
+                        origin = TaskOrigin.MANUAL
                     )
                 )
                 launchAppByPackage(context, app.packageName)
@@ -521,8 +523,9 @@ private fun WillScreen(
                     Task(
                         title = title,
                         text = "",
-                        sourcePackage = "manual",
-                        createdAt = System.currentTimeMillis()
+                        sourcePackage = TaskOrigin.MANUAL_SOURCE_PACKAGE,
+                        createdAt = System.currentTimeMillis(),
+                        origin = TaskOrigin.MANUAL
                     )
                 )
                 showIntentInputSheet = false

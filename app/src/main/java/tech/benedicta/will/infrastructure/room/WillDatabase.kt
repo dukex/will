@@ -6,8 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import tech.benedicta.will.task.TaskOrigin
 
-@Database(entities = [TaskEntity::class], version = 7, exportSchema = false)
+@Database(entities = [TaskEntity::class], version = 8, exportSchema = false)
 abstract class WillDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 
@@ -94,6 +95,22 @@ abstract class WillDatabase : RoomDatabase() {
             }
         }
 
+        // Before this column, `sourcePackage` carried the origin through one
+        // magic value: "manual" for what the user typed, a real package name
+        // for everything intercepted from a notification.
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE tasks ADD COLUMN origin TEXT NOT NULL " +
+                    "DEFAULT '${TaskEntity.DEFAULT_ORIGIN}'"
+                )
+                db.execSQL(
+                    "UPDATE tasks SET origin = '${TaskOrigin.MANUAL.name}' " +
+                    "WHERE sourcePackage = '${TaskOrigin.MANUAL_SOURCE_PACKAGE}'"
+                )
+            }
+        }
+
         fun getInstance(context: Context): WillDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -102,7 +119,8 @@ abstract class WillDatabase : RoomDatabase() {
                     "will.db"
                 ).addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4,
-                    MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7
+                    MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                    MIGRATION_7_8
                 ).build().also { instance = it }
             }
     }

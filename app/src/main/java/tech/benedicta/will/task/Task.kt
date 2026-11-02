@@ -13,5 +13,6 @@ data class Task(
     val notificationKey: String? = null,
     val conversationKey: String? = null,
     val unreadCount: Int = 1,
-    val shortcutId: String? = null
+    val shortcutId: String? = null,
+    val origin: TaskOrigin = TaskOrigin.NOTIFICATION
 )

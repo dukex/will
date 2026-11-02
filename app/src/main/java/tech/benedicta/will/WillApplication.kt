@@ -70,7 +70,8 @@ class WillApplication : Application() {
         TaskLifecycleApplier(
             coordinator = TaskLifecycleCoordinator(launcherPackage = packageName),
             activeTaskProvider = { activeTaskFlow.value },
-            repository = taskRepository
+            repository = taskRepository,
+            events = taskEventRecorder
         )
     }
 

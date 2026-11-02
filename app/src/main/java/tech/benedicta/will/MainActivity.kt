@@ -155,7 +155,9 @@ class MainActivity : ComponentActivity() {
                     factory = LauncherViewModel.factory(appRepository)
                 )
                 this@MainActivity.launcherVm = launcherVm
-                taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
+                taskVm = viewModel(
+                    factory = TaskViewModel.Factory(taskRepository, app.taskEventRecorder)
+                )
 
                 val appFilterVm: AppFilterViewModel = viewModel(
                     factory = AppFilterViewModel.Factory(app.appFilterRepository)

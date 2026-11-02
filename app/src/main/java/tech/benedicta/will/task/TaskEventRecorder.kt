@@ -15,6 +15,15 @@ class TaskEventRecorder(
 ) {
     suspend fun created(taskId: Long) = append(taskId, TaskEventType.CREATED)
 
+    /**
+     * The task started at a moment the caller already decided, which is the
+     * case for the accessibility pipeline: the coordinator stamps `startedAt`
+     * and the log has to agree with it.
+     */
+    suspend fun started(taskId: Long, at: Long) {
+        events.append(TaskEvent(taskId = taskId, type = TaskEventType.STARTED, at = at))
+    }
+
     /** [task] must be the row as it was *before* activation. */
     suspend fun activated(task: Task) = append(
         task.id,

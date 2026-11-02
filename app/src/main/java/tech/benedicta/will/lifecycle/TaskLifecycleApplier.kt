@@ -1,6 +1,7 @@
 package tech.benedicta.will.lifecycle
 
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskEventRecorder
 import tech.benedicta.will.task.TaskRepository
 
 /**
@@ -13,20 +14,29 @@ import tech.benedicta.will.task.TaskRepository
  * and [resetForActiveTaskChange] whenever the active task switches so
  * the coordinator's last-seen-foreground memory does not bleed across
  * tasks.
+ *
+ * Every decision lands twice: on the task row, where it updates the current
+ * state, and in the task log, where it keeps the timestamp and the package the
+ * user jumped to.
  */
 class TaskLifecycleApplier(
     private val coordinator: TaskLifecycleCoordinator,
     private val activeTaskProvider: () -> Task?,
-    private val repository: TaskRepository
+    private val repository: TaskRepository,
+    private val events: TaskEventRecorder
 ) {
     suspend fun onForegroundChange(packageName: String) {
-        val events = coordinator.onForegroundChange(packageName, activeTaskProvider())
-        events.forEach { event ->
+        val decisions = coordinator.onForegroundChange(packageName, activeTaskProvider())
+        decisions.forEach { event ->
             when (event) {
-                is LifecycleEvent.StartTask ->
+                is LifecycleEvent.StartTask -> {
                     repository.markStartedIfNeeded(event.taskId, event.startedAt)
-                is LifecycleEvent.IncrementContextSwitch ->
+                    events.started(event.taskId, event.startedAt)
+                }
+                is LifecycleEvent.IncrementContextSwitch -> {
                     repository.incrementContextSwitch(event.taskId)
+                    events.switchedAway(event.taskId, packageName)
+                }
             }
         }
     }

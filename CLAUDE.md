@@ -27,6 +27,10 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 # Lint
 ./gradlew lint
 
+# Render the Compose previews to PNGs (layoutlib on the JVM, no device needed)
+./gradlew updateDebugScreenshotTest   # write/refresh the reference images
+./gradlew validateDebugScreenshotTest # fail if the UI drifted from them
+
 # Install on connected device
 ./gradlew installDebug
 ```
@@ -125,6 +129,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `ui/PinnedAppsRow.kt` | exposes `LazyListScope.pinnedAppsItems(...)` extension consumed by `TaskFeed`'s header slot, so up to 5 pinned apps scroll together with the feed; same row layout as TaskItem (48dp dot + name + packageName); tap to launch, long-press to unpin (haptic feedback) |
 | `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
+| `ui/TaskMetadataFormatter.kt` | pure builder for the metadata line under a task title; drops empty segments, and keeps NOTIFICATION / MANUAL silent so only origins the user did not author are named |
+| `app/src/screenshotTest/.../TaskFeedScreenshotTest.kt` | `@PreviewTest` previews rendered to PNGs under `app/src/screenshotTestDebug/reference/`; add one whenever a UI change needs looking at |
 | **Tests** | |
 | `test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests against MemoryTaskRepository |
 | `test/.../notification/NotificationProcessorTest.kt` | processor mapping + edge cases |
@@ -182,6 +188,8 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - **The task log is the record; the scalars are a view** — `startedAt`, `pausedAt`, `completedAt` and `contextSwitchCount` on `Task` answer what the state is now. `TaskEvent` answers how it got there, and is append-only. Both are written together by `TaskLifecycleApplier` and `TaskViewModel`. Never derive one from the other at read time; keep writing both.
 - **No `DELETED` event** — deleting a task deletes its events (US-07). A tombstone would point at a row nothing can resolve. `TaskEventRecorder.forgot` wipes, it does not append.
 - **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. To add one, flip `exportSchema = true` plus `ksp { arg("room.schemaLocation", ...) }` temporarily, read `createSql` from the generated JSON, then revert.
+- **UI changes are rendered before they are handed over** — `./gradlew updateDebugScreenshotTest` renders the `@PreviewTest` previews in `app/src/screenshotTest/` through layoutlib on the JVM, so there is no emulator or device in the loop. The reference PNGs are committed; `validateDebugScreenshotTest` fails when the UI drifts from them. Enabling it needs the flag in **both** places: `android.experimental.enableScreenshotTest=true` in `gradle.properties` (so the plugin applies) and `experimentalProperties["android.experimental.enableScreenshotTest"] = true` in the module's `android` block (so the source set exists). `@PreviewTest` comes from `com.android.tools.screenshot:screenshot-validation-api`, which the plugin does not add for you; without it the task fails with "did not discover any tests".
+- **The `"manual"` source package never reaches the screen** — it is the sentinel for a task with no app to open, not a name to read. `TaskFeed` maps it to a null app label and `taskMetadataLine` drops the segment.
 - **Domain/Infrastructure separation** — `task/Task.kt` is a pure Kotlin data class with zero Android deps. `infrastructure/room/TaskEntity.kt` mirrors it with Room annotations and provides `toTask()` / `Task.toEntity()` mappers. Never add Android/Room imports to domain classes.
 - No Hilt — manual `ViewModelProvider.Factory` for DI
 - `CoroutineDispatcher` injected into ViewModel for testability

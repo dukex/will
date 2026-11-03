@@ -15,11 +15,11 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 # Run all unit tests
 ./gradlew test
 
-# Run a single test class
-./gradlew test --tests "tech.benedicta.will.task.TaskViewModelTest"
+# Run a single test class (the aggregate `test` task rejects --tests; use the variant task)
+./gradlew testDebugUnitTest --tests "tech.benedicta.will.task.TaskViewModelTest"
 
 # Run a single test method
-./gradlew test --tests "tech.benedicta.will.task.TaskViewModelTest.someTestMethod"
+./gradlew testDebugUnitTest --tests "tech.benedicta.will.task.TaskViewModelTest.someTestMethod"
 
 # Type-check (Kotlin compile without APK)
 ./gradlew compileDebugKotlin
@@ -102,7 +102,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `infrastructure/memory/MemoryPinnedAppsRepository.kt` | in-memory PinnedAppsRepository (used in tests) |
 | `infrastructure/SharedPrefsPinnedAppsRepository.kt` | PinnedAppsRepository impl backed by SharedPreferences (`pinned_apps` prefs file, pipe-separated package list) |
 | **Notification** | |
-| `notification/NotificationProcessor.kt` | pure logic: notification data → Task (or null) |
+| `notification/NotificationProcessor.kt` | structural mapping only: blank checks, conversation key, flags. Does **not** judge whether content is worth showing |
+| `notification/IntentionClassifier.kt` | `fun interface` deciding intention vs noise, plus `PatternIntentionClassifier`, the default and fallback: English and Portuguese housekeeping patterns, accent-folded, biased toward keeping |
 | `notification/NotificationActionStore.kt` | holds PendingIntents keyed by notification key (in-memory) |
 | `notification/NotificationKeyTracker.kt` | **deprecated** — dedup now via Room unique index on `conversationKey` |
 | `notification/WillNotificationListenerService.kt` | intercepts notifications; inserts Tasks; fires PendingIntent on tap |
@@ -190,6 +191,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. To add one, flip `exportSchema = true` plus `ksp { arg("room.schemaLocation", ...) }` temporarily, read `createSql` from the generated JSON, then revert.
 - **UI changes are rendered before they are handed over** — `./gradlew updateDebugScreenshotTest` renders the `@PreviewTest` previews in `app/src/screenshotTest/` through layoutlib on the JVM, so there is no emulator or device in the loop. The reference PNGs are committed; `validateDebugScreenshotTest` fails when the UI drifts from them. Enabling it needs the flag in **both** places: `android.experimental.enableScreenshotTest=true` in `gradle.properties` (so the plugin applies) and `experimentalProperties["android.experimental.enableScreenshotTest"] = true` in the module's `android` block (so the source set exists). `@PreviewTest` comes from `com.android.tools.screenshot:screenshot-validation-api`, which the plugin does not add for you; without it the task fails with "did not discover any tests".
 - **The `"manual"` source package never reaches the screen** — it is the sentinel for a task with no app to open, not a name to read. `TaskFeed` maps it to a null app label and `taskMetadataLine` drops the segment.
+- **Triage is a seam, not a regex buried in the processor** — `NotificationProcessor` answers structural questions; `IntentionClassifier` answers "is this an intention or noise". The pattern implementation is the default and the fallback on every device. It is biased toward keeping: a false keep costs one dismissable row, a false drop means a message the user never sees and the feed cannot tell them about.
 - **Domain/Infrastructure separation** — `task/Task.kt` is a pure Kotlin data class with zero Android deps. `infrastructure/room/TaskEntity.kt` mirrors it with Room annotations and provides `toTask()` / `Task.toEntity()` mappers. Never add Android/Room imports to domain classes.
 - No Hilt — manual `ViewModelProvider.Factory` for DI
 - `CoroutineDispatcher` injected into ViewModel for testability

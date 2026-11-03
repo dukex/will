@@ -3,6 +3,7 @@
 ## [unreleased]
 
 ### added
+- notifications in Portuguese no longer clutter the feed — "Baixando vídeo", "Carregamento concluído", "Atualização concluída", "Sua hora de dormir começa" and the rest of the housekeeping chatter are now recognised and skipped, in Portuguese as well as English, with or without accents
 - the feed says when a task was not yours — a task another app shared into Will reads "shared" next to the app it came from, and one an agent wrote reads "from agent". a notification or something you typed says nothing extra, because that is the ordinary case and naming it would add a word to every row
 - share anything into Will — Will now appears in the Android share sheet. share a message, a link or a selected paragraph from any app and it lands on your home screen as a task, with the app you shared from kept as the source, so tapping the task takes you back there. sharing never opens Will, you stay in the app you were in
 - create a task from a link — `will://task?title=pay%20the%20bill` puts that task on your home screen, so a script, an automation tool or an agent on your phone can hand you an intention without Will having to talk to anything

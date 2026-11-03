@@ -3,6 +3,7 @@
 ## [unreleased]
 
 ### added
+- the feed says when a task was not yours — a task another app shared into Will reads "shared" next to the app it came from, and one an agent wrote reads "from agent". a notification or something you typed says nothing extra, because that is the ordinary case and naming it would add a word to every row
 - share anything into Will — Will now appears in the Android share sheet. share a message, a link or a selected paragraph from any app and it lands on your home screen as a task, with the app you shared from kept as the source, so tapping the task takes you back there. sharing never opens Will, you stay in the app you were in
 - create a task from a link — `will://task?title=pay%20the%20bill` puts that task on your home screen, so a script, an automation tool or an agent on your phone can hand you an intention without Will having to talk to anything
 - Will remembers how a task went, not just where it ended up — each task now keeps its own history: when you started it, every time you were pulled away and which app pulled you, when you paused, finished or reopened it. coming back to a task reads as resuming it instead of starting over, which is what the focus dashboard needs before it can show trends across days. deleting a task takes its history with it, and clearing your data clears all of it
@@ -16,6 +17,7 @@
 - unread counter on tasks — when more than one notification piles up for the same conversation, the task shows "N new" so you know how many messages are waiting
 
 ### changed
+- a task you typed no longer shows the word "manual" where an app name belongs — it just shows the time
 - pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
 
 ### fixed

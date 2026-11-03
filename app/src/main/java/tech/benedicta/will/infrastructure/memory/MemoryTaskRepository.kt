@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskRepository
+import tech.benedicta.will.task.TaskUpsert
 import tech.benedicta.will.task.isActive
 
 class MemoryTaskRepository : TaskRepository {
@@ -83,7 +84,7 @@ class MemoryTaskRepository : TaskRepository {
         }
     }
 
-    override suspend fun upsertByConversationKey(task: Task): Long {
+    override suspend fun upsertByConversationKey(task: Task): TaskUpsert {
         val key = task.conversationKey
         if (key != null) {
             val existing = _tasks.value.firstOrNull {
@@ -102,11 +103,11 @@ class MemoryTaskRepository : TaskRepository {
                         ) else it
                     }
                 }
-                return existing.id
+                return TaskUpsert(id = existing.id, created = false)
             }
         }
         val newTask = task.copy(id = nextId++, unreadCount = 1)
         _tasks.update { it + newTask }
-        return newTask.id
+        return TaskUpsert(id = newTask.id, created = true)
     }
 }

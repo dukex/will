@@ -54,6 +54,10 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-07: Privacy-First | 🟡 partial | `PrivacySettings` + delete-all + permissions rationale shipped; selective deletion and accessibility on-device guarantees still to enforce |
 | US-08: Notification Filter Settings | ✅ done | `SettingsScreen` + `AppFilterViewModel` + `SharedPrefsAppFilterRepository`; filter applied in `WillNotificationListenerService` |
 | US-09: Brand Android Icon Set | ✅ done | adaptive icon vectors, monochrome variant, density-variant raster mipmaps regenerated from `scripts/render-icons.sh`, true-black splash via `values-v31`, programmatic wallpaper legibility audit archived under `.design/branding/will/identity/audits/` |
+| US-11: Share-to-Will | ✅ done | `ACTION_SEND` (text/plain) + `will://task` via `ShareTargetActivity`; pure `SharedIntentParser` (21 tests); works on minSdk 24 |
+| US-12: Task event log | ✅ done | append-only `TaskEvent` / `TaskEventRepository` / `TaskEventRecorder`; Room table + migration 8→9; fed by `TaskLifecycleApplier` and `TaskViewModel`; scalars on `Task` are now a view over it |
+| US-13: Task origin | ✅ done | `TaskOrigin { NOTIFICATION, MANUAL, SHARED, AGENT }` on `Task`; migration 7→8 backfills from the `"manual"` source package |
+| US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
 
 ## Key Files
@@ -75,12 +79,21 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | **Task domain** | |
 | `task/Task.kt` | pure domain model — no Android/Room deps; includes `notificationKey` for deep-link persistence |
 | `task/TaskRepository.kt` | repository interface (domain layer) |
-| `task/TaskViewModel.kt` | StateFlow<List<Task>>, addTask, deleteTask, markActive |
+| `task/TaskViewModel.kt` | StateFlow<List<Task>>, addTask, deleteTask, markActive; records every user action in the task log |
+| `task/TaskOrigin.kt` | where a task came from; `fromStored` tolerates an unknown value, `forLegacySourcePackage` is the migration rule; `Task.isAuthoredElsewhere` |
+| `task/TaskEvent.kt` | `TaskEvent` + `TaskEventType` (no `DELETED`: removing a task removes its history) |
+| `task/TaskEventRepository.kt` | append-only contract; chronological reads, ties by insertion order |
+| `task/TaskEventRecorder.kt` | turns state changes into events; decides STARTED vs RESUMED |
+| `task/TaskUpsert.kt` | upsert outcome, so the notification path can tell a new conversation from a bumped one |
 | **Infrastructure** | |
 | `infrastructure/room/TaskEntity.kt` | Room @Entity; `toTask()` / `Task.toEntity()` mappers |
 | `infrastructure/room/TaskDao.kt` | Room DAO — insert, getAll (Flow), update, delete |
 | `infrastructure/room/WillDatabase.kt` | singleton RoomDatabase |
 | `infrastructure/room/RoomTaskRepository.kt` | TaskRepository impl backed by Room |
+| `infrastructure/room/TaskEventEntity.kt` | Room @Entity for the log; `toTaskEvent()` returns null for an unknown type so the row is dropped, never guessed |
+| `infrastructure/room/TaskEventDao.kt` | append and read only; deliberately no `@Update` |
+| `infrastructure/room/RoomTaskEventRepository.kt` | TaskEventRepository impl backed by Room |
+| `infrastructure/memory/MemoryTaskEventRepository.kt` | in-memory TaskEventRepository (used in tests) |
 | `infrastructure/memory/MemoryTaskRepository.kt` | in-memory TaskRepository (used in tests) |
 | `infrastructure/memory/MemoryPinnedAppsRepository.kt` | in-memory PinnedAppsRepository (used in tests) |
 | `infrastructure/SharedPrefsPinnedAppsRepository.kt` | PinnedAppsRepository impl backed by SharedPreferences (`pinned_apps` prefs file, pipe-separated package list) |
@@ -98,6 +111,9 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `infrastructure/SharedPrefsOnboardingRepository.kt` | OnboardingRepository backed by `SharedPreferences` (`onboarding` prefs file, `completed` boolean) |
 | `infrastructure/AndroidPermissionInspector.kt` | PermissionInspector backed by RoleManager.ROLE_HOME (Q+) / PackageManager fallback, `Settings.canDrawOverlays`, `NotificationManagerCompat.getEnabledListenerPackages` |
 | `ui/OnboardingScreen.kt` | brand-aligned three-step Compose screen consumed by MainActivity before WillScreen; primary action launches the right system intent, optional step also offers "skip for now" |
+| **Share** | |
+| `share/SharedIntentParser.kt` | pure parser for `ACTION_SEND` extras and `will://task` links → `SharedTask`; no Android types |
+| `share/ShareTargetActivity.kt` | no-UI share target; hands the task to `WillApplication.acceptTaskFromOutside` and finishes |
 | **Overlay** | |
 | `overlay/ActiveTaskOverlayService.kt` | TYPE_APPLICATION_OVERLAY bubble; draggable; expands to panel with done/later/delete |
 | **UI** | |
@@ -163,6 +179,9 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 
 ## Architecture Decisions
 
+- **The task log is the record; the scalars are a view** — `startedAt`, `pausedAt`, `completedAt` and `contextSwitchCount` on `Task` answer what the state is now. `TaskEvent` answers how it got there, and is append-only. Both are written together by `TaskLifecycleApplier` and `TaskViewModel`. Never derive one from the other at read time; keep writing both.
+- **No `DELETED` event** — deleting a task deletes its events (US-07). A tombstone would point at a row nothing can resolve. `TaskEventRecorder.forgot` wipes, it does not append.
+- **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. To add one, flip `exportSchema = true` plus `ksp { arg("room.schemaLocation", ...) }` temporarily, read `createSql` from the generated JSON, then revert.
 - **Domain/Infrastructure separation** — `task/Task.kt` is a pure Kotlin data class with zero Android deps. `infrastructure/room/TaskEntity.kt` mirrors it with Room annotations and provides `toTask()` / `Task.toEntity()` mappers. Never add Android/Room imports to domain classes.
 - No Hilt — manual `ViewModelProvider.Factory` for DI
 - `CoroutineDispatcher` injected into ViewModel for testability

@@ -82,9 +82,9 @@ Subtasks:
 - [x] Build dashboard using custom Canvas (no external chart lib)
 - [x] Display time-on-task distribution (bar chart, normalized per-task)
 - [x] Show context switch frequency (today's total)
-- [ ] Implement GOMS model to estimate "Carga Estranha" (cognitive load saved)
-- [ ] Visualize focus score trends across days (line graph)
-- [ ] Provide filtering by date range (week, month) — currently only today
+- [ ] Implement GOMS model to estimate "Carga Estranha" (cognitive load saved) — now has the data it needs (US-12)
+- [ ] Visualize focus score trends across days (line graph) — now has the data it needs (US-12)
+- [ ] Provide filtering by date range (week, month) — currently only today; `TaskEventRepository.eventsSince` is the input
 - [ ] ~~Export metrics~~ → out of MVP per scope.md
 - [ ] ~~Goal setting / progress tracking~~ → out of MVP per scope.md
 
@@ -160,6 +160,68 @@ Subtasks:
 - [x] Persist filter preferences (`SharedPrefsAppFilterRepository`)
 - [x] Apply filter in `WillNotificationListenerService` before creating tasks
 - [x] Link to data & privacy from the same screen (`onNavigateToPrivacy`)
+
+### US-11: Share-to-Will ✅
+**As a user, I want to send anything from any app into Will so an intention I notice elsewhere lands on my home screen without me retyping it.**
+
+Subtasks:
+- [x] Pure parser for the share-sheet extras and `will://task` links (`SharedIntentParser`, 21 unit tests)
+- [x] `ACTION_SEND` / `text/plain` intent filter so Will appears in the Android share sheet
+- [x] `will://task?title=…&text=…` scheme so a script, automation tool or on-device agent can create a task by firing an intent
+- [x] No-UI share target (`ShareTargetActivity`, translucent, `noHistory`) so sharing never pulls the user out of the app they were in
+- [x] Keep the sharing app as `sourcePackage` (via `referrer`) so tapping the task returns there
+- [x] Nothing is interpreted: the text arrives as written, only trimmed and split into title plus body
+- [x] An empty share creates nothing
+- [ ] Instrumented test for the share flow — deferred, same reason as US-10's e2e
+
+### US-12: Task event log ✅
+**As a user, I want Will to keep how a task went, not just where it ended up, so the dashboard can eventually tell me when I actually get things done.**
+
+Subtasks:
+- [x] `TaskEvent` + `TaskEventType` domain model, no Android deps
+- [x] `TaskEventRepository` append-only contract, chronological reads with ties by insertion order (13 contract tests)
+- [x] `TaskEventRecorder` deciding STARTED vs RESUMED (9 tests)
+- [x] Room table, DAO without `@Update`, repository impl, migration 8→9
+- [x] Fed from `TaskLifecycleApplier` (STARTED, SWITCHED_AWAY with the package jumped to) and `TaskViewModel` (CREATED, PAUSED, RESUMED, COMPLETED, REOPENED)
+- [x] Notification-created tasks logged once per conversation, not once per message (`TaskUpsert.created`)
+- [x] Deleting a task drops its events; clearing all data clears the log (US-07)
+- [ ] Surface it: US-05's trends, date ranges and cognitive-load estimate are what this unblocks, and none of it is built yet
+
+### US-13: Task origin ✅
+**As a user, I want to see which tasks I did not put there myself, now that other apps and agents can write to my home screen.**
+
+Subtasks:
+- [x] `TaskOrigin { NOTIFICATION, MANUAL, SHARED, AGENT }` on the domain model
+- [x] Column plus migration 7→8 backfilling from the `"manual"` source package
+- [x] Unknown stored value reads as NOTIFICATION rather than throwing
+- [x] `Task.isAuthoredElsewhere` for SHARED and AGENT
+- [ ] Show it in the feed — the data is there, `TaskFeed` does not render it yet
+
+### US-14: AppFunctions surface ⬜ deferred
+**As a user, I want an assistant or agent on my phone to be able to put work on my home screen and see what I am holding, without anything leaving the device.**
+
+Built once and reverted (`961682c`, reverted). It worked: four functions, 16 unit tests, and the generated metadata verified in the APK. It was reverted because the cost does not pay off yet:
+
+- `androidx.appfunctions:appfunctions:1.0.0-beta01` refuses to build against `compileSdk 36` and forces 37
+- about 1.8 MB of transitive dependencies (appsearch, guava) on a launcher that cares about size
+- beta API, explicitly allowed to break
+- the Gemini side of the pipeline was a private preview with trusted testers as of May 2026, so almost nothing can call it
+
+`will://task` from US-11 covers agent writes meanwhile, on `minSdk 24`, with none of that.
+
+**What the beta01 processor actually requires**, so the next attempt does not rediscover it. The published example at developer.android.com/ai/appfunctions is out of date:
+
+- the annotation is `@AppFunctionDeclaration`, not `@AppFunction` (that name is now an interface)
+- functions must be members of the class annotated `@AppFunctionServiceEntryPoint`; top-level functions are rejected
+- that class must be abstract and must hold at least one function
+- functions take **no** `AppFunctionContext` parameter, despite the processor carrying a message that reads "the first parameter of an app function must be"
+- parameter and return types must be annotated `@AppFunctionSerializable`
+- the AppFunctions exception types cannot be constructed in a JVM unit test (`NullPointerException: EMPTY must not be null`), so keep the behaviour in a plain class throwing plain Kotlin exceptions and translate at the service boundary. That also keeps framework types out of the task layer, which the architecture already requires
+- the service needs `android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"` plus the `android.app.appfunctions.AppFunctionService` action; a caller needs `android.permission.EXECUTE_APP_FUNCTIONS`
+- lint fails on the generated service without `tools:targetApi="36"`, since its platform superclass only exists there
+- verify registration with `adb shell cmd app_function list-app-functions`
+
+When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whichever comes first. Open question to settle before then: whether `PrivacySettings` should list which callers are allowed, which is the US-07 question this raises.
 
 ## Technical Debt and Improvement Tasks
 

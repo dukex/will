@@ -3,7 +3,9 @@ package tech.benedicta.will.notification
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
 
@@ -84,7 +86,7 @@ class NotificationDedupIntegrationTest {
             timestamp = 1000L,
             notificationKey = "key-1"
         )!!
-        val firstId = repo.upsertByConversationKey(first)
+        val firstId = repo.upsertByConversationKey(first).id
 
         repo.updateTask(
             repo.getAllTasks().first().single().copy(
@@ -100,7 +102,7 @@ class NotificationDedupIntegrationTest {
             timestamp = 2000L,
             notificationKey = "key-2"
         )!!
-        val secondId = repo.upsertByConversationKey(second)
+        val secondId = repo.upsertByConversationKey(second).id
 
         val all = repo.getAllTasks().first()
         assertEquals(2, all.size)
@@ -144,5 +146,35 @@ class NotificationDedupIntegrationTest {
         val tasks = repo.getAllTasks().first()
         assertEquals(1, tasks.size)
         assertEquals(4, tasks[0].unreadCount)
+    }
+
+
+    @Test
+    fun `only a genuinely new conversation reports itself as created`() = runTest {
+        val repo = MemoryTaskRepository()
+        val first = processor.process("Maria", "Hi", "com.whatsapp", 1000L, "k-1")!!
+        val second = processor.process("Maria", "Still there?", "com.whatsapp", 2000L, "k-2")!!
+
+        val firstUpsert = repo.upsertByConversationKey(first)
+        val secondUpsert = repo.upsertByConversationKey(second)
+
+        assertTrue("a new conversation is a creation", firstUpsert.created)
+        assertFalse("a further message only bumps it", secondUpsert.created)
+        assertEquals(firstUpsert.id, secondUpsert.id)
+    }
+
+    @Test
+    fun `a conversation that starts again after being finished reports a creation`() = runTest {
+        val repo = MemoryTaskRepository()
+        val first = processor.process("Maria", "Hi", "com.whatsapp", 1000L, "k-1")!!
+        repo.upsertByConversationKey(first)
+        repo.updateTask(
+            repo.getAllTasks().first().single().copy(completedAt = 1500L, conversationKey = null)
+        )
+
+        val second = processor.process("Maria", "Back", "com.whatsapp", 2000L, "k-2")!!
+        val secondUpsert = repo.upsertByConversationKey(second)
+
+        assertTrue(secondUpsert.created)
     }
 }

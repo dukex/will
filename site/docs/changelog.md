@@ -3,6 +3,9 @@
 ## [unreleased]
 
 ### added
+- share anything into Will — Will now appears in the Android share sheet. share a message, a link or a selected paragraph from any app and it lands on your home screen as a task, with the app you shared from kept as the source, so tapping the task takes you back there. sharing never opens Will, you stay in the app you were in
+- create a task from a link — `will://task?title=pay%20the%20bill` puts that task on your home screen, so a script, an automation tool or an agent on your phone can hand you an intention without Will having to talk to anything
+- Will remembers how a task went, not just where it ended up — each task now keeps its own history: when you started it, every time you were pulled away and which app pulled you, when you paused, finished or reopened it. coming back to a task reads as resuming it instead of starting over, which is what the focus dashboard needs before it can show trends across days. deleting a task takes its history with it, and clearing your data clears all of it
 - first-run onboarding — Will now walks you through making it the default launcher, granting the active-task overlay, and (optionally) enabling the notification listener, instead of dropping you into a wall of system dialogs. you can re-run the flow any time from settings.
 - distinctive Will icon — a flat geometric "W" stroke on true black replaces the default platform mark. ships with a monochrome variant so Android 13+ themed icons inherit your system tint.
 - pin up to 5 apps to the home screen — long-press an app in the drawer to pin or unpin it; pinned apps live above the task feed for one-tap launch

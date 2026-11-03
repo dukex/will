@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskRepository
+import tech.benedicta.will.task.TaskUpsert
 
 class RoomTaskRepository(private val dao: TaskDao) : TaskRepository {
     override suspend fun insertTask(task: Task): Long = dao.insert(task.toEntity())
@@ -17,7 +18,7 @@ class RoomTaskRepository(private val dao: TaskDao) : TaskRepository {
         dao.clearAllActive(System.currentTimeMillis())
     override suspend fun deleteAllTasks() = dao.deleteAll()
     override suspend fun clearConversationKey(taskId: Long) = dao.clearConversationKey(taskId)
-    override suspend fun upsertByConversationKey(task: Task): Long =
+    override suspend fun upsertByConversationKey(task: Task): TaskUpsert =
         dao.upsertByConversationKey(task.toEntity())
     override suspend fun markStartedIfNeeded(taskId: Long, startedAt: Long) =
         dao.markStartedIfNeeded(taskId, startedAt)

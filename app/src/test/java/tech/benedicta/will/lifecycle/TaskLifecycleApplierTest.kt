@@ -3,13 +3,18 @@ package tech.benedicta.will.lifecycle
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import tech.benedicta.will.infrastructure.memory.MemoryTaskEventRepository
 import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskEventRecorder
+import tech.benedicta.will.task.TaskEventType
 
 private const val LAUNCHER = "tech.benedicta.will"
 private const val SLACK = "com.slack"
 private const val INSTAGRAM = "com.instagram.android"
+private const val TWITTER = "com.twitter.android"
 
 class TaskLifecycleApplierTest {
 
@@ -23,7 +28,8 @@ class TaskLifecycleApplierTest {
         val applier = TaskLifecycleApplier(
             coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER, now = { 5_000L }),
             activeTaskProvider = { active },
-            repository = repo
+            repository = repo,
+            events = TaskEventRecorder(MemoryTaskEventRepository())
         )
         active = repo.getAllTasks().first().first()
 
@@ -49,7 +55,8 @@ class TaskLifecycleApplierTest {
         val applier = TaskLifecycleApplier(
             coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER),
             activeTaskProvider = { active },
-            repository = repo
+            repository = repo,
+            events = TaskEventRecorder(MemoryTaskEventRepository())
         )
 
         applier.onForegroundChange(SLACK)
@@ -72,7 +79,8 @@ class TaskLifecycleApplierTest {
         val applier = TaskLifecycleApplier(
             coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER, now = { 5_000L }),
             activeTaskProvider = { null },
-            repository = repo
+            repository = repo,
+            events = TaskEventRecorder(MemoryTaskEventRepository())
         )
 
         applier.onForegroundChange(SLACK)
@@ -108,7 +116,8 @@ class TaskLifecycleApplierTest {
         val applier = TaskLifecycleApplier(
             coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER),
             activeTaskProvider = { active },
-            repository = repo
+            repository = repo,
+            events = TaskEventRecorder(MemoryTaskEventRepository())
         )
 
         // user is on Slack with the first task active
@@ -126,5 +135,105 @@ class TaskLifecycleApplierTest {
         val second = repo.getAllTasks().first().first { it.id == secondId }
         assertEquals(0, first.contextSwitchCount)
         assertEquals(0, second.contextSwitchCount)
+    }
+
+
+    @Test
+    fun `entering the source app writes a STARTED event stamped with the same time`() = runTest {
+        val repo = MemoryTaskRepository()
+        val log = MemoryTaskEventRepository()
+        val taskId = repo.insertTask(
+            Task(title = "Sarah", text = "msg", sourcePackage = SLACK, createdAt = 1_000L)
+        )
+        var active: Task? = repo.getAllTasks().first().first { it.id == taskId }
+        val applier = TaskLifecycleApplier(
+            coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER, now = { 5_000L }),
+            activeTaskProvider = { active },
+            repository = repo,
+            events = TaskEventRecorder(log)
+        )
+
+        applier.onForegroundChange(SLACK)
+
+        val event = log.eventsForTask(taskId).first().single()
+        assertEquals(TaskEventType.STARTED, event.type)
+        assertEquals(5_000L, event.at)
+        assertEquals(repo.getAllTasks().first().first { it.id == taskId }.startedAt, event.at)
+    }
+
+    @Test
+    fun `every context switch is logged with the package the user jumped to`() = runTest {
+        val repo = MemoryTaskRepository()
+        val log = MemoryTaskEventRepository()
+        val taskId = repo.insertTask(
+            Task(
+                title = "Sarah",
+                text = "msg",
+                sourcePackage = SLACK,
+                createdAt = 1_000L,
+                startedAt = 5_000L
+            )
+        )
+        val active: Task? = repo.getAllTasks().first().first { it.id == taskId }
+        val applier = TaskLifecycleApplier(
+            coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER),
+            activeTaskProvider = { active },
+            repository = repo,
+            events = TaskEventRecorder(log)
+        )
+
+        applier.onForegroundChange(SLACK)
+        applier.onForegroundChange(INSTAGRAM)
+        applier.onForegroundChange(SLACK)
+        applier.onForegroundChange(TWITTER)
+
+        val switches = log.eventsForTask(taskId).first()
+            .filter { it.type == TaskEventType.SWITCHED_AWAY }
+        assertEquals(listOf(INSTAGRAM, TWITTER), switches.map { it.foregroundPackage })
+    }
+
+    @Test
+    fun `returning to the launcher is not logged as a switch`() = runTest {
+        val repo = MemoryTaskRepository()
+        val log = MemoryTaskEventRepository()
+        val taskId = repo.insertTask(
+            Task(
+                title = "Sarah",
+                text = "msg",
+                sourcePackage = SLACK,
+                createdAt = 1_000L,
+                startedAt = 5_000L
+            )
+        )
+        val active: Task? = repo.getAllTasks().first().first { it.id == taskId }
+        val applier = TaskLifecycleApplier(
+            coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER),
+            activeTaskProvider = { active },
+            repository = repo,
+            events = TaskEventRecorder(log)
+        )
+
+        applier.onForegroundChange(SLACK)
+        applier.onForegroundChange(LAUNCHER)
+
+        assertTrue(log.eventsForTask(taskId).first().isEmpty())
+    }
+
+    @Test
+    fun `no active task writes nothing to the log`() = runTest {
+        val repo = MemoryTaskRepository()
+        val log = MemoryTaskEventRepository()
+        repo.insertTask(Task(title = "Sarah", text = "m", sourcePackage = SLACK, createdAt = 1_000L))
+        val applier = TaskLifecycleApplier(
+            coordinator = TaskLifecycleCoordinator(launcherPackage = LAUNCHER),
+            activeTaskProvider = { null },
+            repository = repo,
+            events = TaskEventRecorder(log)
+        )
+
+        applier.onForegroundChange(SLACK)
+        applier.onForegroundChange(INSTAGRAM)
+
+        assertTrue(log.eventsSince(0L).first().isEmpty())
     }
 }

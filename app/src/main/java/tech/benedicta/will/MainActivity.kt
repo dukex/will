@@ -56,6 +56,7 @@ import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskOrigin
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.TaskStatus
 import tech.benedicta.will.task.status
@@ -154,7 +155,9 @@ class MainActivity : ComponentActivity() {
                     factory = LauncherViewModel.factory(appRepository)
                 )
                 this@MainActivity.launcherVm = launcherVm
-                taskVm = viewModel(factory = TaskViewModel.Factory(taskRepository))
+                taskVm = viewModel(
+                    factory = TaskViewModel.Factory(taskRepository, app.taskEventRecorder)
+                )
 
                 val appFilterVm: AppFilterViewModel = viewModel(
                     factory = AppFilterViewModel.Factory(app.appFilterRepository)
@@ -500,7 +503,8 @@ private fun WillScreen(
                         title = intent,
                         text = "",
                         sourcePackage = app.packageName,
-                        createdAt = System.currentTimeMillis()
+                        createdAt = System.currentTimeMillis(),
+                        origin = TaskOrigin.MANUAL
                     )
                 )
                 launchAppByPackage(context, app.packageName)
@@ -521,8 +525,9 @@ private fun WillScreen(
                     Task(
                         title = title,
                         text = "",
-                        sourcePackage = "manual",
-                        createdAt = System.currentTimeMillis()
+                        sourcePackage = TaskOrigin.MANUAL_SOURCE_PACKAGE,
+                        createdAt = System.currentTimeMillis(),
+                        origin = TaskOrigin.MANUAL
                     )
                 )
                 showIntentInputSheet = false

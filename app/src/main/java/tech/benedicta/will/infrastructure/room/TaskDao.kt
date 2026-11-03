@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import tech.benedicta.will.task.TaskUpsert
 
 @Dao
 interface TaskDao {
@@ -94,7 +95,7 @@ interface TaskDao {
     )
 
     @Transaction
-    suspend fun upsertByConversationKey(task: TaskEntity): Long {
+    suspend fun upsertByConversationKey(task: TaskEntity): TaskUpsert {
         val key = task.conversationKey
         if (key != null) {
             val existing = findOpenByConversationKey(key)
@@ -107,9 +108,9 @@ interface TaskDao {
                     text = task.text,
                     shortcutId = task.shortcutId ?: existing.shortcutId
                 )
-                return existing.id
+                return TaskUpsert(id = existing.id, created = false)
             }
         }
-        return insert(task.copy(unreadCount = 1))
+        return TaskUpsert(id = insert(task.copy(unreadCount = 1)), created = true)
     }
 }

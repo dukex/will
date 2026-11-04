@@ -61,6 +61,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-11: Share-to-Will | ✅ done | `ACTION_SEND` (text/plain) + `will://task` via `ShareTargetActivity`; pure `SharedIntentParser` (21 tests); works on minSdk 24 |
 | US-12: Task event log | ✅ done | append-only `TaskEvent` / `TaskEventRepository` / `TaskEventRecorder`; Room table + migration 8→9; fed by `TaskLifecycleApplier` and `TaskViewModel`; scalars on `Task` are now a view over it |
 | US-13: Task origin | ✅ done | `TaskOrigin { NOTIFICATION, MANUAL, SHARED, AGENT }` on `Task`; migration 7→8 backfills from the `"manual"` source package |
+| US-15: On-device triage model | ⬜ blocked on data | the `IntentionClassifier` seam and the pattern implementation are shipped and in use. ML Kit, MediaPipe, LiteRT and a pure-Kotlin linear model were each measured; none earns its place yet, and the linear one was built and cross-validated here. Numbers and the reason in `./docs/99-TASKS.md` |
 | US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
 

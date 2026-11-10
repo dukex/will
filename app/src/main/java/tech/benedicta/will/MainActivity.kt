@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.AppLaunchAction
 import tech.benedicta.will.launcher.AppLaunchGate
+import tech.benedicta.will.launcher.AppMentionResolver
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
@@ -175,6 +176,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val filteredApps by launcherVm.filteredApps.collectAsState()
+                val allApps by launcherVm.apps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
                 val suggestedFinished by taskVm.completionSuggestions.collectAsState()
@@ -183,6 +185,7 @@ class MainActivity : ComponentActivity() {
 
                 WillScreen(
                     apps = filteredApps,
+                    allApps = allApps,
                     appSearchQuery = appSearchQuery,
                     onAppSearchQueryChange = launcherVm::setQuery,
                     tasks = tasks,
@@ -331,6 +334,7 @@ private fun AppDrawerOverlay(
 @Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
+    allApps: List<LauncherApp>,
     appSearchQuery: String,
     onAppSearchQueryChange: (String) -> Unit,
     tasks: List<Task>,
@@ -352,6 +356,7 @@ private fun WillScreen(
     var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
+    val appMentionResolver = remember { AppMentionResolver(context.packageName) }
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
         scope.launch {
@@ -529,11 +534,16 @@ private fun WillScreen(
         IntentInputSheet(
             onDismiss = { showIntentInputSheet = false },
             onAddTask = { title ->
+                // An intention that names an app gets that app as its target,
+                // so tapping the task opens it. Before this a typed task had
+                // nowhere to go and the tap did nothing.
+                val mentioned = appMentionResolver.resolve(title, allApps)
                 taskVm.addTask(
                     Task(
                         title = title,
                         text = "",
-                        sourcePackage = TaskOrigin.MANUAL_SOURCE_PACKAGE,
+                        sourcePackage = mentioned?.packageName
+                            ?: TaskOrigin.MANUAL_SOURCE_PACKAGE,
                         createdAt = System.currentTimeMillis(),
                         origin = TaskOrigin.MANUAL
                     )

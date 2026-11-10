@@ -215,6 +215,23 @@ Subtasks:
 
 This is also the first thing that reads the task log. Before it, US-12 was write-only.
 
+### US-17: Typed intentions find their app ✅
+**As a user, when I type "mandar o contrato no WhatsApp" I want tapping that task to open WhatsApp, instead of nothing happening.**
+
+A typed task was created with `sourcePackage = "manual"`, which is the sentinel for "no app to open". Tapping it called `getLaunchIntentForPackage("manual")`, got null, and did nothing. Every typed task was a dead end.
+
+Subtasks:
+- [x] `AppMentionResolver`: finds the installed app whose name the user wrote, accent-folded and case-insensitive, whole words only (13 unit tests)
+- [x] Wired into the typed-task path, so the task is created pointing at that app
+- [x] The launcher itself is never the target, which would be a loop
+- [x] One- and two-letter app names are ignored: they collide with ordinary words too often to be a signal
+- [x] Earliest mention wins, longest name breaks a tie, so "Google Chat" beats a bare "Chat"
+- [x] The resolution is visible before it is used: the feed already shows the app on the metadata line, so the user sees where the tap will go
+
+Deliberately literal. It resolves a name the user actually typed and does not guess that "pagar boleto" means a bank, because being wrong sends them into the wrong app. When it is unsure the task stays untargeted, which is what used to happen to every typed task.
+
+- [ ] Resolving an intention to a *screen* rather than an app, which is what `01-IDEA.md` wants from deep links. That needs reading the installed apps' declared intent filters and is a story of its own.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

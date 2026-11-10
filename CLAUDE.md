@@ -63,6 +63,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-13: Task origin | ✅ done | `TaskOrigin { NOTIFICATION, MANUAL, SHARED, AGENT }` on `Task`; migration 7→8 backfills from the `"manual"` source package |
 | US-16: Inferred completion | ✅ done | `CompletionInference` reads the task log and marks tasks that look handled; feed shows `looks finished`, the existing checkbox stays the action. Metadata only, never window content. First reader of the US-12 log |
 | US-17: Typed task finds its app | ✅ done | `AppMentionResolver` reads the app name out of a typed intention, so the task opens that app instead of going nowhere. Literal matching only, never a guess at what a sentence implies |
+| US-18: Search survives Portuguese | ✅ done | `AppMatcher` replaces `contains(ignoreCase)` in the drawer: accents folded, initials and subsequence, ranked. Fixes "itau" never finding Itaú. Feed search still open under US-06 |
 | US-15: On-device triage model | ⬜ blocked on data | the `IntentionClassifier` seam and the pattern implementation are shipped and in use. ML Kit, MediaPipe, LiteRT and a pure-Kotlin linear model were each measured; none earns its place yet, and the linear one was built and cross-validated here. Numbers and the reason in `./docs/99-TASKS.md` |
 | US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
@@ -80,7 +81,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/LauncherApp.kt` | app data model (packageName, name) |
 | `launcher/AppRepository.kt` | interface for app list source |
 | `launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
-| `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher |
+| `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher; filters through `AppMatcher`, never `contains` |
+| `launcher/AppMatcher.kt` | drawer search: folds accents, accepts initials and subsequences, ranks results. Pure |
 | `launcher/AppMentionResolver.kt` | finds the installed app named in a typed intention; accent-folded, whole words, never the launcher itself; null when unsure |
 | `launcher/PinnedAppsRepository.kt` | interface for pinned apps storage; `MAX_PINNED = 5` |
 | `launcher/PinnedAppsViewModel.kt` | combines pinned packageNames + installed apps → StateFlow<List<LauncherApp>> in pin order; `canPinMore`, `togglePin`, `pin`, `unpin` |

@@ -24,6 +24,7 @@
 - pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
 
 ### fixed
+- searching the app drawer now works in Portuguese — typing "itau" finds Itaú and "configuracoes" finds Configurações. Accents used to make the app invisible to its own name. You can also type initials ("gd" for Google Drive) or just the consonants ("tlgrm" for Telegram), and the closest match comes first
 - only the task you are working on is highlighted as active — every other started-but-not-finished task now shows as paused, with its own muted dot, so the home screen reflects what you are actually doing right now
 - uninstalled apps no longer linger in the pinned row — the launcher refreshes its app list every time you return home, so pins for apps you removed disappear automatically
 - WhatsApp and other messengers no longer spam the feed — repeated notifications from the same chat collapse into a single task and the tap always opens the most recent message

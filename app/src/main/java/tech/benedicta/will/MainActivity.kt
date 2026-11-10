@@ -32,7 +32,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,6 +55,7 @@ import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
@@ -160,7 +163,8 @@ class MainActivity : ComponentActivity() {
                     factory = TaskViewModel.Factory(
                         taskRepository,
                         app.taskEventRecorder,
-                        app.taskEventRepository
+                        app.taskEventRepository,
+                        app.learnedNoiseRepository
                     )
                 )
 
@@ -418,9 +422,25 @@ private fun WillScreen(
             return
         }
         Screen.PrivacySettings -> {
+            val application = context.applicationContext as WillApplication
+            var silenced by remember { mutableStateOf(emptyList<SilencedNotification>()) }
+            var silencedRevision by remember { mutableIntStateOf(0) }
+            LaunchedEffect(silencedRevision) {
+                silenced = application.learnedNoiseRepository.silenced()
+            }
             PrivacySettings(
                 onBack = { currentScreen = Screen.Settings },
-                onDeleteAllTasks = { taskVm.deleteAllTasks() }
+                onDeleteAllTasks = {
+                    taskVm.deleteAllTasks()
+                    silencedRevision++
+                },
+                silencedNotifications = silenced,
+                onForgetSilenced = { entry ->
+                    scope.launch {
+                        application.learnedNoiseRepository.forget(entry.sourcePackage, entry.title)
+                        silencedRevision++
+                    }
+                }
             )
             return
         }

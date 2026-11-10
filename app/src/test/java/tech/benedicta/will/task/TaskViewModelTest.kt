@@ -17,6 +17,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import tech.benedicta.will.infrastructure.memory.MemoryLearnedNoiseRepository
 import tech.benedicta.will.infrastructure.memory.MemoryTaskEventRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,7 +37,9 @@ class TaskViewModelTest {
 
     private fun viewModelFor(repo: TaskRepository): TaskViewModel {
         val log = MemoryTaskEventRepository()
-        return TaskViewModel(repo, TaskEventRecorder(log), log, testDispatcher)
+        return TaskViewModel(
+            repo, TaskEventRecorder(log), log, MemoryLearnedNoiseRepository(), testDispatcher
+        )
     }
 
     @Test
@@ -255,7 +258,9 @@ class TaskViewModelTest {
     private fun viewModelWithLog(
         repo: FakeViewModelTaskRepository,
         log: MemoryTaskEventRepository
-    ) = TaskViewModel(repo, TaskEventRecorder(log), log, testDispatcher)
+    ) = TaskViewModel(
+        repo, TaskEventRecorder(log), log, MemoryLearnedNoiseRepository(), testDispatcher
+    )
 
     @Test
     fun `adding a task logs it as created`() = runTest {

@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import tech.benedicta.will.notification.LearnedNoiseRepository
 
 class TaskViewModel(
     private val repository: TaskRepository,
     private val events: TaskEventRecorder,
     private val eventLog: TaskEventRepository,
+    private val learnedNoise: LearnedNoiseRepository,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val inference: CompletionInference = CompletionInference(),
     private val now: () -> Long = System::currentTimeMillis
@@ -46,6 +48,22 @@ class TaskViewModel(
         inference.suggestedTaskIds(tasks, events, instant)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
 
+    /**
+     * Throwing away a notification you never finished says it was not worth a
+     * row. Only notifications teach this: a task you typed or an app sent in
+     * is not something Will should learn to hide.
+     */
+    private suspend fun Task.teachDismissed() {
+        if (origin != TaskOrigin.NOTIFICATION || completedAt != null) return
+        learnedNoise.recordDismissed(sourcePackage, rawTitle ?: title)
+    }
+
+    /** Acting on one proves it mattered, whatever was learned before. */
+    private suspend fun Task.teachKept() {
+        if (origin != TaskOrigin.NOTIFICATION) return
+        learnedNoise.recordKept(sourcePackage, rawTitle ?: title)
+    }
+
     private fun ticker() = flow {
         while (true) {
             emit(now())
@@ -72,10 +90,12 @@ class TaskViewModel(
                         task.copy(completedAt = System.currentTimeMillis(), conversationKey = null)
                     )
                     events.completed(task.id)
+                    task.teachKept()
                 }
                 ACTION_DELETE -> {
                     repository.deleteTask(task)
                     events.forgot(task.id)
+                    task.teachDismissed()
                 }
                 // "later" leaves the task open and only drops it from active,
                 // which clearActiveTask below turns into a pause.
@@ -114,6 +134,7 @@ class TaskViewModel(
             repository.clearConversationKey(task.id)
             repository.deleteTask(task)
             events.forgot(task.id)
+            task.teachDismissed()
         }
     }
 
@@ -124,6 +145,7 @@ class TaskViewModel(
                 task.copy(completedAt = System.currentTimeMillis(), conversationKey = null)
             )
             events.completed(task.id)
+            task.teachKept()
         }
     }
 
@@ -138,16 +160,18 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) {
             repository.deleteAllTasks()
             events.forgotEverything()
+            learnedNoise.forgetEverything()
         }
     }
 
     class Factory(
         private val repository: TaskRepository,
         private val events: TaskEventRecorder,
-        private val eventLog: TaskEventRepository
+        private val eventLog: TaskEventRepository,
+        private val learnedNoise: LearnedNoiseRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            TaskViewModel(repository, events, eventLog) as T
+            TaskViewModel(repository, events, eventLog, learnedNoise) as T
     }
 }

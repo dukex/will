@@ -115,4 +115,26 @@ class TaskMetadataFormatterTest {
 
         assertEquals(listOf(TaskOrigin.SHARED, TaskOrigin.AGENT), spelledOut)
     }
+
+
+    @Test
+    fun `a task the log thinks is done says so last`() {
+        val line = taskMetadataLine("Slack", TaskOrigin.NOTIFICATION, "14:32", 1, looksFinished = true)
+
+        assertEquals("Slack · 14:32 · looks finished", line)
+    }
+
+    @Test
+    fun `the hint is silent unless the log actually suggests it`() {
+        val line = taskMetadataLine("Slack", TaskOrigin.NOTIFICATION, "14:32", 1, looksFinished = false)
+
+        assertEquals("Slack · 14:32", line)
+    }
+
+    @Test
+    fun `the hint sits after the unread count, so the newest fact is still the count`() {
+        val line = taskMetadataLine("Slack", TaskOrigin.SHARED, "14:32", 3, looksFinished = true)
+
+        assertEquals("Slack · shared · 14:32 · 3 new · looks finished", line)
+    }
 }

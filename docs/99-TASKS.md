@@ -197,6 +197,24 @@ Subtasks:
 - [x] `Task.isAuthoredElsewhere` for SHARED and AGENT
 - [ ] Show it in the feed — the data is there, `TaskFeed` does not render it yet
 
+### US-16: Inferred completion ✅
+**As a user, I want Will to point out the tasks I have probably already dealt with, so clearing the feed is one tap instead of a memory exercise.**
+
+US-04 gave up on automatic completion because deciding from inside another app would have meant `canRetrieveWindowContent=true`, and that costs more privacy than the brand promise allows. The task log from US-12 reopens the question on the right side of that line: the inference sees timestamps, event types and package names, which is all the accessibility service ever exposed, and no content at all.
+
+Subtasks:
+- [x] `CompletionInference`, pure and with no Android dependency (15 unit tests)
+- [x] The rule, in order: the task is open; it was actually started; the user spent at least 30 seconds on it; nothing has happened for 20 minutes; the last event is under 24 hours old
+- [x] A notification nobody opened is never suggested, however long it sits. That is the property that keeps the feature from quietly burying unread work
+- [x] `TaskViewModel.completionSuggestions`, recomputed on a slow tick because a task becomes suggestable by time passing with no event to wake a flow
+- [x] The feed says `looks finished` as the last metadata segment. No badge, no accent, no new touch target: the checkbox that was already there is still the action
+- [x] End-to-end test over repository, recorder, log and view model (`CompletionSuggestionIntegrationTest`)
+- [x] Rendered and checked before handover (`TaskFeedSuggestionsPreview`)
+- [ ] Tune the thresholds against real use. 20 minutes and 30 seconds are reasoned, not measured, and they are constructor parameters so they can move without touching the rule
+- [ ] Decide whether an ignored suggestion should eventually stop being shown. Today it is derived, so it persists until the task changes
+
+This is also the first thing that reads the task log. Before it, US-12 was write-only.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

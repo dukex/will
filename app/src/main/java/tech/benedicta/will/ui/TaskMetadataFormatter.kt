@@ -7,8 +7,13 @@ import tech.benedicta.will.task.TaskOrigin
  *
  * Segments are joined with a middle dot in a fixed order, so the line stays
  * scannable down the feed: where it came from, how it got here, when, how much
- * is waiting. A segment with nothing to say is dropped rather than rendered
- * empty, which is why [appLabel] is nullable and the origin is usually silent.
+ * is waiting, and whether the log thinks it is already done. A segment with
+ * nothing to say is dropped rather than rendered empty, which is why
+ * [appLabel] is nullable and the origin is usually silent.
+ *
+ * [looksFinished] is a hint, never an action: the checkbox beside the row is
+ * still what completes the task, so the guess costs the user nothing if it is
+ * wrong.
  *
  * Pure so it can be tested without Android. [time] arrives already formatted,
  * which keeps locale handling at the call site.
@@ -17,12 +22,14 @@ fun taskMetadataLine(
     appLabel: String?,
     origin: TaskOrigin,
     time: String,
-    unreadCount: Int
+    unreadCount: Int,
+    looksFinished: Boolean = false
 ): String = listOfNotNull(
     appLabel?.trim()?.takeIf { it.isNotEmpty() },
     origin.feedLabel(),
     time,
-    unreadCount.takeIf { it > 1 }?.let { "$it new" }
+    unreadCount.takeIf { it > 1 }?.let { "$it new" },
+    "looks finished".takeIf { looksFinished }
 ).joinToString(" · ")
 
 /**

@@ -232,6 +232,23 @@ Deliberately literal. It resolves a name the user actually typed and does not gu
 
 - [ ] Resolving an intention to a *screen* rather than an app, which is what `01-IDEA.md` wants from deep links. That needs reading the installed apps' declared intent filters and is a story of its own.
 
+### US-18: Search that survives Portuguese ✅
+**As a user typing in the app drawer, I want to find Itaú by typing "itau", and Google Drive by typing "gd".**
+
+The drawer filtered with `name.contains(query, ignoreCase = true)`. Ignoring case does nothing about accents, so `itau` never found "Itaú" and `configuracoes` never found "Configurações". On a phone used in Portuguese that failed several times a day.
+
+Subtasks:
+- [x] `AppMatcher`, pure and with no Android dependency (15 unit tests)
+- [x] Accents folded on both sides, so the query and the name meet in the middle
+- [x] Initials of a multi-word name: `gd` finds Google Drive
+- [x] Subsequence of the letters in order: `wapp` finds WhatsApp, `tlgrm` finds Telegram, and `ppaw` finds nothing
+- [x] Ranked, so a name that starts with the query beats one that merely contains it, and a scattered subsequence comes last
+- [x] Ties keep the repository's alphabetical order
+- [x] Replaces the filter in `LauncherViewModel`; its eight existing tests still pass unchanged
+
+- [ ] The same matcher over the task feed. US-06 still lists feed search as open, and it needs a search field in the home screen, which is a UI decision of its own.
+- [ ] This is matching, not meaning. "money" will not find the bank app. That needs embeddings, which is the blocked US-15 problem.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

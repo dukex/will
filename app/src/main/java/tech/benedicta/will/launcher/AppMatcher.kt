@@ -39,6 +39,7 @@ class AppMatcher {
             name.contains(needle) -> CONTAINS
             name.initials().startsWith(needle) -> INITIALS
             name.hasSubsequence(needle) -> SUBSEQUENCE
+            app.category.matches(needle) -> CATEGORY
             else -> null
         }
     }
@@ -58,6 +59,15 @@ class AppMatcher {
         return cursor == needle.length
     }
 
+    /**
+     * Whether a word names this category, in Portuguese or English. The words
+     * are Android's categories, so this is searching by what an app is for
+     * without anyone guessing: there is no category for money, so "banco"
+     * finds nothing here.
+     */
+    private fun AppCategory.matches(needle: String): Boolean =
+        CATEGORY_WORDS[this]?.any { it.startsWith(needle) } == true
+
     private fun String.fold(): String {
         val lowered = trim().lowercase()
         return lowered
@@ -71,6 +81,19 @@ class AppMatcher {
         const val CONTAINS = 2
         const val INITIALS = 3
         const val SUBSEQUENCE = 4
+        const val CATEGORY = 5
+
+        val CATEGORY_WORDS: Map<AppCategory, List<String>> = mapOf(
+            AppCategory.GAME to listOf("jogo", "jogos", "game", "games"),
+            AppCategory.AUDIO to listOf("musica", "musicas", "audio", "music", "podcast"),
+            AppCategory.VIDEO to listOf("video", "videos", "filme", "filmes", "movie"),
+            AppCategory.IMAGE to listOf("foto", "fotos", "imagem", "photo", "photos", "image"),
+            AppCategory.SOCIAL to listOf("social", "rede social", "redes"),
+            AppCategory.NEWS to listOf("noticia", "noticias", "news", "jornal"),
+            AppCategory.MAPS to listOf("mapa", "mapas", "map", "maps", "navegacao"),
+            AppCategory.PRODUCTIVITY to listOf("trabalho", "produtividade", "work", "productivity"),
+            AppCategory.ACCESSIBILITY to listOf("acessibilidade", "accessibility")
+        )
 
         val ACCENTS = mapOf(
             'á' to 'a', 'à' to 'a', 'ã' to 'a', 'â' to 'a', 'ä' to 'a',

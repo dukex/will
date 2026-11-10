@@ -30,7 +30,16 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import tech.benedicta.will.launcher.LauncherApp
+import tech.benedicta.will.task.Task
+import tech.benedicta.will.ui.theme.Spacing
 
 @Composable
 fun AppGrid(
@@ -40,6 +49,8 @@ fun AppGrid(
     onLaunchApp: (LauncherApp) -> Unit = { },
     onDismiss: () -> Unit = {},
     onLongPressApp: (LauncherApp) -> Unit = {},
+    matchingTasks: List<Task> = emptyList(),
+    onTapTask: (Task) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
@@ -62,6 +73,22 @@ fun AppGrid(
                     .padding(bottom = 16.dp)
             )
         }
+        // One search box over both: what you still have to do comes before the
+        // apps, because a task is more specific than the app it lives in.
+        if (matchingTasks.isNotEmpty()) {
+            item { SectionHeader("tasks") }
+            items(matchingTasks, key = { "task-${it.id}" }) { task ->
+                TaskSearchResult(
+                    task = task,
+                    onClick = {
+                        onQueryChange("")
+                        onDismiss()
+                        onTapTask(task)
+                    }
+                )
+            }
+            item { SectionHeader("apps") }
+        }
         items(apps, key = { it.packageName }) { app ->
             AppItem(
                 app = app,
@@ -74,6 +101,26 @@ fun AppGrid(
             )
         }
     }
+}
+
+@Composable
+private fun TaskSearchResult(task: Task, onClick: () -> Unit) {
+    Text(
+        text = task.title,
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onBackground,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .heightIn(min = Spacing.touchTarget)
+            .padding(vertical = Spacing.md)
+            .semantics {
+                role = Role.Button
+                contentDescription = "open task ${task.title}"
+            }
+    )
 }
 
 @Composable
@@ -112,6 +159,9 @@ private fun AppItem(app: LauncherApp, onClick: () -> Unit, onLongPress: () -> Un
     Text(
         text = app.name,
         style = MaterialTheme.typography.titleMedium,
+        // Stated rather than inherited: every other text in the launcher names
+        // its colour, and on true black an inherited default disappears.
+        color = MaterialTheme.colorScheme.onBackground,
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(

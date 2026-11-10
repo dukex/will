@@ -114,4 +114,49 @@ class AppMatcherTest {
     fun `the subsequence has to be in order`() {
         assertTrue("ppaw is whatsapp backwards-ish and must not match", search("ppaw").isEmpty())
     }
+
+
+    // --- searching by what an app is for, not what it is called ---
+
+    private val categorised = listOf(
+        LauncherApp("com.spotify.music", "Spotify", AppCategory.AUDIO),
+        LauncherApp("com.google.android.apps.maps", "Maps", AppCategory.MAPS),
+        LauncherApp("com.instagram.android", "Instagram", AppCategory.SOCIAL),
+        LauncherApp("com.notion", "Notion", AppCategory.PRODUCTIVITY),
+        LauncherApp("com.itau", "Itaú", AppCategory.UNKNOWN)
+    )
+
+    @Test
+    fun `a word for a category finds the apps in it`() {
+        assertEquals(
+            listOf("Spotify"),
+            matcher.filter(categorised, "musica").map { it.name }
+        )
+    }
+
+    @Test
+    fun `the category words work in English too`() {
+        assertEquals(listOf("Spotify"), matcher.filter(categorised, "music").map { it.name })
+        assertEquals(listOf("Instagram"), matcher.filter(categorised, "social").map { it.name })
+    }
+
+    @Test
+    fun `a name match still beats a category match`() {
+        val apps = listOf(
+            LauncherApp("com.b", "Mapas Brasil", AppCategory.UNKNOWN),
+            LauncherApp("com.a", "Waze", AppCategory.MAPS)
+        )
+
+        assertEquals("Mapas Brasil", matcher.filter(apps, "mapas").first().name)
+    }
+
+    @Test
+    fun `an app with no category is not found by a category word`() {
+        assertTrue(matcher.filter(categorised, "jogo").isEmpty())
+    }
+
+    @Test
+    fun `a category word nobody uses matches nothing rather than everything`() {
+        assertTrue(matcher.filter(categorised, "banco").isEmpty())
+    }
 }

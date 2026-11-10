@@ -98,7 +98,7 @@ Subtasks:
 - [x] Lifecycle-based ordering (active → pending → done-today)
 - [x] Implement deep linking to jump directly to relevant app screens (PendingIntent + `notificationKey` fallback)
 - [ ] Provide visual feedback when deep linking is attempted (toast/state when PendingIntent is fired)
-- [ ] Implement search/filter functionality within the task feed
+- [x] Implement search/filter functionality within the task feed — done in US-24, through the drawer's search box rather than new chrome on the home screen
 - [ ] ~~Priority-based ordering (urgent/today/scheduled)~~ → not in current scope; lifecycle ordering replaces it
 - [ ] ~~App Actions integration~~ → out of MVP per scope.md
 - [ ] ~~Clipboard monitoring~~ → out of MVP per scope.md
@@ -310,6 +310,50 @@ Subtasks:
 - [x] No new dependency; `androidx.core` was already here
 
 - [ ] Verify on a device that the shortcut appears and opens the right task. The rules have tests; `ShortcutManagerCompat` itself cannot be exercised in a JVM test, and this container has no emulator.
+
+### US-22: An intention opens the screen, not the app ✅
+**As a user, when a task says "ligar para Miguel" I want the tap to open the dialer with Miguel in it, not the phone app's front door.**
+
+`01-IDEA.md` asks for deep links. US-17 got the task as far as the right app; this gets it to the right screen for the part Android standardises, where the user's own verb names the action.
+
+Subtasks:
+- [x] `IntentionActionResolver`, pure, reading the verb that starts the intention (15 unit tests)
+- [x] Calling, writing, going somewhere and opening a link map to `ACTION_DIAL`, `ACTION_SENDTO`, a `geo:` link and `ACTION_VIEW`
+- [x] Portuguese and English verbs, accent- and case-insensitive
+- [x] The verb has to start the intention: "a ligação com o Miguel caiu" is about a call, not an instruction to make one
+- [x] English trailing particles handled, so "call Sarah back" is about Sarah
+- [x] A link anywhere in the text wins, because a URL is unambiguous
+- [x] `ACTION_DIAL`, never `ACTION_CALL`: the dialer opens with the number ready and the user presses call. Will does not place calls on anyone's behalf, and needs no permission
+- [x] `IntentionActionLauncher` falls back to opening the app when nothing on the phone handles the action
+
+- [ ] Resolving an intention to a screen *inside a third-party app*, which would mean reading each app's declared intent filters and knowing what they mean. Not attempted.
+
+### US-23: Searching by what an app is for ✅
+**As a user, I want to type "musica" and find Spotify, without knowing what I installed.**
+
+Android attaches a category to each app, so this is searching by meaning without anyone guessing what a word implies.
+
+Subtasks:
+- [x] `AppCategory` on `LauncherApp`, read from `ApplicationInfo.category` (API 26+, `UNKNOWN` below that)
+- [x] Portuguese and English words per category in `AppMatcher`
+- [x] A name match always beats a category match
+- [x] An app with no declared category is not found this way
+
+The limit is Android's list, and it is worth stating: there is no category for money, so "banco" finds nothing. That gap is what embeddings would close, and they are still blocked under US-15.
+
+### US-24: One search box over tasks and apps ✅
+**As a user, I want the search I already use for apps to find the task I am looking for too.**
+
+Closes the feed-search item that US-06 had left open, without putting a search field on the home screen: the drawer is already a search surface, and the home screen stays free of app chrome as the brand requires.
+
+Subtasks:
+- [x] `TaskMatcher` sharing the drawer's rules through `SearchText`, so one box behaves one way (9 unit tests)
+- [x] Matching tasks appear above the apps, because a task is more specific than the app it lives in
+- [x] Finished tasks are left out; they have their own screen
+- [x] An empty query finds no tasks: the feed is already on screen
+- [x] Capped at five results so the search never buries the apps
+- [x] Rendered and checked before handover (`AppGridWithTaskResultsPreview`)
+- [x] Fixed on the way: `AppItem` was the one text in the launcher that inherited its colour instead of stating it, which made it invisible outside a `Surface`
 
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**

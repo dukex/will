@@ -3,6 +3,9 @@
 ## [unreleased]
 
 ### added
+- a task opens the screen, not just the app — "ligar para Miguel" opens the dialer with Miguel ready, "ir para Pocrane" opens the map, a link opens the browser. Will never places the call itself, it just gets you there
+- search finds your tasks too — the search box in the app drawer now looks through what you still have to do as well as your apps, with the tasks first
+- find an app by what it is for — type "musica" and get your music apps, "mapa" and get your maps, even when you cannot remember what the app is called
 - a long press on the Will icon offers the task you are in the middle of, so what you are working on is one gesture away from anywhere
 - Will stops showing the notification you keep throwing away — delete the same one three times and it stops reaching your feed. Finish one and it comes back, because acting on it proves it mattered. You can see everything it silenced, and undo any of it, under data & privacy. It only learns from notifications you deleted without finishing, never from tasks you typed yourself
 - Will now speaks Portuguese — the texts the launcher itself writes follow your phone's language, including the new task titles it derives from your notifications

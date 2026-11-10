@@ -148,3 +148,41 @@ private fun TaskFeedSuggestionsPreview() {
         )
     }
 }
+
+/** Conversation notifications read as what to do about them. */
+@PreviewTest
+@Preview(name = "feed with derived intentions", widthDp = 412, heightDp = 420, showBackground = true)
+@Composable
+private fun TaskFeedDerivedPreview() {
+    WillTheme {
+        TaskFeed(
+            tasks = listOf(
+                sampleTask(
+                    id = 1,
+                    title = "responder Maria",
+                    sourcePackage = "com.whatsapp",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 3,
+                    unreadCount = 2
+                ),
+                sampleTask(
+                    id = 2,
+                    title = "ligar de volta para Miguel",
+                    sourcePackage = "com.android.dialer",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 25
+                ),
+                sampleTask(
+                    id = 3,
+                    title = "Boleto vence hoje",
+                    sourcePackage = "com.itau",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 68
+                )
+            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        )
+    }
+}

@@ -249,6 +249,29 @@ Subtasks:
 - [ ] The same matcher over the task feed. US-06 still lists feed search as open, and it needs a search field in the home screen, which is a UI decision of its own.
 - [ ] This is matching, not meaning. "money" will not find the bank app. That needs embeddings, which is the blocked US-15 problem.
 
+### US-19: A notification becomes what to do about it ✅
+**As a user, I want a message from Maria to read "responder Maria" in my feed, instead of just "Maria".**
+
+This is the thesis of `01-IDEA.md`: "um alerta de mensagem se transforme na tarefa 'Responder Contato'". Until now the feed mirrored the notification; the task was titled with the sender's name and the user had to supply the verb themselves.
+
+Subtasks:
+- [x] `IntentionExtractor`, pure, reading the notification's own category (15 unit tests)
+- [x] A message or an email becomes replying to the sender; a missed call becomes calling back
+- [x] `Sender: message` titles yield the sender, and `(3 messages)` suffixes are not part of anyone's name
+- [x] A title long enough to be the message itself is left alone: that notification carries no sender to reply to
+- [x] Everything that is not a conversation arrives exactly as it was, which is most notifications
+- [x] `Task.rawTitle` keeps the original, so the derivation is reversible and auditable. Migration 9→10
+- [x] The phrasing comes from a string resource, so it follows the phone's language. `values-pt` ships the Portuguese
+- [x] `NotificationToTask` holds the whole conversion so it can be tested; the service keeps only what needs Android (8 tests)
+- [x] The conversation key still follows the original title, so two messages from Maria stay one task
+- [x] Triage judges the original title, not the derived one: the noise patterns are written against vendor wording
+- [x] Rendered and checked before handover (`TaskFeedDerivedPreview`)
+
+No language model, and no guessing at what a sentence means. It reads a category the system already attaches, which is why it can be exact. Typed intentions never pass through here: `01-IDEA.md` promises those stay "exatamente como o usuário a escreveu", and that promise is intact.
+
+- [ ] Show the original title in the feed. It is in the data; nothing renders it yet, and the derived title already contains the sender, so nothing is currently hidden.
+- [ ] Richer kinds than reply and call back. "Confirme sua presença" is an intention too, but reading that needs the model work blocked under US-15.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

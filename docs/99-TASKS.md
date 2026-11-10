@@ -272,6 +272,29 @@ No language model, and no guessing at what a sentence means. It reads a category
 - [ ] Show the original title in the feed. It is in the data; nothing renders it yet, and the derived title already contains the sender, so nothing is currently hidden.
 - [ ] Richer kinds than reply and call back. "Confirme sua presença" is an intention too, but reading that needs the model work blocked under US-15.
 
+### US-20: Will learns what you throw away ✅
+**As a user, I want Will to stop showing me the notification I keep deleting, without me having to go and configure anything.**
+
+The pattern list knows the housekeeping notifications someone wrote down in advance. It cannot know that *this* phone gets a weekly promo from one shop that this user never once acted on. That part has to be learned from the user, and the signal already exists in what they do.
+
+Subtasks:
+- [x] `LearnedNoiseRepository`: counts dismissals per app and title, with a SharedPreferences implementation capped at 200 entries (13 unit tests)
+- [x] Three dismissals silence a title; one completion unlearns it, because acting on one proves it mattered
+- [x] The lesson is per app **and** per title: silencing one promo must not silence the whole app
+- [x] Titles are folded for case, accents and spacing, so a vendor reformatting its own message does not reset the count
+- [x] `LearnedIntentionClassifier` composes it with the patterns; cheap check first (7 unit tests)
+- [x] Taught by actions the user already performs: deleting an unfinished notification task teaches noise, finishing one teaches the opposite
+- [x] Only notification tasks teach. A task you typed or an app shared in is never a complaint about a notification
+- [x] Tidying up an already-finished task from the done screen teaches nothing
+- [x] Visible and reversible: `data & privacy` lists what was silenced, with "show again" per entry
+- [x] "delete all task history" forgets everything learned
+- [x] End-to-end test of the loop as the user lives it (6 tests)
+- [x] Rendered and checked before handover (`PrivacySettingsSilencedPreview`)
+
+This is the "learn from the user's own stream" idea from US-15, built without a model. Three dismissals is a reasoned threshold, not a measured one.
+
+- [ ] The same signal, kept as labelled examples, is what US-15's model needs. Nothing here stores enough for that yet, and doing so is a privacy decision of its own.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

@@ -12,6 +12,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import tech.benedicta.will.infrastructure.memory.MemoryLearnedNoiseRepository
 import tech.benedicta.will.infrastructure.memory.MemoryTaskEventRepository
 import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
 
@@ -40,6 +41,7 @@ class CompletionSuggestionIntegrationTest {
         repository = tasks,
         events = TaskEventRecorder(log),
         eventLog = log,
+        learnedNoise = MemoryLearnedNoiseRepository(),
         dispatcher = testDispatcher,
         now = { instant }
     )

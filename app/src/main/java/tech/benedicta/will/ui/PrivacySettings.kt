@@ -31,6 +31,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import tech.benedicta.will.ui.theme.Spacing
+import tech.benedicta.will.notification.SilencedNotification
+import tech.benedicta.will.ui.theme.WillAccent
 import tech.benedicta.will.ui.theme.WillBorder
 import tech.benedicta.will.ui.theme.WillDestructive
 import tech.benedicta.will.ui.theme.WillTextSecondary
@@ -47,7 +49,9 @@ private val permissionsList = listOf(
 @Composable
 fun PrivacySettings(
     onBack: () -> Unit,
-    onDeleteAllTasks: () -> Unit
+    onDeleteAllTasks: () -> Unit,
+    silencedNotifications: List<SilencedNotification> = emptyList(),
+    onForgetSilenced: (SilencedNotification) -> Unit = {}
 ) {
     val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
 
@@ -74,6 +78,8 @@ fun PrivacySettings(
             item { DataRow("app switch count per task") }
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item { DataRow("notification filter preferences") }
+            item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
+            item { DataRow("which notifications you keep throwing away") }
 
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item { SectionHeader("where it stays") }
@@ -97,8 +103,70 @@ fun PrivacySettings(
             }
 
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
+            item { SectionHeader("notifications will stopped showing") }
+            item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
+            if (silencedNotifications.isEmpty()) {
+                item {
+                    Text(
+                        text = "none yet. throw the same notification away three times and will stops showing it. finishing one brings it back.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WillTextSecondary,
+                        modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                    )
+                }
+            } else {
+                items(silencedNotifications) { silenced ->
+                    SilencedRow(silenced = silenced, onForget = { onForgetSilenced(silenced) })
+                    HorizontalDivider(color = WillBorder, thickness = 1.dp)
+                }
+            }
+
+            item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item { DeleteHistoryRow(onDeleteAllTasks) }
         }
+    }
+}
+
+/**
+ * One notification Will has stopped showing, and the way back. Hiding
+ * something the user never asked to hide has to be visible and undoable, which
+ * is what this row is for.
+ */
+@Composable
+private fun SilencedRow(silenced: SilencedNotification, onForget: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = Spacing.touchTarget)
+            .padding(horizontal = Spacing.xl, vertical = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = silenced.title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = "${silenced.sourcePackage} · thrown away ${silenced.dismissals} times",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+        Text(
+            text = "show again",
+            style = MaterialTheme.typography.bodyMedium,
+            color = WillAccent,
+            modifier = Modifier
+                .clickable { onForget() }
+                .heightIn(min = Spacing.touchTarget)
+                .padding(start = Spacing.lg, top = Spacing.md, bottom = Spacing.md)
+                .semantics {
+                    role = Role.Button
+                    contentDescription = "show ${silenced.title} again"
+                }
+        )
     }
 }
 

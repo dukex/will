@@ -3,6 +3,8 @@
 ## [unreleased]
 
 ### added
+- Will now speaks Portuguese — the texts the launcher itself writes follow your phone's language, including the new task titles it derives from your notifications
+- your feed now says what to do, not who it was from — a WhatsApp message from Maria reads "responder Maria", a missed call reads "ligar de volta para Miguel". Anything that is not a conversation, like a bank alert, arrives exactly as it was. The wording follows your phone's language, and the original title is kept so nothing is lost
 - a task you type now opens the app you mentioned — write "mandar o contrato no WhatsApp" and tapping the task opens WhatsApp. Before this, typing a task gave you something that did nothing when tapped. Will only follows an app name you actually wrote; it does not try to guess which app you meant
 - Will points out what you have probably already done — a task you opened, spent time on and left alone now reads "looks finished" in the feed, so clearing it is one tap on the checkbox that was already there. It never completes anything by itself, and a notification you never opened is never suggested, however long it has been sitting there. Worked out from timestamps and app names only, nothing from inside your apps
 - notifications in Portuguese no longer clutter the feed — "Baixando vídeo", "Carregamento concluído", "Atualização concluída", "Sua hora de dormir começa" and the rest of the housekeeping chatter are now recognised and skipped, in Portuguese as well as English, with or without accents

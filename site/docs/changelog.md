@@ -3,6 +3,7 @@
 ## [unreleased]
 
 ### added
+- a long press on the Will icon offers the task you are in the middle of, so what you are working on is one gesture away from anywhere
 - Will stops showing the notification you keep throwing away — delete the same one three times and it stops reaching your feed. Finish one and it comes back, because acting on it proves it mattered. You can see everything it silenced, and undo any of it, under data & privacy. It only learns from notifications you deleted without finishing, never from tasks you typed yourself
 - Will now speaks Portuguese — the texts the launcher itself writes follow your phone's language, including the new task titles it derives from your notifications
 - your feed now says what to do, not who it was from — a WhatsApp message from Maria reads "responder Maria", a missed call reads "ligar de volta para Miguel". Anything that is not a conversation, like a bank alert, arrives exactly as it was. The wording follows your phone's language, and the original title is kept so nothing is lost

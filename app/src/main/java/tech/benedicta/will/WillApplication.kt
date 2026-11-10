@@ -21,6 +21,7 @@ import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskEventRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskRepository
 import tech.benedicta.will.infrastructure.room.WillDatabase
+import tech.benedicta.will.launcher.ActiveTaskShortcutPublisher
 import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.lifecycle.TaskLifecycleApplier
 import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
@@ -88,6 +89,10 @@ class WillApplication : Application() {
         )
     }
 
+    private val activeTaskShortcuts: ActiveTaskShortcutPublisher by lazy {
+        ActiveTaskShortcutPublisher(this)
+    }
+
     private val _overlayEvents = MutableSharedFlow<OverlayEvent>(
         extraBufferCapacity = 8,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -132,6 +137,12 @@ class WillApplication : Application() {
                 .map { it?.id }
                 .distinctUntilChanged()
                 .collect { taskLifecycleApplier.resetForActiveTaskChange() }
+        }
+        // What the user is working on is reachable from outside Will, through
+        // the shortcut a long press on the icon shows.
+        applicationScope.launch {
+            // StateFlow already conflates, so no distinctUntilChanged here.
+            activeTaskFlow.collect { activeTaskShortcuts.publish(it) }
         }
     }
 }

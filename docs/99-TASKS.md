@@ -295,6 +295,22 @@ This is the "learn from the user's own stream" idea from US-15, built without a 
 
 - [ ] The same signal, kept as labelled examples, is what US-15's model needs. Nothing here stores enough for that yet, and doing so is a privacy decision of its own.
 
+### US-21: What you are working on, reachable from outside Will ✅
+**As a user, I want a long press on the Will icon to offer the task I am in the middle of.**
+
+Completes the agent-surface list from the AI-readiness direction. `will://task` lets anything put a task in; this lets the system read out the one task that matters right now.
+
+Subtasks:
+- [x] `ActiveTaskShortcut`, pure, deciding what to publish and how to label it (11 unit tests)
+- [x] Only a task that is actually in progress; nothing finished and nothing untouched
+- [x] A stable shortcut id, so the shortcut is replaced rather than piling up
+- [x] Labels cut to what the system renders, rather than the shortcut being rejected
+- [x] `ActiveTaskShortcutPublisher` pushes and removes it, following the active task
+- [x] Failures are swallowed: no launcher should crash because a system surface refused a shortcut
+- [x] No new dependency; `androidx.core` was already here
+
+- [ ] Verify on a device that the shortcut appears and opens the right task. The rules have tests; `ShortcutManagerCompat` itself cannot be exercised in a JVM test, and this container has no emulator.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

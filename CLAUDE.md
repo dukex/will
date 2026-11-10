@@ -66,6 +66,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-18: Search survives Portuguese | ✅ done | `AppMatcher` replaces `contains(ignoreCase)` in the drawer: accents folded, initials and subsequence, ranked. Fixes "itau" never finding Itaú. Feed search still open under US-06 |
 | US-19: Notification becomes an intention | ✅ done | `IntentionExtractor` + `NotificationToTask`: a message reads "responder Maria", a missed call "ligar de volta para Miguel". Category-driven, no model. `Task.rawTitle` keeps the original; migration 9→10 |
 | US-20: Will learns what you throw away | ✅ done | `LearnedNoiseRepository` + `LearnedIntentionClassifier`: three dismissals of the same app and title silence it, one completion undoes it. Taught by actions the user already performs. Listed and reversible in `data & privacy` |
+| US-21: Active task as a shortcut | 🟡 done, unverified on device | `ActiveTaskShortcut` (pure rules, 11 tests) + `ActiveTaskShortcutPublisher`; a long press on the icon offers the task in progress. `ShortcutManagerCompat` cannot be exercised in a JVM test |
 | US-15: On-device triage model | ⬜ blocked on data | the `IntentionClassifier` seam and the pattern implementation are shipped and in use. ML Kit, MediaPipe, LiteRT and a pure-Kotlin linear model were each measured; none earns its place yet, and the linear one was built and cross-validated here. Numbers and the reason in `./docs/99-TASKS.md` |
 | US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
@@ -84,6 +85,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/AppRepository.kt` | interface for app list source |
 | `launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
 | `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher; filters through `AppMatcher`, never `contains` |
+| `launcher/ActiveTaskShortcut.kt` | pure rules for the active-task shortcut: when to publish, how to label it |
+| `launcher/ActiveTaskShortcutPublisher.kt` | the Android half; pushes and removes, swallowing failures |
 | `launcher/AppMatcher.kt` | drawer search: folds accents, accepts initials and subsequences, ranks results. Pure |
 | `launcher/AppMentionResolver.kt` | finds the installed app named in a typed intention; accent-folded, whole words, never the launcher itself; null when unsure |
 | `launcher/PinnedAppsRepository.kt` | interface for pinned apps storage; `MAX_PINNED = 5` |

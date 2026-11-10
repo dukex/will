@@ -61,6 +61,7 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-11: Share-to-Will | ✅ done | `ACTION_SEND` (text/plain) + `will://task` via `ShareTargetActivity`; pure `SharedIntentParser` (21 tests); works on minSdk 24 |
 | US-12: Task event log | ✅ done | append-only `TaskEvent` / `TaskEventRepository` / `TaskEventRecorder`; Room table + migration 8→9; fed by `TaskLifecycleApplier` and `TaskViewModel`; scalars on `Task` are now a view over it |
 | US-13: Task origin | ✅ done | `TaskOrigin { NOTIFICATION, MANUAL, SHARED, AGENT }` on `Task`; migration 7→8 backfills from the `"manual"` source package |
+| US-16: Inferred completion | ✅ done | `CompletionInference` reads the task log and marks tasks that look handled; feed shows `looks finished`, the existing checkbox stays the action. Metadata only, never window content. First reader of the US-12 log |
 | US-15: On-device triage model | ⬜ blocked on data | the `IntentionClassifier` seam and the pattern implementation are shipped and in use. ML Kit, MediaPipe, LiteRT and a pure-Kotlin linear model were each measured; none earns its place yet, and the linear one was built and cross-validated here. Numbers and the reason in `./docs/99-TASKS.md` |
 | US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
@@ -89,6 +90,7 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `task/TaskEvent.kt` | `TaskEvent` + `TaskEventType` (no `DELETED`: removing a task removes its history) |
 | `task/TaskEventRepository.kt` | append-only contract; chronological reads, ties by insertion order |
 | `task/TaskEventRecorder.kt` | turns state changes into events; decides STARTED vs RESUMED |
+| `task/CompletionInference.kt` | reads the task log and points out tasks that look finished; pure, thresholds injectable, suggests only |
 | `task/TaskUpsert.kt` | upsert outcome, so the notification path can tell a new conversation from a bumped one |
 | **Infrastructure** | |
 | `infrastructure/room/TaskEntity.kt` | Room @Entity; `toTask()` / `Task.toEntity()` mappers |
@@ -194,6 +196,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - **The `"manual"` source package never reaches the screen** — it is the sentinel for a task with no app to open, not a name to read. `TaskFeed` maps it to a null app label and `taskMetadataLine` drops the segment.
 - **Triage is a seam, not a regex buried in the processor** — `NotificationProcessor` answers structural questions; `IntentionClassifier` answers "is this an intention or noise". The pattern implementation is the default and the fallback on every device. It is biased toward keeping: a false keep costs one dismissable row, a false drop means a message the user never sees and the feed cannot tell them about.
 - **Kotlin 2.4 removed the `kotlinOptions` DSL** — the JVM target is set through `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_11 } }` at the top level of `app/build.gradle.kts`, not inside the `android` block. On 2.4 the old form is a build error, not a warning.
+- **Inference suggests, the user completes** — `CompletionInference` reads the task log and marks a task as probably handled; nothing writes `completedAt` on its own. A task that was never started is never suggested, whatever its age, so an unread notification cannot be buried by a guess. It reads timestamps, event types and package names only, which is the same surface the accessibility service already exposed.
 - **Domain/Infrastructure separation** — `task/Task.kt` is a pure Kotlin data class with zero Android deps. `infrastructure/room/TaskEntity.kt` mirrors it with Room annotations and provides `toTask()` / `Task.toEntity()` mappers. Never add Android/Room imports to domain classes.
 - No Hilt — manual `ViewModelProvider.Factory` for DI
 - `CoroutineDispatcher` injected into ViewModel for testability

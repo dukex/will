@@ -156,7 +156,11 @@ class MainActivity : ComponentActivity() {
                 )
                 this@MainActivity.launcherVm = launcherVm
                 taskVm = viewModel(
-                    factory = TaskViewModel.Factory(taskRepository, app.taskEventRecorder)
+                    factory = TaskViewModel.Factory(
+                        taskRepository,
+                        app.taskEventRecorder,
+                        app.taskEventRepository
+                    )
                 )
 
                 val appFilterVm: AppFilterViewModel = viewModel(
@@ -173,6 +177,7 @@ class MainActivity : ComponentActivity() {
                 val filteredApps by launcherVm.filteredApps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
+                val suggestedFinished by taskVm.completionSuggestions.collectAsState()
                 val pinnedApps by pinnedAppsVm.pinnedApps.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
@@ -181,6 +186,7 @@ class MainActivity : ComponentActivity() {
                     appSearchQuery = appSearchQuery,
                     onAppSearchQueryChange = launcherVm::setQuery,
                     tasks = tasks,
+                    suggestedFinished = suggestedFinished,
                     taskVm = taskVm,
                     appFilterVm = appFilterVm,
                     pinnedApps = pinnedApps,
@@ -328,6 +334,7 @@ private fun WillScreen(
     appSearchQuery: String,
     onAppSearchQueryChange: (String) -> Unit,
     tasks: List<Task>,
+    suggestedFinished: Set<Long>,
     taskVm: TaskViewModel,
     appFilterVm: AppFilterViewModel,
     pinnedApps: List<LauncherApp>,
@@ -462,6 +469,7 @@ private fun WillScreen(
                         taskVm.markDone(task)
                     },
                     header = pinnedHeader,
+                    suggestedFinished = suggestedFinished,
                     modifier = Modifier.fillMaxSize()
                 )
 

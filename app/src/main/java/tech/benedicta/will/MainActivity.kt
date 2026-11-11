@@ -62,7 +62,9 @@ import tech.benedicta.will.notification.AppFilterViewModel
 import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
+import tech.benedicta.will.task.AttentionRange
 import tech.benedicta.will.task.FocusDashboardViewModel
+import tech.benedicta.will.task.startOfDay
 import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskMatcher
 import tech.benedicta.will.task.TaskOrigin
@@ -461,9 +463,24 @@ private fun WillScreen(
         }
         Screen.FocusDashboard -> {
             val allTasks by taskVm.tasks.collectAsState()
+            val application = context.applicationContext as WillApplication
+            var range by remember { mutableStateOf(AttentionRange.WEEK) }
+            // One day further back than the range: a task started just before
+            // the window is what opens the first stretch inside it, and
+            // AttentionHistory clips whatever falls outside.
+            val since = remember(range) {
+                startOfDay(System.currentTimeMillis()) - range.days * MILLIS_PER_DAY
+            }
+            val events by application.taskEventRepository
+                .eventsSince(since)
+                .collectAsState(initial = emptyList())
             FocusDashboard(
-                viewModel = remember(allTasks) { FocusDashboardViewModel(allTasks) },
-                onBack = { currentScreen = Screen.Home }
+                viewModel = remember(allTasks, events, range) {
+                    FocusDashboardViewModel(allTasks, events, range)
+                },
+                onBack = { currentScreen = Screen.Home },
+                range = range,
+                onRangeChange = { range = it }
             )
             return
         }
@@ -625,3 +642,6 @@ private fun WillScreen(
         )
     }
 }
+
+/** Only used to widen the event query; day boundaries come from `startOfDay`. */
+private const val MILLIS_PER_DAY = 24 * 60 * 60 * 1000L

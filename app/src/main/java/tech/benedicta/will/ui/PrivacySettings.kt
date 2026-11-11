@@ -88,7 +88,7 @@ fun PrivacySettings(
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item {
                 Text(
-                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. search by meaning, when you turn it on, runs google's model on this device and ships google's libraries with the app; your searches still go nowhere.",
+                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. the two on-device model switches in settings are separate: search by meaning sends the model what you typed and your app names, and reading notifications sends it what a notification said. both run google's model on this device and ship google's libraries with the app; nothing is sent anywhere, and reading a notification can never hide one.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = WillTextSecondary,
                     modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)

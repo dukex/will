@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import tech.benedicta.will.infrastructure.AndroidPermissionInspector
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
+import tech.benedicta.will.infrastructure.SharedPrefsDerivedIntentionPreference
 import tech.benedicta.will.infrastructure.SharedPrefsLearnedNoiseRepository
 import tech.benedicta.will.infrastructure.SharedPrefsOnboardingRepository
 import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
@@ -34,6 +35,10 @@ import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.lifecycle.TaskLifecycleApplier
 import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
+import tech.benedicta.will.notification.GeminiNanoIntentions
+import tech.benedicta.will.notification.IntentionExtractor
+import tech.benedicta.will.notification.ReadIntentionWithMeaning
+import tech.benedicta.will.notification.SemanticIntentionReader
 import tech.benedicta.will.notification.IntentionClassifier
 import tech.benedicta.will.notification.LearnedIntentionClassifier
 import tech.benedicta.will.notification.LearnedNoiseRepository
@@ -85,6 +90,24 @@ class WillApplication : Application() {
 
     val appSearch: SearchWithMeaning by lazy {
         SearchWithMeaning(AppMatcher(), geminiNano ?: SemanticAppSearch.Unavailable)
+    }
+
+    val derivedIntentionPreference: SharedPrefsDerivedIntentionPreference by lazy {
+        SharedPrefsDerivedIntentionPreference(this)
+    }
+
+    /**
+     * The category first, on every device, and the model only for a
+     * notification whose category said nothing. With the switch off this is
+     * exactly `IntentionExtractor` and nothing else.
+     */
+    val intentionReader: ReadIntentionWithMeaning by lazy {
+        val model = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            GeminiNanoIntentions(enabled = { derivedIntentionPreference.enabledNow() })
+        } else {
+            SemanticIntentionReader.Unavailable
+        }
+        ReadIntentionWithMeaning(IntentionExtractor(), model)
     }
 
     val learnedNoiseRepository: LearnedNoiseRepository by lazy {

@@ -2,6 +2,7 @@ package tech.benedicta.will.notification
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import tech.benedicta.will.task.TaskOrigin
 
@@ -15,17 +16,20 @@ class NotificationToTaskTest {
 
     private val convert = NotificationToTask(
         processor = NotificationProcessor(),
-        extractor = IntentionExtractor(),
+        reader = ReadIntentionWithMeaning(IntentionExtractor()),
         phrase = { kind, subject ->
             when (kind) {
                 IntentionKind.REPLY -> "responder $subject"
                 IntentionKind.CALL_BACK -> "ligar de volta para $subject"
+                IntentionKind.CONFIRM -> "confirmar $subject"
+                IntentionKind.PAY -> "pagar $subject"
+                IntentionKind.ATTEND -> "comparecer a $subject"
             }
         }
     )
 
     @Test
-    fun `a WhatsApp message becomes replying to the person who sent it`() {
+    fun `a WhatsApp message becomes replying to the person who sent it`() = runTest {
         val task = convert.convert(
             category = IntentionExtractor.CATEGORY_MESSAGE,
             title = "Maria",
@@ -40,7 +44,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `the notification's own title is kept so the change can be undone`() {
+    fun `the notification's own title is kept so the change can be undone`() = runTest {
         val task = convert.convert(
             category = IntentionExtractor.CATEGORY_MESSAGE,
             title = "Maria",
@@ -53,7 +57,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `a missed call becomes calling back`() {
+    fun `a missed call becomes calling back`() = runTest {
         val task = convert.convert(
             category = IntentionExtractor.CATEGORY_MISSED_CALL,
             title = "Miguel",
@@ -66,7 +70,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `a notification that is not a conversation arrives exactly as it was`() {
+    fun `a notification that is not a conversation arrives exactly as it was`() = runTest {
         val task = convert.convert(
             category = null,
             title = "Boleto vence hoje",
@@ -80,7 +84,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `the conversation key still follows the original title, not the derived one`() {
+    fun `the conversation key still follows the original title, not the derived one`() = runTest {
         val first = convert.convert(
             category = IntentionExtractor.CATEGORY_MESSAGE,
             title = "Maria",
@@ -104,7 +108,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `a notification the processor throws away is still thrown away`() {
+    fun `a notification the processor throws away is still thrown away`() = runTest {
         val task = convert.convert(
             category = IntentionExtractor.CATEGORY_MESSAGE,
             title = null,
@@ -117,7 +121,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `a task from a notification keeps the notification origin`() {
+    fun `a task from a notification keeps the notification origin`() = runTest {
         val task = convert.convert(
             category = IntentionExtractor.CATEGORY_MESSAGE,
             title = "Maria",
@@ -130,7 +134,7 @@ class NotificationToTaskTest {
     }
 
     @Test
-    fun `a conversation whose title is the message itself is left alone`() {
+    fun `a conversation whose title is the message itself is left alone`() = runTest {
         val sentence = "pode me mandar o contrato assinado ainda hoje antes das cinco"
 
         val task = convert.convert(

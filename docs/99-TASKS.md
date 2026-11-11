@@ -300,7 +300,7 @@ Subtasks:
 No language model, and no guessing at what a sentence means. It reads a category the system already attaches, which is why it can be exact. Typed intentions never pass through here: `01-IDEA.md` promises those stay "exatamente como o usuário a escreveu", and that promise is intact.
 
 - [ ] Show the original title in the feed. It is in the data; nothing renders it yet, and the derived title already contains the sender, so nothing is currently hidden.
-- [ ] Richer kinds than reply and call back. "Confirme sua presença" is an intention too, but reading that needs the model work blocked under US-15.
+- [x] Richer kinds than reply and call back, read by the on-device model. `IntentionKind` gained `CONFIRM`, `PAY` and `ATTEND`; `IntentionPrompt` asks Gemini Nano which one a notification is asking for and `ReadIntentionWithMeaning` consults it only when no category answered (25 unit tests). Opt-in, off by default, and separate from the search switch.
 
 ### US-20: Will learns what you throw away ✅
 **As a user, I want Will to stop showing me the notification I keep deleting, without me having to go and configure anything.**
@@ -410,7 +410,15 @@ Subtasks:
 
 **Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
 
-### US-15: On-device notification triage ⬜ blocked on data, not on code
+### US-15: On-device notification triage ⬜ still open for triage; the model itself is no longer blocked
+
+**2026-11 correction.** "Blocked on data" was true of every route measured below, and all of them were *trained* classifiers: ML Kit, MediaPipe, LiteRT and the hand-rolled linear model each need labelled examples. A **prompt** needs none, and `com.google.mlkit:genai-prompt` has shipped since US-25 for semantic app search, so the size, the Play Services dependency, the telemetry transport and the `tools:overrideLibrary` in both manifests are already paid for. The conclusion below ("what would unblock it is data") held only because nobody asked the model in words.
+
+That route is now built, and used for **reading** a notification rather than dropping one: `IntentionPrompt` + `ReadIntentionWithMeaning`, closing US-19's open item.
+
+**Triage by model is still not done, and that is a decision rather than a gap.** Reading can only change a title, so a wrong answer costs a title the user disagrees with over an original `rawTitle` still holds. Dropping is different: a wrong answer is a message the user never sees and the feed cannot tell them about, which is the one failure this product has said repeatedly it will not accept. CLAUDE.md already sets the price of admission: "What Will learns to hide has to be visible and undoable", as US-20's silenced list is. A model-backed triage therefore needs its own audit surface, listing what it dropped with a way back, before it is worth building. That is the next story, not a line item.
+
+### The routes measured before any of that ⬜ kept for the record
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 
 Shipped so far: the `IntentionClassifier` seam and `PatternIntentionClassifier`, with English and Portuguese patterns, accent-folded. That part is done and in use.

@@ -56,6 +56,9 @@ fun SettingsScreen(
     onSemanticSearchChange: (Boolean) -> Unit = {},
     semanticSearchStatus: SemanticSearchStatus = SemanticSearchStatus.OFF,
     onDownloadSemanticModel: () -> Unit = {},
+    derivedIntentionsEnabled: Boolean = false,
+    onDerivedIntentionsChange: (Boolean) -> Unit = {},
+    modelOnThisPhone: Boolean = false,
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -264,6 +267,68 @@ fun SettingsScreen(
                             color = if (semanticSearchStatus.canStartDownload ||
                                 semanticSearchStatus == SemanticSearchStatus.ON
                             ) WillAccent else WillTextTertiary
+                        )
+                    }
+                }
+                item {
+                    // Its own switch, never folded into the one above:
+                    // agreeing to send the model a search term is not
+                    // agreeing to send it what a notification said.
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = modelOnThisPhone) {
+                                onDerivedIntentionsChange(!derivedIntentionsEnabled)
+                            }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Switch
+                                contentDescription = when {
+                                    !modelOnThisPhone ->
+                                        "reading notifications needs the on-device model, " +
+                                            "which is not on this phone"
+                                    derivedIntentionsEnabled ->
+                                        "reading notifications is on; tap to turn it off"
+                                    else -> "reading notifications is off; tap to turn it on"
+                                }
+                            },
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "read what a notification asks for",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = when {
+                                    !modelOnThisPhone ->
+                                        "needs the on-device model, which is not on this phone. " +
+                                            "notifications arrive with the title they were sent with"
+                                    derivedIntentionsEnabled ->
+                                        "on — a notification only your words can explain, like " +
+                                            "\"confirme sua presença\", becomes what it is asking " +
+                                            "for. the model reads it on your phone and the " +
+                                            "original title is kept"
+                                    else ->
+                                        "off — a message or a missed call already becomes an " +
+                                            "intention without any model. turning this on lets " +
+                                            "the on-device model read the rest. it never hides a " +
+                                            "notification"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = when {
+                                !modelOnThisPhone -> "unsupported"
+                                derivedIntentionsEnabled -> "on"
+                                else -> "off"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (derivedIntentionsEnabled) WillAccent else WillTextTertiary
                         )
                     }
                 }

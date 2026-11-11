@@ -80,13 +80,15 @@ fun PrivacySettings(
             item { DataRow("notification filter preferences") }
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item { DataRow("which notifications you keep throwing away") }
+            item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
+            item { DataRow("whether search by meaning is on") }
 
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item { SectionHeader("where it stays") }
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item {
                 Text(
-                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing.",
+                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. search by meaning, when you turn it on, runs google's model on this device and ships google's libraries with the app; your searches still go nowhere.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = WillTextSecondary,
                     modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)

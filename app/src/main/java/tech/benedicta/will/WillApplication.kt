@@ -21,7 +21,14 @@ import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskEventRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskRepository
 import tech.benedicta.will.infrastructure.room.WillDatabase
+import android.os.Build
+import tech.benedicta.will.infrastructure.SharedPrefsSemanticSearchPreference
 import tech.benedicta.will.launcher.ActiveTaskShortcutPublisher
+import tech.benedicta.will.launcher.AppMatcher
+import tech.benedicta.will.launcher.GeminiNanoAppSearch
+import tech.benedicta.will.launcher.SearchWithMeaning
+import tech.benedicta.will.launcher.SemanticAppSearch
+import tech.benedicta.will.launcher.SemanticSearchPreference
 import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.lifecycle.TaskLifecycleApplier
 import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
@@ -55,6 +62,23 @@ class WillApplication : Application() {
     val taskEventRecorder: TaskEventRecorder by lazy {
         TaskEventRecorder(taskEventRepository)
     }
+    val semanticSearchPreference: SharedPrefsSemanticSearchPreference by lazy {
+        SharedPrefsSemanticSearchPreference(this)
+    }
+
+    /**
+     * Exact matching first, meaning only when that finds nothing, and only
+     * where the device can serve a model and the user asked for it.
+     */
+    val appSearch: SearchWithMeaning by lazy {
+        val semantic = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            GeminiNanoAppSearch(enabled = { semanticSearchPreference.enabledNow() })
+        } else {
+            SemanticAppSearch.Unavailable
+        }
+        SearchWithMeaning(AppMatcher(), semantic)
+    }
+
     val learnedNoiseRepository: LearnedNoiseRepository by lazy {
         SharedPrefsLearnedNoiseRepository(this)
     }

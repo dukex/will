@@ -3,6 +3,7 @@ package tech.benedicta.will.launcher
 import androidx.annotation.RequiresApi
 import com.google.mlkit.genai.common.FeatureStatus
 import com.google.mlkit.genai.prompt.Generation
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -25,7 +26,25 @@ import kotlinx.coroutines.withTimeoutOrNull
 class GeminiNanoAppSearch(
     private val enabled: () -> Boolean,
     private val timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
-) : SemanticAppSearch {
+) : SemanticAppSearch, SemanticSearchModel {
+
+    override suspend fun availability(): ModelAvailability = runCatching {
+        when (Generation.getClient().checkStatus()) {
+            FeatureStatus.AVAILABLE -> ModelAvailability.AVAILABLE
+            FeatureStatus.DOWNLOADABLE -> ModelAvailability.DOWNLOADABLE
+            FeatureStatus.DOWNLOADING -> ModelAvailability.DOWNLOADING
+            else -> ModelAvailability.UNAVAILABLE
+        }
+    }.getOrDefault(ModelAvailability.UNAVAILABLE)
+
+    /**
+     * Runs to completion so settings can show the result rather than guessing.
+     * A failure leaves the model absent, which the next availability check
+     * reports honestly.
+     */
+    override suspend fun download() {
+        runCatching { Generation.getClient().download().collect() }
+    }
 
     override suspend fun rank(query: String, apps: List<LauncherApp>): List<LauncherApp> {
         if (!enabled()) return emptyList()

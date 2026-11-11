@@ -28,6 +28,7 @@ import tech.benedicta.will.launcher.AppMatcher
 import tech.benedicta.will.launcher.GeminiNanoAppSearch
 import tech.benedicta.will.launcher.SearchWithMeaning
 import tech.benedicta.will.launcher.SemanticAppSearch
+import tech.benedicta.will.launcher.SemanticSearchModel
 import tech.benedicta.will.launcher.SemanticSearchPreference
 import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.lifecycle.TaskLifecycleApplier
@@ -70,13 +71,20 @@ class WillApplication : Application() {
      * Exact matching first, meaning only when that finds nothing, and only
      * where the device can serve a model and the user asked for it.
      */
-    val appSearch: SearchWithMeaning by lazy {
-        val semantic = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    private val geminiNano: GeminiNanoAppSearch? by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             GeminiNanoAppSearch(enabled = { semanticSearchPreference.enabledNow() })
         } else {
-            SemanticAppSearch.Unavailable
+            null
         }
-        SearchWithMeaning(AppMatcher(), semantic)
+    }
+
+    /** What settings asks about the model's presence. */
+    val semanticSearchModel: SemanticSearchModel
+        get() = geminiNano ?: SemanticSearchModel.Unsupported
+
+    val appSearch: SearchWithMeaning by lazy {
+        SearchWithMeaning(AppMatcher(), geminiNano ?: SemanticAppSearch.Unavailable)
     }
 
     val learnedNoiseRepository: LearnedNoiseRepository by lazy {

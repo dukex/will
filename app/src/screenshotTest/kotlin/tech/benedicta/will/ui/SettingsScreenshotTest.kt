@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.launcher.SemanticSearchStatus
 import tech.benedicta.will.notification.AppNotificationFilter
 import tech.benedicta.will.ui.theme.WillTheme
 
@@ -39,6 +40,7 @@ private fun SettingsSemanticSearchOffPreview() {
             onNavigateToPrivacy = {},
             accessibilityServiceGranted = true,
             semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.OFF,
             viewModel = viewModel
         )
     }
@@ -60,6 +62,51 @@ private fun SettingsSemanticSearchOnPreview() {
             onNavigateToPrivacy = {},
             accessibilityServiceGranted = true,
             semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.ON,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** On, but the model still has to be fetched, and only the user starts that. */
+@PreviewTest
+@Preview(name = "settings with the model to download", widthDp = 412, heightDp = 720, showBackground = true)
+@Composable
+private fun SettingsSemanticSearchNeedsDownloadPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.NEEDS_DOWNLOAD,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** A phone that cannot serve the model says so instead of pretending. */
+@PreviewTest
+@Preview(name = "settings where the model is unsupported", widthDp = 412, heightDp = 720, showBackground = true)
+@Composable
+private fun SettingsSemanticSearchUnsupportedPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.UNSUPPORTED,
             viewModel = viewModel
         )
     }

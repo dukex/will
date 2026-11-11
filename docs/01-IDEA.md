@@ -29,6 +29,13 @@ Através do NotificationListenerService, as notificações são interceptadas e 
 
 Para intenções criadas ativamente (ex: "pagar boleto", "responder mensagem"), o usuário digita o título da Task em uma bottom sheet e a tarefa é inserida diretamente no feed. Não há processamento automático de linguagem natural — a intenção é tratada exatamente como o usuário a escreveu, mantendo o sistema previsível, auditável e totalmente *on-device*.
 
+**Escopo desta promessa (resolvido em 2026-11):** ela vale para o que o usuário escreve, e só. Um título de notificação não foi escrito por ele, e reescrevê-lo como "responder Maria" é justamente o que esta seção pede logo acima, em "Conversão de Entradas Passivas". As duas coisas convivem porque são entradas diferentes:
+
+* **Texto digitado** nunca é reescrito, resumido ou reinterpretado. O que aparece no feed é caractere por caractere o que foi digitado. A única leitura feita sobre ele é a resolução de alvo (`AppMentionResolver`, `IntentionActionResolver`), que decide para onde o toque leva sem alterar o texto.
+* **Título de notificação** pode ser derivado, sob três condições: a derivação vem da categoria que o próprio Android anexa, nunca de um modelo adivinhando; o título original fica guardado em `Task.rawTitle`, então a mudança é reversível e auditável; e a chave de conversa continua seguindo o original, então derivar não parte uma conversa em duas tarefas.
+
+O sistema segue previsível e auditável nos dois casos. O que mudou foi a precisão da promessa, não o seu conteúdo.
+
 ## **Rastreabilidade Total: O Laboratório de Performance Pessoal**
 
 Ao transformar toda interação em uma **Task**, o **Will** habilita uma camada de monitoramento que permite quantificar o comportamento digital do usuário . Esta arquitetura de "Quantified Self" utiliza o banco de dados **Room** para persistência local e auditável .

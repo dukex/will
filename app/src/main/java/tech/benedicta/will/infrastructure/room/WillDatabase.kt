@@ -11,7 +11,7 @@ import tech.benedicta.will.task.TaskOrigin
 @Database(
     entities = [TaskEntity::class, TaskEventEntity::class],
     version = 10,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class WillDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
@@ -148,17 +148,20 @@ abstract class WillDatabase : RoomDatabase() {
             }
         }
 
+        /** Every migration, in order, so a test can replay a real upgrade. */
+        val MIGRATIONS: Array<Migration> = arrayOf(
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4,
+            MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+            MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10
+        )
+
         fun getInstance(context: Context): WillDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext,
                     WillDatabase::class.java,
                     "will.db"
-                ).addMigrations(
-                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4,
-                    MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
-                    MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10
-                ).build().also { instance = it }
+                ).addMigrations(*MIGRATIONS).build().also { instance = it }
             }
     }
 }

@@ -111,3 +111,54 @@ private fun SettingsSemanticSearchUnsupportedPreview() {
         )
     }
 }
+
+/**
+ * Both model switches on, side by side, because they are separate decisions
+ * and the screen has to make that readable rather than imply one switch.
+ */
+@PreviewTest
+@Preview(name = "settings reading notifications on", widthDp = 412, heightDp = 860, showBackground = true)
+@Composable
+private fun SettingsDerivedIntentionsOnPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.ON,
+            derivedIntentionsEnabled = true,
+            modelOnThisPhone = true,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** The ordinary case: the model is here, and the user has not asked for it. */
+@PreviewTest
+@Preview(name = "settings reading notifications off", widthDp = 412, heightDp = 860, showBackground = true)
+@Composable
+private fun SettingsDerivedIntentionsOffPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.OFF,
+            derivedIntentionsEnabled = false,
+            modelOnThisPhone = true,
+            viewModel = viewModel
+        )
+    }
+}

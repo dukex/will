@@ -14,14 +14,23 @@ import tech.benedicta.will.task.Task
  *
  * [phrase] is that last step, injected so this stays free of Android and the
  * wording still follows the phone's language.
+ *
+ * [keep] is triage, run between the structural mapping and the model so the
+ * order is part of the tested path rather than something the service has to
+ * remember.
+ *
+ * `suspend` because [reader] may have to wait on the on-device model. It only
+ * ever does so for a notification whose category said nothing, and when it
+ * answers with nothing the task is created exactly as it was before the model
+ * existed.
  */
 class NotificationToTask(
     private val processor: NotificationProcessor,
-    private val extractor: IntentionExtractor,
+    private val reader: ReadIntentionWithMeaning,
     private val phrase: (IntentionKind, String) -> String
 ) {
 
-    fun convert(
+    suspend fun convert(
         category: String?,
         title: String?,
         text: String?,
@@ -29,7 +38,8 @@ class NotificationToTask(
         timestamp: Long,
         notificationKey: String? = null,
         conversationTitle: String? = null,
-        shortcutId: String? = null
+        shortcutId: String? = null,
+        keep: suspend (Task) -> Boolean = { true }
     ): Task? {
         val plain = processor.process(
             title = title,
@@ -41,7 +51,12 @@ class NotificationToTask(
             shortcutId = shortcutId
         ) ?: return null
 
-        val intention = extractor.extract(
+        // Triage before the model, never after. A notification the user is
+        // never going to see is not worth waiting on inference for, and its
+        // words have no business reaching the model at all.
+        if (!keep(plain)) return null
+
+        val intention = reader.read(
             category = category,
             title = plain.title,
             text = plain.text,

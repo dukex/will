@@ -1,7 +1,14 @@
 package tech.benedicta.will.notification
 
-/** What the notification is asking the user to do. */
-enum class IntentionKind { REPLY, CALL_BACK }
+/**
+ * What the notification is asking the user to do.
+ *
+ * [REPLY] and [CALL_BACK] are read from the system's own category, with no
+ * model involved, and are the only two every device gets. The rest can only
+ * be read from the words, which is what [IntentionPrompt] asks the on-device
+ * model for when the user has turned it on.
+ */
+enum class IntentionKind { REPLY, CALL_BACK, CONFIRM, PAY, ATTEND }
 
 /**
  * A notification read as something to do, with the title it was read from so

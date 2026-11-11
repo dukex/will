@@ -8,4 +8,7 @@
     <string name="share_nothing_to_add">nothing to add</string>
     <string name="derived_reply_to">reply to %1$s</string>
     <string name="derived_call_back">call %1$s back</string>
+    <string name="derived_confirm">confirm %1$s</string>
+    <string name="derived_pay">pay %1$s</string>
+    <string name="derived_attend">be at %1$s</string>
 </resources>

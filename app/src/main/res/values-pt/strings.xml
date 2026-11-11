@@ -6,4 +6,7 @@
     <string name="share_nothing_to_add">nada para adicionar</string>
     <string name="derived_reply_to">responder %1$s</string>
     <string name="derived_call_back">ligar de volta para %1$s</string>
+    <string name="derived_confirm">confirmar %1$s</string>
+    <string name="derived_pay">pagar %1$s</string>
+    <string name="derived_attend">comparecer a %1$s</string>
 </resources>

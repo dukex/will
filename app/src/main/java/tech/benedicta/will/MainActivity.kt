@@ -427,6 +427,8 @@ private fun WillScreen(
             val application = context.applicationContext as WillApplication
             val semanticSearchEnabled by application.semanticSearchPreference
                 .isEnabled().collectAsState(initial = false)
+            val derivedIntentionsEnabled by application.derivedIntentionPreference
+                .isEnabled().collectAsState(initial = false)
             var modelAvailability by remember { mutableStateOf(ModelAvailability.UNAVAILABLE) }
             var availabilityRevision by remember { mutableIntStateOf(0) }
             LaunchedEffect(availabilityRevision, semanticSearchEnabled) {
@@ -453,6 +455,11 @@ private fun WillScreen(
                         availabilityRevision++
                     }
                 },
+                derivedIntentionsEnabled = derivedIntentionsEnabled,
+                onDerivedIntentionsChange = { enabled ->
+                    scope.launch { application.derivedIntentionPreference.setEnabled(enabled) }
+                },
+                modelOnThisPhone = modelAvailability == ModelAvailability.AVAILABLE,
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
                 accessibilityServiceGranted = accessibilityServiceGranted,

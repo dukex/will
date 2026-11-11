@@ -6,7 +6,6 @@ data class DayOfAttention(
     val engagedMillis: Long = 0L,
     val longestStretchMillis: Long = 0L,
     val contextSwitches: Int = 0,
-    val tasksTouched: Int = 0,
     val tasksFinished: Int = 0
 )
 
@@ -45,7 +44,7 @@ enum class AttentionRange(val days: Int) { WEEK(7), MONTH(30) }
  */
 class AttentionHistory(private val dayStartOf: (Long) -> Long) {
 
-    private data class Span(val from: Long, val until: Long, val taskId: Long)
+    private data class Span(val from: Long, val until: Long)
 
     fun read(
         events: List<TaskEvent>,
@@ -81,11 +80,6 @@ class AttentionHistory(private val dayStartOf: (Long) -> Long) {
                 engagedMillis = withinDay.sumOf { it.until - it.from },
                 longestStretchMillis = withinDay.maxOfOrNull { it.until - it.from } ?: 0L,
                 contextSwitches = switchesByDay[from] ?: 0,
-                tasksTouched = spans
-                    .filter { it.overlaps(from, until) }
-                    .map { it.taskId }
-                    .distinct()
-                    .size,
                 tasksFinished = finishesByDay[from] ?: 0
             )
         }
@@ -134,12 +128,12 @@ class AttentionHistory(private val dayStartOf: (Long) -> Long) {
     private fun engagementSpans(events: List<TaskEvent>, now: Long): List<Span> =
         events
             .groupBy { it.taskId }
-            .flatMap { (taskId, forTask) ->
+            .flatMap { (_, forTask) ->
                 val ordered = forTask.sortedWith(compareBy({ it.at }, { it.id }))
                 ordered.mapIndexedNotNull { index, event ->
                     if (!event.type.opensWork()) return@mapIndexedNotNull null
                     val until = ordered.drop(index + 1).firstOrNull { it.at > event.at }?.at ?: now
-                    Span(from = event.at, until = minOf(until, now), taskId = taskId)
+                    Span(from = event.at, until = minOf(until, now))
                 }
             }
             .filter { it.until > it.from }
@@ -152,8 +146,6 @@ class AttentionHistory(private val dayStartOf: (Long) -> Long) {
         val end = minOf(this.until, until)
         return if (end > start) copy(from = start, until = end) else null
     }
-
-    private fun Span.overlaps(from: Long, until: Long) = this.from < until && this.until > from
 
     /**
      * The union of the spans. Overlapping and touching spans become one, so a

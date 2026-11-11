@@ -182,6 +182,13 @@ fun FocusDashboard(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = WillTextTertiary
                             )
+                            Text(
+                                text = "longest unbroken stretch " +
+                                    attentionDuration(viewModel.bestStretchMillis),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextSecondary,
+                                modifier = Modifier.padding(top = Spacing.sm)
+                            )
                             AttentionTrendChart(
                                 days = viewModel.trend,
                                 busiestDayMillis = viewModel.busiestDayMillis,

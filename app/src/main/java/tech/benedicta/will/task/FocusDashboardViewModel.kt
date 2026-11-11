@@ -39,13 +39,23 @@ class FocusDashboardViewModel(
     events: List<TaskEvent> = emptyList(),
     range: AttentionRange = AttentionRange.WEEK,
     private val now: () -> Long = System::currentTimeMillis,
-    private val dayStartOf: (Long) -> Long = ::startOfDay
+    private val dayStartOf: (Long) -> Long = ::startOfDay,
+    ownPackage: String = WILL_PACKAGE
 ) : ViewModel() {
+
+    private val history = AttentionHistory(dayStartOf)
 
     val metrics: TaskMetrics = computeMetrics(tasks)
 
-    val trend: List<DayOfAttention> =
-        AttentionHistory(dayStartOf).read(events, range, now())
+    val trend: List<DayOfAttention> = history.read(events, range, now())
+
+    /**
+     * The apps that most often pulled the user off a task. Will is left out:
+     * coming back to the launcher is how you move between tasks, not an
+     * interruption.
+     */
+    val distractions: List<Distraction> =
+        history.distractions(events, range, now(), excluding = setOf(ownPackage))
 
     /** The fullest day in [trend], so a chart can scale to it rather than to a guess. */
     val busiestDayMillis: Long = trend.maxOfOrNull { it.engagedMillis } ?: 0L
@@ -93,6 +103,7 @@ class FocusDashboardViewModel(
     private fun isToday(millis: Long) = dayStartOf(millis) == dayStartOf(now())
 
     private companion object {
+        const val WILL_PACKAGE = "tech.benedicta.will"
         const val COMPLETION_WEIGHT = 50
         const val TIME_WEIGHT = 30
         const val CALM_WEIGHT = 20

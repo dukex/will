@@ -57,11 +57,25 @@ private fun dashboard(
     dayStartOf = ::fixedDayStart
 )
 
+private fun pulledAway(to: String, dayOffset: Long, times: Int, seed: Long) =
+    (0 until times).map { index ->
+        TaskEvent(
+            id = seed + index,
+            taskId = 1,
+            type = TaskEventType.SWITCHED_AWAY,
+            at = (20_000 - dayOffset) * DAY + (9 + index) * HOUR,
+            foregroundPackage = to
+        )
+    }
+
 private val aWeekOfWork = worked(1, dayOffset = 6, startHour = 9, minutes = 95) +
     worked(2, dayOffset = 5, startHour = 14, minutes = 40) +
     worked(3, dayOffset = 3, startHour = 10, minutes = 150) +
     worked(4, dayOffset = 2, startHour = 16, minutes = 25) +
-    worked(5, dayOffset = 0, startHour = 9, minutes = 70)
+    worked(5, dayOffset = 0, startHour = 9, minutes = 70) +
+    pulledAway("com.instagram.android", dayOffset = 5, times = 6, seed = 1_000) +
+    pulledAway("com.whatsapp", dayOffset = 3, times = 4, seed = 2_000) +
+    pulledAway("com.twitter.android", dayOffset = 1, times = 2, seed = 3_000)
 
 private val today = listOf(
     sampleTask(1, "responder Maria", startedAt = NOW - 5 * HOUR, completedAt = NOW - 4 * HOUR),

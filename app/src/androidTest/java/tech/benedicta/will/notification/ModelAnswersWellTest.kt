@@ -2,6 +2,7 @@ package tech.benedicta.will.notification
 
 import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.mlkit.genai.prompt.Generation
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -46,49 +47,81 @@ class ModelAnswersWellTest {
 
     // --- triage: does it recognise housekeeping? ---
 
-    private fun judge(title: String, text: String = ""): Boolean {
+    /**
+     * The verdict, and what the model actually said to reach it.
+     *
+     * A bare assertion failure here would say "expected true, got false",
+     * which tells whoever ran it nothing about whether the prompt was
+     * misread, the model hedged, or it answered in a shape the parser
+     * refuses. Every failure message carries the raw reply instead.
+     */
+    private fun judged(title: String, text: String = ""): Pair<Boolean, String> {
         requireModel()
-        return runBlocking { GeminiNanoTriage().isNoise(title, text) }
+        val prompt = TriagePrompt.build(title, text) ?: return false to "(nothing to ask)"
+        val raw = runBlocking { rawAnswer(prompt) }
+        return TriagePrompt.parse(raw) to raw
+    }
+
+    private suspend fun rawAnswer(prompt: String): String = runCatching {
+        Generation.getClient()
+            .generateContent(prompt)
+            .candidates
+            .firstOrNull()
+            ?.text
+            .orEmpty()
+    }.getOrElse { "(the model threw: ${it.javaClass.simpleName}: ${it.message})" }
+
+    private fun assertNoise(title: String, text: String = "", why: String) {
+        val (noise, raw) = judged(title, text)
+        assertTrue("$why\n  notification: \"$title\" / \"$text\"\n  model said: $raw", noise)
+    }
+
+    private fun assertNotNoise(title: String, text: String = "", why: String) {
+        val (noise, raw) = judged(title, text)
+        assertFalse("$why\n  notification: \"$title\" / \"$text\"\n  model said: $raw", noise)
     }
 
     @Test
     fun obvious_housekeeping_is_recognised_as_noise() {
-        assertTrue("a download finishing is not something to act on", judge("Download complete"))
+        assertNoise("Download complete", why = "a download finishing is not something to act on")
     }
 
     @Test
     fun obvious_housekeeping_is_recognised_in_portuguese_too() {
-        assertTrue(judge("Backup concluído"))
+        assertNoise("Backup concluído", why = "the patterns catch this one; the model should too")
     }
 
     @Test
     fun an_advert_is_recognised_as_noise() {
-        assertTrue(judge("Experimente o premium por 7 dias", "oferta por tempo limitado"))
+        assertNoise(
+            "Experimente o premium por 7 dias", "oferta por tempo limitado",
+            why = "an advert nobody wrote a pattern for is the whole reason for this feature"
+        )
     }
 
     @Test
     fun a_message_from_a_person_is_never_noise() {
-        assertFalse(
-            "dropping this is the failure the whole design is arranged against",
-            judge("Maria", "pode revisar o contrato hoje?")
+        assertNotNoise(
+            "Maria", "pode revisar o contrato hoje?",
+            why = "dropping this is the failure the whole design is arranged against"
         )
     }
 
     @Test
     fun something_about_the_users_own_money_is_never_noise() {
-        assertFalse(judge("Banco Itaú", "seu boleto vence amanhã"))
+        assertNotNoise("Banco Itaú", "seu boleto vence amanhã", why = "a bill is not housekeeping")
     }
 
     @Test
     fun a_delivery_is_never_noise() {
-        assertFalse(judge("Seu pedido chegou", "deixado na portaria"))
+        assertNotNoise("Seu pedido chegou", "deixado na portaria", why = "a delivery needs acting on")
     }
 
     @Test
     fun a_notification_mentioning_a_housekeeping_word_is_still_a_message() {
-        assertFalse(
-            "this is the boundary the linear model could not learn; see US-15",
-            judge("Tom", "alarm did not go off, running late")
+        assertNotNoise(
+            "Tom", "alarm did not go off, running late",
+            why = "this is the boundary the linear model could not learn; see US-15"
         )
     }
 
@@ -99,18 +132,34 @@ class ModelAnswersWellTest {
         return runBlocking { GeminiNanoIntentions(enabled = { true }).read(title, text) }
     }
 
+    /** What the model replied, so a failure says why rather than only that. */
+    private fun rawReading(title: String, text: String): String {
+        val prompt = IntentionPrompt.build(title, text) ?: return "(nothing to ask)"
+        return runBlocking { rawAnswer(prompt) }
+    }
+
     @Test
     fun an_invitation_reads_as_something_to_confirm() {
-        val read = read("Agenda", "Confirme sua presença na reunião de sexta")
+        val text = "Confirme sua presença na reunião de sexta"
+        val read = read("Agenda", text)
 
-        assertEquals(IntentionKind.CONFIRM, read?.kind)
+        assertEquals(
+            "model said: ${rawReading("Agenda", text)}",
+            IntentionKind.CONFIRM,
+            read?.kind
+        )
     }
 
     @Test
     fun a_bill_reads_as_something_to_pay() {
-        val read = read("Banco Itaú", "seu boleto de R$ 230 vence amanhã")
+        val text = "seu boleto de R$ 230 vence amanhã"
+        val read = read("Banco Itaú", text)
 
-        assertEquals(IntentionKind.PAY, read?.kind)
+        assertEquals(
+            "model said: ${rawReading("Banco Itaú", text)}",
+            IntentionKind.PAY,
+            read?.kind
+        )
     }
 
     @Test
@@ -126,8 +175,14 @@ class ModelAnswersWellTest {
 
     @Test
     fun a_notification_asking_for_nothing_is_left_alone() {
-        val read = read("Banco", "seu saldo hoje é R$ 1.240,00")
+        val text = "seu saldo hoje é R$ 1.240,00"
+        val read = read("Banco", text)
 
-        assertEquals("a balance asks for nothing; the title should survive", null, read)
+        assertEquals(
+            "a balance asks for nothing; the title should survive. " +
+                "model said: ${rawReading("Banco", text)}",
+            null,
+            read
+        )
     }
 }

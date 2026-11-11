@@ -6,6 +6,13 @@ import tech.benedicta.will.task.TaskOrigin
  * Reads what a notification is asking for: from the system's own category
  * when it says, and from the words when only a model can tell.
  *
+ * In the notification path [semantic] is always `Unavailable`, because ML
+ * Kit's GenAI APIs refuse to run outside the top foreground app and the
+ * notification listener is a background service. The model's reading happens
+ * in [ModelReviewPass] once Will is open. The seam stays because the
+ * extractor's own guards still run here, and because it is where a model that
+ * could answer in the background would belong.
+ *
  * The same shape as `SearchWithMeaning` in the launcher. The answer that
  * needs no model comes first, on every device, and the model is asked only
  * the question it alone can answer. `IntentionExtractor` knows a message

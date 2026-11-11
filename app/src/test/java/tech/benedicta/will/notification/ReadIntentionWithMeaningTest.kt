@@ -11,6 +11,11 @@ import org.junit.Test
  * The same shape as `SearchWithMeaning`: the answer that needs no model comes
  * first, and the model is asked only the question it alone can answer.
  *
+ * The notification path injects no model, because ML Kit refuses to run
+ * outside the foreground; `ModelReviewPassTest` covers the place it does run.
+ * These still pin the composition, which is what decides that a category
+ * answer is never overridden by a model.
+ *
  * The model can only ever name what a notification is asking for. It cannot
  * drop one, so the worst a wrong answer costs is a title the user disagrees
  * with, over an original that `Task.rawTitle` still holds.

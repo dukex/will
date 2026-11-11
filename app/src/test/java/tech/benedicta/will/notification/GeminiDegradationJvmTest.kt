@@ -1,5 +1,6 @@
 package tech.benedicta.will.notification
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -9,6 +10,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import tech.benedicta.will.infrastructure.memory.MemoryModelTriageLog
+import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
+import tech.benedicta.will.task.Task
 
 /**
  * The real `GeminiNanoTriage` and `GeminiNanoIntentions`, against the real ML
@@ -99,21 +102,33 @@ class GeminiDegradationJvmTest {
     }
 
     @Test
-    fun `triage on a phone without the model cannot hide a notification`() = runBlocking {
+    fun `the whole foreground pass on a phone without the model changes nothing`() = runBlocking {
+        val tasks = MemoryTaskRepository()
         val log = MemoryModelTriageLog()
-        val classifier = ModelIntentionClassifier(
-            cheap = LearnedIntentionClassifier(
-                PatternIntentionClassifier(),
-                tech.benedicta.will.infrastructure.memory.MemoryLearnedNoiseRepository()
-            ),
-            model = GeminiNanoTriage(),
+        tasks.insertTask(
+            Task(
+                title = "Experimente o premium",
+                text = "oferta por tempo limitado",
+                sourcePackage = "com.shop",
+                createdAt = 1_000L
+            )
+        )
+        val pass = ModelReviewPass(
+            tasks = tasks,
+            triage = GeminiNanoTriage(),
+            reader = GeminiNanoIntentions(enabled = { true }),
             log = log,
-            enabled = { true }
+            phrase = { _, subject -> "derived $subject" },
+            triageEnabled = { true },
+            readingEnabled = { true },
+            now = { 5_000L }
         )
 
-        val kept = classifier.isIntention("Experimente o premium", "oferta", "com.shop")
+        pass.review(tasks.getAllTasks().first(), since = 0L)
 
-        assertTrue("with the switch on and no model, nothing may be hidden", kept)
+        val remaining = tasks.getAllTasks().first()
+        assertEquals("with both switches on and no model, nothing may be hidden", 1, remaining.size)
+        assertEquals("Experimente o premium", remaining.single().title)
         assertTrue(log.dropped().isEmpty())
     }
 }

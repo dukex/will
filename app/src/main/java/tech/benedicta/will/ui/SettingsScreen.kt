@@ -310,8 +310,8 @@ fun SettingsScreen(
                                     derivedIntentionsEnabled ->
                                         "on — a notification only your words can explain, like " +
                                             "\"confirme sua presença\", becomes what it is asking " +
-                                            "for. the model reads it on your phone and the " +
-                                            "original title is kept"
+                                            "for. the model reads it on your phone, next time you " +
+                                            "open will, and the original title is kept"
                                     else ->
                                         "off — a message or a missed call already becomes an " +
                                             "intention without any model. turning this on lets " +
@@ -370,10 +370,10 @@ fun SettingsScreen(
                                         "needs the on-device model, which is not on this phone. " +
                                             "the built-in list still catches the usual chatter"
                                     modelTriageEnabled ->
-                                        "on — the model reads what the built-in list missed and " +
-                                            "keeps it off your feed. everything it hides is " +
-                                            "listed in data & privacy, with a way back. when it " +
-                                            "is unsure, it keeps"
+                                        "on — next time you open will, the model reads what " +
+                                            "the built-in list missed and takes it off your " +
+                                            "feed. everything it hides is listed in data & " +
+                                            "privacy, with a way back. when it is unsure, it keeps"
                                     else ->
                                         "off — the built-in list and what you have thrown away " +
                                             "already filter your feed. turning this on lets the " +

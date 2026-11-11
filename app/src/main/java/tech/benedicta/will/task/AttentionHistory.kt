@@ -10,6 +10,9 @@ data class DayOfAttention(
     val tasksFinished: Int = 0
 )
 
+/** An app that kept pulling the user off their own tasks, and how often. */
+data class Distraction(val packageName: String, val interruptions: Int)
+
 /** How far back a reading goes. */
 enum class AttentionRange(val days: Int) { WEEK(7), MONTH(30) }
 
@@ -89,6 +92,40 @@ class AttentionHistory(private val dayStartOf: (Long) -> Long) {
     }
 
     /**
+     * The apps that most often pulled the user off a task, worst first.
+     *
+     * `SWITCHED_AWAY` has carried the app jumped to since US-12 and nothing
+     * ever read it, so Will has been recording what interrupts people and
+     * never telling them. It is the same surface the accessibility service
+     * already exposes: a package name, never a word of window content.
+     *
+     * Counted across every task, because the interruption is the same one
+     * whichever task it landed on. Capped at [limit], because a ranked list
+     * of twenty apps is a list nobody reads.
+     */
+    fun distractions(
+        events: List<TaskEvent>,
+        range: AttentionRange,
+        now: Long,
+        limit: Int = DEFAULT_DISTRACTION_LIMIT,
+        excluding: Set<String> = emptySet()
+    ): List<Distraction> {
+        val windowStart = daysEndingAt(now, range.days).first()
+
+        return events
+            .asSequence()
+            .filter { it.type == TaskEventType.SWITCHED_AWAY }
+            .filter { it.at in windowStart..now }
+            .mapNotNull { it.foregroundPackage }
+            .filter { it.isNotBlank() && it !in excluding }
+            .groupingBy { it }
+            .eachCount()
+            .map { (packageName, count) -> Distraction(packageName, count) }
+            .sortedWith(compareByDescending<Distraction> { it.interruptions }.thenBy { it.packageName })
+            .take(limit)
+    }
+
+    /**
      * Every stretch the user was actually on a task: a work-starting event
      * opens one and the task's next event closes it. A stretch still open when
      * the log ends closes at [now], never later, so a task left running
@@ -157,6 +194,8 @@ class AttentionHistory(private val dayStartOf: (Long) -> Long) {
     private fun nextDayStart(dayStart: Long) = dayStartOf(dayStart + DAY + HALF_DAY)
 
     private companion object {
+        /** Enough to name a habit, few enough to read at a glance. */
+        const val DEFAULT_DISTRACTION_LIMIT = 3
         const val HALF_DAY = 12 * 60 * 60 * 1000L
         const val DAY = 24 * 60 * 60 * 1000L
     }

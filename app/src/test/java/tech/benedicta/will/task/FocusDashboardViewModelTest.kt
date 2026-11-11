@@ -165,6 +165,40 @@ class FocusDashboardViewModelTest {
         assertTrue(dashboard(events = events).hasTrend)
     }
 
+    // --- what pulled you away, which nothing used to read ---
+
+    @Test
+    fun `the dashboard names the apps that pulled you off your tasks`() {
+        val events = listOf(
+            TaskEvent(id = 1, taskId = 1, type = TaskEventType.SWITCHED_AWAY,
+                at = 9 * DAY + 9 * HOUR, foregroundPackage = "com.instagram.android"),
+            TaskEvent(id = 2, taskId = 1, type = TaskEventType.SWITCHED_AWAY,
+                at = 10 * DAY + 9 * HOUR, foregroundPackage = "com.instagram.android"),
+            TaskEvent(id = 3, taskId = 2, type = TaskEventType.SWITCHED_AWAY,
+                at = 10 * DAY + 10 * HOUR, foregroundPackage = "com.twitter")
+        )
+
+        val distractions = dashboard(events = events).distractions
+
+        assertEquals(listOf("com.instagram.android", "com.twitter"), distractions.map { it.packageName })
+        assertEquals(2, distractions.first().interruptions)
+    }
+
+    @Test
+    fun `Will is left out, because going home is not being interrupted`() {
+        val events = listOf(
+            TaskEvent(id = 1, taskId = 1, type = TaskEventType.SWITCHED_AWAY,
+                at = 10 * DAY + 9 * HOUR, foregroundPackage = "tech.benedicta.will")
+        )
+
+        assertTrue(dashboard(events = events).distractions.isEmpty())
+    }
+
+    @Test
+    fun `a week nobody was interrupted in reports nobody`() {
+        assertTrue(dashboard().distractions.isEmpty())
+    }
+
     @Test
     fun `the week totals what the days hold, without double counting overlap`() {
         val events = listOf(

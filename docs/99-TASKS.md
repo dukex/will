@@ -212,6 +212,7 @@ Subtasks:
 - [x] Notification-created tasks logged once per conversation, not once per message (`TaskUpsert.created`)
 - [x] Deleting a task drops its events; clearing all data clears the log (US-07)
 - [x] Surfaced. `AttentionHistory` is the second reader of the log after `CompletionInference`, and the first to use it for something the `Task` scalars cannot answer at all: which days the user actually spent attention on, rather than when a task began and ended (19 unit tests)
+- [x] `SWITCHED_AWAY` carried the app the user jumped to from the start and nothing ever read it, so Will was recording what interrupts people and never telling them. `AttentionHistory.distractions` ranks them and the focus screen names them (11 unit tests). Package names and counts only, which is the same surface the accessibility service already exposes
 - [ ] The cognitive-load estimate is still open. The per-day switch counts and longest unbroken stretch that GOMS would need are computed and carried on `DayOfAttention`; nothing reads them yet
 
 ### US-13: Task origin ✅

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -38,6 +40,7 @@ import java.util.Date
 import java.util.Locale
 import tech.benedicta.will.task.AttentionRange
 import tech.benedicta.will.task.DayOfAttention
+import tech.benedicta.will.task.Distraction
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.ui.theme.Spacing
 import tech.benedicta.will.ui.theme.WillAccent
@@ -193,6 +196,34 @@ fun FocusDashboard(
                             )
                         }
                     }
+
+                    if (viewModel.distractions.isNotEmpty()) {
+                        item {
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outline,
+                                thickness = 1.dp
+                            )
+                        }
+                        item {
+                            SectionHeader("what pulled you away")
+                            Column(
+                                Modifier.padding(
+                                    horizontal = Spacing.xl,
+                                    vertical = Spacing.md
+                                )
+                            ) {
+                                viewModel.distractions.forEach { distraction ->
+                                    DistractionRow(distraction)
+                                }
+                                Text(
+                                    text = "times a task was open and you went elsewhere",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = WillTextTertiary,
+                                    modifier = Modifier.padding(top = Spacing.sm)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -300,6 +331,49 @@ private fun RangePicker(
             )
             Spacer(Modifier.width(Spacing.xs))
         }
+    }
+}
+
+/**
+ * One app and how often it interrupted. The count is read from the task log,
+ * which has carried the app jumped to since US-12 without anything reading it.
+ *
+ * The app's own name when the phone can still resolve it, and the package name
+ * when it cannot, which is what an app uninstalled since looks like.
+ */
+@Composable
+private fun DistractionRow(distraction: Distraction) {
+    val context = LocalContext.current
+    val label = remember(distraction.packageName) {
+        runCatching {
+            context.packageManager
+                .getApplicationLabel(
+                    context.packageManager.getApplicationInfo(distraction.packageName, 0)
+                )
+                .toString()
+        }.getOrDefault(distraction.packageName)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(Spacing.touchTarget)
+            .semantics {
+                contentDescription = "$label, ${distraction.interruptions} interruptions"
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "${distraction.interruptions}",
+            style = MaterialTheme.typography.labelSmall,
+            color = WillTextSecondary
+        )
     }
 }
 

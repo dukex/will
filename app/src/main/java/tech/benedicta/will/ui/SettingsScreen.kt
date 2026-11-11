@@ -51,6 +51,8 @@ fun SettingsScreen(
     onRerunOnboarding: () -> Unit = {},
     accessibilityServiceGranted: Boolean = false,
     onOpenAccessibilitySettings: () -> Unit = {},
+    semanticSearchEnabled: Boolean = false,
+    onSemanticSearchChange: (Boolean) -> Unit = {},
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -69,33 +71,25 @@ fun SettingsScreen(
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
 
-        if (filters.isEmpty()) {
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "no apps yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+        LazyColumn(Modifier.weight(1f)) {
+            item {
+                SectionHeader("apps that create tasks")
+                HorizontalDivider(color = WillBorder, thickness = 1.dp)
+            }
+            if (filters.isEmpty()) {
+                item {
                     Text(
                         text = "apps will appear here once they send notifications",
                         style = MaterialTheme.typography.labelSmall,
                         color = WillTextTertiary,
-                        modifier = Modifier.padding(top = Spacing.xs)
+                        modifier = Modifier.padding(
+                            horizontal = Spacing.xl,
+                            vertical = Spacing.md
+                        )
                     )
-                }
-            }
-        } else {
-            LazyColumn(Modifier.weight(1f)) {
-                item {
-                    SectionHeader("apps that create tasks")
                     HorizontalDivider(color = WillBorder, thickness = 1.dp)
                 }
+            }
                 items(filters, key = { it.packageName }) { filter ->
                     AppToggleRow(
                         appName = filter.appName,
@@ -196,7 +190,49 @@ fun SettingsScreen(
                         )
                     }
                 }
-            }
+                item {
+                    val statusLabel = if (semanticSearchEnabled) "on" else "off"
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onSemanticSearchChange(!semanticSearchEnabled) }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Switch
+                                contentDescription =
+                                    "search by meaning is $statusLabel; tap to turn it " +
+                                    if (semanticSearchEnabled) "off" else "on"
+                            },
+                        // Top, not centre: the explanation runs to three lines
+                        // and the status belongs beside the name it describes.
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "search by meaning",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = if (semanticSearchEnabled) {
+                                    "on — finds apps by what they are for, using Google's " +
+                                        "on-device model. only when the name search finds nothing"
+                                } else {
+                                    "off — turning it on uses Google's on-device model, which " +
+                                        "ships with its own libraries. nothing is sent anywhere"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = statusLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (semanticSearchEnabled) WillAccent else WillTextTertiary
+                        )
+                    }
+                }
         }
     }
 }

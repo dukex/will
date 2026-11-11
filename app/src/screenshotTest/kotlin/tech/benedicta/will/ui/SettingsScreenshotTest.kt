@@ -1,0 +1,66 @@
+package tech.benedicta.will.ui
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.tools.screenshot.PreviewTest
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import tech.benedicta.will.notification.AppFilterRepository
+import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.AppNotificationFilter
+import tech.benedicta.will.ui.theme.WillTheme
+
+private fun filtersFor(vararg apps: Pair<String, String>) = object : AppFilterRepository {
+    private val filters = MutableStateFlow(
+        apps.map { AppNotificationFilter(it.first, it.second, true) }
+    )
+
+    override fun getAllFilters(): Flow<List<AppNotificationFilter>> = filters.asStateFlow()
+    override suspend fun setEnabled(packageName: String, enabled: Boolean) = Unit
+    override suspend fun addApp(packageName: String, appName: String) = Unit
+    override fun isEnabled(packageName: String): Boolean = true
+}
+
+/** Search by meaning is off until asked for, and says what turning it on brings. */
+@PreviewTest
+@Preview(name = "settings with search by meaning off", widthDp = 412, heightDp = 720, showBackground = true)
+@Composable
+private fun SettingsSemanticSearchOffPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** The same row once it is on. */
+@PreviewTest
+@Preview(name = "settings with search by meaning on", widthDp = 412, heightDp = 720, showBackground = true)
+@Composable
+private fun SettingsSemanticSearchOnPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            viewModel = viewModel
+        )
+    }
+}

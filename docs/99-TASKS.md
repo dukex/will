@@ -355,6 +355,29 @@ Subtasks:
 - [x] Rendered and checked before handover (`AppGridWithTaskResultsPreview`)
 - [x] Fixed on the way: `AppItem` was the one text in the launcher that inherited its colour instead of stating it, which made it invisible outside a `Surface`
 
+### US-25: Search by meaning ✅ (shipped, inference unverified on device)
+**As a user, I want to type "banco" and find Itaú, even though the word is nowhere in the name.**
+
+The last item of the direction document's layer 3, and the one `AppMatcher` could never reach: no amount of string comparison connects "banco" to "Itaú". This is the piece that needs a model, and the route was the one already agreed: accept Google's on-device model in the Play Store build, opt-in at runtime.
+
+Subtasks:
+- [x] `com.google.mlkit:genai-prompt` (Gemini Nano through AICore). `+2.3 MB` on the APK
+- [x] `tools:overrideLibrary` in both manifests: the library declares minSdk 26, Will stays installable on 24
+- [x] `SemanticSearchPrompt`, pure: numbers the apps, asks for numbers back, reads the reply (13 unit tests)
+- [x] The answer can only ever name an app that was offered. Prose, invented names, out-of-range numbers and a model that lists everything all yield nothing or a bounded subset
+- [x] `SearchWithMeaning`: the name match runs first and the model is asked only when it found nothing (8 unit tests)
+- [x] The model cannot remove a result the matcher found, cannot name an app that is not installed, and when it is off, unavailable, slow or broken the search behaves exactly as before
+- [x] Two-second timeout: a search box that waits longer has already failed
+- [x] Never downloads the model on its own. Megabytes over someone's connection is not a search box's decision
+- [x] Off until asked for, with a row in settings saying plainly that turning it on brings Google's libraries
+- [x] `data & privacy` says the same, and still says searches go nowhere
+- [x] Rendered and checked before handover (`SettingsSemanticSearchOffPreview`, `...OnPreview`)
+
+- [ ] Verify the inference on a device with AICore. The prompt and the parse have tests; Gemini Nano itself cannot be exercised in a JVM test and this container has no emulator.
+- [ ] Offer the model download from settings when the status is DOWNLOADABLE. Today the feature simply stays quiet until the model is already there.
+
+**Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

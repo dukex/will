@@ -89,6 +89,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // On-device semantic search, Gemini Nano through AICore. Opt-in at
+    // runtime and absent from every device that cannot serve it.
+    implementation(libs.mlkit.genai.prompt)
+
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

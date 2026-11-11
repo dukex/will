@@ -3,6 +3,7 @@
 ## [unreleased]
 
 ### added
+- search by meaning, if you want it — turn it on in settings and typing "banco" finds your bank even though the word is nowhere in its name. It runs Google's model on your phone, only when searching by name finds nothing, and your searches still go nowhere. Off until you ask for it, and settings says plainly what turning it on brings
 - a task opens the screen, not just the app — "ligar para Miguel" opens the dialer with Miguel ready, "ir para Pocrane" opens the map, a link opens the browser. Will never places the call itself, it just gets you there
 - search finds your tasks too — the search box in the app drawer now looks through what you still have to do as well as your apps, with the tasks first
 - find an app by what it is for — type "musica" and get your music apps, "mapa" and get your maps, even when you cannot remember what the app is called
@@ -31,6 +32,7 @@
 - pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
 
 ### fixed
+- settings is reachable on a fresh install — data & privacy, re-run onboarding and lifecycle tracking used to be hidden until some app had sent you a notification
 - searching the app drawer now works in Portuguese — typing "itau" finds Itaú and "configuracoes" finds Configurações. Accents used to make the app invisible to its own name. You can also type initials ("gd" for Google Drive) or just the consonants ("tlgrm" for Telegram), and the closest match comes first
 - only the task you are working on is highlighted as active — every other started-but-not-finished task now shows as paused, with its own muted dot, so the home screen reflects what you are actually doing right now
 - uninstalled apps no longer linger in the pinned row — the launcher refreshes its app list every time you return home, so pins for apps you removed disappear automatically

@@ -159,7 +159,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val launcherVm: LauncherViewModel = viewModel(
-                    factory = LauncherViewModel.factory(appRepository)
+                    factory = LauncherViewModel.factory(appRepository, app.appSearch)
                 )
                 this@MainActivity.launcherVm = launcherVm
                 taskVm = viewModel(
@@ -420,8 +420,15 @@ private fun WillScreen(
 
     when (currentScreen) {
         Screen.Settings -> {
+            val application = context.applicationContext as WillApplication
+            val semanticSearchEnabled by application.semanticSearchPreference
+                .isEnabled().collectAsState(initial = false)
             SettingsScreen(
                 onBack = { currentScreen = Screen.Home },
+                semanticSearchEnabled = semanticSearchEnabled,
+                onSemanticSearchChange = { enabled ->
+                    scope.launch { application.semanticSearchPreference.setEnabled(enabled) }
+                },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
                 accessibilityServiceGranted = accessibilityServiceGranted,

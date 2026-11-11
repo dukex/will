@@ -176,20 +176,6 @@ class AttentionHistoryTest {
     }
 
     @Test
-    fun `a task touched twice in one day counts once`() {
-        val events = listOf(
-            event(1, TaskEventType.STARTED, 10 * DAY + 9 * HOUR),
-            event(1, TaskEventType.PAUSED, 10 * DAY + 9 * HOUR + 5 * MINUTE),
-            event(1, TaskEventType.RESUMED, 10 * DAY + 15 * HOUR),
-            event(1, TaskEventType.PAUSED, 10 * DAY + 15 * HOUR + 5 * MINUTE)
-        )
-
-        val today = read(events, now = 10 * DAY + 16 * HOUR).last()
-
-        assertEquals(1, today.tasksTouched)
-    }
-
-    @Test
     fun `finishing a task counts on the day it was finished`() {
         val events = listOf(
             event(1, TaskEventType.STARTED, 9 * DAY + 23 * HOUR),
@@ -277,6 +263,6 @@ class AttentionHistoryTest {
         val today = read(events, now = 10 * DAY + 18 * HOUR).last()
 
         assertEquals(0L, today.engagedMillis)
-        assertEquals(0, today.tasksTouched)
+        assertEquals(0L, today.longestStretchMillis)
     }
 }

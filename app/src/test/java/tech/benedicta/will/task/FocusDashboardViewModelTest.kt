@@ -165,6 +165,27 @@ class FocusDashboardViewModelTest {
         assertTrue(dashboard(events = events).hasTrend)
     }
 
+    @Test
+    fun `the longest unbroken stretch of the range is reported`() {
+        val events = listOf(
+            TaskEvent(id = 1, taskId = 1, type = TaskEventType.STARTED, at = 8 * DAY + 9 * HOUR),
+            TaskEvent(id = 2, taskId = 1, type = TaskEventType.PAUSED, at = 8 * DAY + 11 * HOUR),
+            TaskEvent(id = 3, taskId = 1, type = TaskEventType.RESUMED, at = 10 * DAY + 9 * HOUR),
+            TaskEvent(id = 4, taskId = 1, type = TaskEventType.COMPLETED, at = 10 * DAY + 10 * HOUR)
+        )
+
+        val dashboard = dashboard(events = events)
+
+        assertEquals("three hours in total, but never more than two at once",
+            3 * HOUR, dashboard.engagedThisRangeMillis)
+        assertEquals(2 * HOUR, dashboard.bestStretchMillis)
+    }
+
+    @Test
+    fun `an empty range has no best stretch rather than an error`() {
+        assertEquals(0L, dashboard().bestStretchMillis)
+    }
+
     // --- what pulled you away, which nothing used to read ---
 
     @Test

@@ -63,6 +63,13 @@ class FocusDashboardViewModel(
     /** Attention across the whole range, already free of overlap. */
     val engagedThisRangeMillis: Long = trend.sumOf { it.engagedMillis }
 
+    /**
+     * The longest the user stayed on one thing without leaving it, anywhere in
+     * the range. The total says how much; this says whether any of it was in
+     * one piece.
+     */
+    val bestStretchMillis: Long = trend.maxOfOrNull { it.longestStretchMillis } ?: 0L
+
     /** Whether there is anything to draw. An empty week is said, not plotted. */
     val hasTrend: Boolean = trend.any { it.engagedMillis > 0L }
 

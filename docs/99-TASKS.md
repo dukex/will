@@ -83,10 +83,36 @@ Subtasks:
 - [x] Display time-on-task distribution (bar chart, normalized per-task)
 - [x] Show context switch frequency (today's total)
 - [ ] Implement GOMS model to estimate "Carga Estranha" (cognitive load saved) — now has the data it needs (US-12)
-- [ ] Visualize focus score trends across days (line graph) — now has the data it needs (US-12)
-- [ ] Provide filtering by date range (week, month) — currently only today; `TaskEventRepository.eventsSince` is the input
+- [x] Visualise attention across days — `AttentionHistory` reads the event log into one `DayOfAttention` per day and `FocusDashboard` draws it as a bar per day. A bar chart rather than a line: the days are discrete and a line between them would imply attention flowing from one to the next
+- [x] Filtering by date range (week, month) — `AttentionRange`, picked on the screen; `TaskEventRepository.eventsSince` is the input, queried one day wider than the window so a stretch that began just before it still opens inside it
 - [ ] ~~Export metrics~~ → out of MVP per scope.md
 - [ ] ~~Goal setting / progress tracking~~ → out of MVP per scope.md
+
+**What the log made possible, and what the scalars never could.** The dashboard
+used to read `Task` alone, so "time on task" meant `completedAt − startedAt`:
+a task opened on Monday and finished on Thursday counted as three days of
+attention, including the two nobody touched it. `AttentionHistory` replays the
+event log instead and attributes each stretch to the day it actually happened
+on. Three rules make the figures honest, and each is a test:
+
+- overlapping stretches are merged before anything is measured, so two tasks
+  open across the same hour cost one hour, not two;
+- a stretch crossing midnight is split between both days in the proportion it
+  fell in each;
+- a stretch still open closes at `now`, so a task left running overnight
+  cannot claim time that has not passed.
+
+**Fixed on the way:** the whole screen lived inside the branch that renders
+when something happened today, so a quiet day showed "nothing yet" over a full
+week of history. Same shape as the settings-screen bug under US-25. The empty
+state now covers the screen only when there is no history either.
+
+**Still reasoned rather than measured:** the focus score's weights (50 / 30 /
+20), its four-hour target day and its thirty-switch ceiling. They are named
+constants now instead of literals buried in the arithmetic, and the tests pin
+the properties that matter (the score stays in 0..100, finishing beats not
+finishing) rather than the exact number, so the weights can move without
+rewriting the suite.
 
 ### US-06: Reactive Task Feed with Deep Linking
 **As a user, I want a clean, text-focused interface that updates in real-time and takes me directly to the right app functionality.**
@@ -185,7 +211,8 @@ Subtasks:
 - [x] Fed from `TaskLifecycleApplier` (STARTED, SWITCHED_AWAY with the package jumped to) and `TaskViewModel` (CREATED, PAUSED, RESUMED, COMPLETED, REOPENED)
 - [x] Notification-created tasks logged once per conversation, not once per message (`TaskUpsert.created`)
 - [x] Deleting a task drops its events; clearing all data clears the log (US-07)
-- [ ] Surface it: US-05's trends, date ranges and cognitive-load estimate are what this unblocks, and none of it is built yet
+- [x] Surfaced. `AttentionHistory` is the second reader of the log after `CompletionInference`, and the first to use it for something the `Task` scalars cannot answer at all: which days the user actually spent attention on, rather than when a task began and ended (19 unit tests)
+- [ ] The cognitive-load estimate is still open. The per-day switch counts and longest unbroken stretch that GOMS would need are computed and carried on `DayOfAttention`; nothing reads them yet
 
 ### US-13: Task origin ✅
 **As a user, I want to see which tasks I did not put there myself, now that other apps and agents can write to my home screen.**

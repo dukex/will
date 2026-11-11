@@ -3,6 +3,8 @@
 ## [unreleased]
 
 ### added
+- the focus screen now shows the week, not just today — a bar for each of the last 7 days, how long you actually spent on task across them, and a switch to 30 days. Worked out from the history Will already keeps, so a day you touched a task for twenty minutes reads as twenty minutes, whatever day the task was created on. Two tasks open across the same hour count as one hour, because that is how much of your attention it took, and a stretch that runs past midnight is split between the two days it belongs to
+- a quiet day no longer hides your week — the focus screen used to say "nothing yet" whenever nothing happened today, even with a full week behind it
 - search by meaning, if you want it — turn it on in settings and typing "banco" finds your bank even though the word is nowhere in its name. It runs Google's model on your phone, only when searching by name finds nothing, and your searches still go nowhere. Off until you ask for it, and settings says plainly what turning it on brings
 - a task opens the screen, not just the app — "ligar para Miguel" opens the dialer with Miguel ready, "ir para Pocrane" opens the map, a link opens the browser. Will never places the call itself, it just gets you there
 - search finds your tasks too — the search box in the app drawer now looks through what you still have to do as well as your apps, with the tasks first

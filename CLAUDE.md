@@ -107,7 +107,7 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/SearchText.kt` | folding and scoring shared by the app and task search, so one box behaves one way |
 | `launcher/IntentionActionResolver.kt` | pure: the verb starting an intention mapped to a standard Android action |
 | `launcher/IntentionActionLauncher.kt` | the Android half; returns false when nothing handles it so the caller falls back |
-| `task/TaskMatcher.kt` | finds open tasks for the drawer's search box; capped, finished tasks excluded |
+| `task/TaskMatcher.kt` | finds open tasks for the drawer's search box: title, the title the notification arrived with, and the message, ranked so a title hit always wins. The message is matched literally, because a subsequence over a paragraph matches almost anything. Capped, finished tasks excluded |
 | `launcher/ActiveTaskShortcut.kt` | pure rules for the active-task shortcut: when to publish, how to label it |
 | `launcher/ActiveTaskShortcutPublisher.kt` | the Android half; pushes and removes, swallowing failures |
 | `launcher/AppMatcher.kt` | drawer search: folds accents, accepts initials and subsequences, ranks results. Pure |

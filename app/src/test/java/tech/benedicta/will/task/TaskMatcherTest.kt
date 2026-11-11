@@ -77,4 +77,82 @@ class TaskMatcherTest {
 
         assertTrue(matcher.filter(many, "tarefa").size <= TaskMatcher.MAX_RESULTS)
     }
+
+    // --- what the notification actually said ---
+
+    private fun notificationTask(
+        id: Long,
+        title: String,
+        text: String = "",
+        rawTitle: String? = null
+    ) = Task(
+        id = id,
+        title = title,
+        text = text,
+        sourcePackage = "com.whatsapp",
+        createdAt = 0L,
+        rawTitle = rawTitle
+    )
+
+    @Test
+    fun `a task is found by what the message said, not only by its title`() {
+        val tasks = listOf(
+            notificationTask(1, "responder Maria", text = "pode mandar o boleto hoje?")
+        )
+
+        assertEquals(listOf(1L), matcher.filter(tasks, "boleto").map { it.id })
+    }
+
+    @Test
+    fun `a derived title does not hide the name the notification arrived with`() {
+        val tasks = listOf(
+            notificationTask(1, "responder Contato", text = "oi", rawTitle = "Banco Itau")
+        )
+
+        assertEquals(
+            "US-19 rewrote the title; the original is still what the user remembers",
+            listOf(1L),
+            matcher.filter(tasks, "itau").map { it.id }
+        )
+    }
+
+    @Test
+    fun `a match in the title beats a match in someone else's message`() {
+        val tasks = listOf(
+            notificationTask(1, "responder Ana", text = "falou do boleto ontem"),
+            notificationTask(2, "pagar o boleto")
+        )
+
+        assertEquals(listOf(2L, 1L), matcher.filter(tasks, "boleto").map { it.id })
+    }
+
+    @Test
+    fun `a short query does not match every task through its message`() {
+        val tasks = listOf(
+            notificationTask(
+                1,
+                "responder Maria",
+                text = "bom dia, consegue revisar aquele documento que mandei na sexta?"
+            )
+        )
+
+        assertTrue(
+            "scattered letters inside a paragraph are not a match, or everything matches everything",
+            matcher.filter(tasks, "bcs").isEmpty()
+        )
+    }
+
+    @Test
+    fun `scattered letters still find a short title, as they always did`() {
+        val tasks = listOf(notificationTask(1, "responder Maria"))
+
+        assertEquals(listOf(1L), matcher.filter(tasks, "rspndr").map { it.id })
+    }
+
+    @Test
+    fun `an empty message is not a match for everything`() {
+        val tasks = listOf(notificationTask(1, "pagar a conta", text = ""))
+
+        assertTrue(matcher.filter(tasks, "zzz").isEmpty())
+    }
 }

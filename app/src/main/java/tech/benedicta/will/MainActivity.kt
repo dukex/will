@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
@@ -248,7 +249,10 @@ class MainActivity : ComponentActivity() {
      */
     private fun reviewWithModel() {
         val application = application as WillApplication
-        lifecycleScope.launch {
+        // Default, not the lifecycle scope's main dispatcher: a pass can hold
+        // several five-second inference timeouts end to end, and the home
+        // screen must stay answerable throughout.
+        lifecycleScope.launch(Dispatchers.Default) {
             runCatching {
                 val since = application.modelReviewWatermark.lastReviewed()
                 val watermark = application.modelReviewPass.review(

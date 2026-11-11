@@ -275,7 +275,8 @@ Subtasks:
 - [x] Ties keep the repository's alphabetical order
 - [x] Replaces the filter in `LauncherViewModel`; its eight existing tests still pass unchanged
 
-- [ ] The same matcher over the task feed. US-06 still lists feed search as open, and it needs a search field in the home screen, which is a UI decision of its own.
+- [x] The same matcher over the task feed — shipped under US-24, which put tasks and apps in one box rather than adding a field to the home screen.
+- [x] Searching what the notification said, not only the title it was given. `TaskMatcher` reads `title`, `rawTitle` and `text`, ranked so any title hit beats any message hit. The message is matched literally: `hasSubsequence` over a paragraph matches nearly any short query, which would make every task match everything (6 tests, one of them that exact trap).
 - [ ] This is matching, not meaning. "money" will not find the bank app. That needs embeddings, which is the blocked US-15 problem.
 
 ### US-19: A notification becomes what to do about it ✅

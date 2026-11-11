@@ -3,6 +3,7 @@
 ## [unreleased]
 
 ### added
+- search now looks inside the message, not just the task title — a task that reads "responder Maria" is found by typing a word Maria actually wrote, and a notification whose title Will rewrote is still found by the name it arrived with. Title matches come first
 - the focus screen now names what pulls you away — the apps you most often jumped to while a task was open, and how many times. Will has been recording this since the task history landed and never showed it to you. Nothing leaves your phone, it is only the app's name and a count, and clearing your data clears it
 - the focus screen now shows the week, not just today — a bar for each of the last 7 days, how long you actually spent on task across them, your longest unbroken stretch, and a switch to 30 days. Worked out from the history Will already keeps, so a day you touched a task for twenty minutes reads as twenty minutes, whatever day the task was created on. Two tasks open across the same hour count as one hour, because that is how much of your attention it took, and a stretch that runs past midnight is split between the two days it belongs to
 - a quiet day no longer hides your week — the focus screen used to say "nothing yet" whenever nothing happened today, even with a full week behind it

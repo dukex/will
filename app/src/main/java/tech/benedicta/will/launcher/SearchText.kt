@@ -25,6 +25,23 @@ internal object SearchText {
         }
     }
 
+    /**
+     * Lower is better; null means no match. Unlike [score] this stops at a
+     * literal match, because initials and a subsequence only make sense over
+     * something short like a name. A paragraph contains almost any short
+     * subsequence, so allowing it there would make every query match
+     * everything.
+     */
+    fun scoreLiteral(haystack: String, needle: String): Int? {
+        val folded = fold(haystack)
+        return when {
+            folded.startsWith(needle) -> STARTS_WITH
+            folded.split(" ").any { it.startsWith(needle) } -> WORD_STARTS_WITH
+            folded.contains(needle) -> CONTAINS
+            else -> null
+        }
+    }
+
     const val STARTS_WITH = 0
     const val WORD_STARTS_WITH = 1
     const val CONTAINS = 2

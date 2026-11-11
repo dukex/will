@@ -54,6 +54,13 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // Robolectric needs the merged resources and manifest to build an
+            // application context.
+            isIncludeAndroidResources = true
+        }
+    }
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
@@ -71,6 +78,17 @@ ksp {
 
 android {
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
+}
+
+tasks.withType<Test>().configureEach {
+    // Robolectric downloads its `android-all` jar with its own HTTP client,
+    // which a sandboxed or offline build cannot always reach. Point it at a
+    // directory already holding those jars and it stops asking the network:
+    //   ./gradlew test -Probolectric.dependency.dir=/path/to/jars
+    providers.gradleProperty("robolectric.dependency.dir").orNull?.let { directory ->
+        systemProperty("robolectric.offline", "true")
+        systemProperty("robolectric.dependency.dir", directory)
+    }
 }
 
 dependencies {
@@ -113,6 +131,11 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Robolectric runs the Android framework on the JVM, so the migration
+    // replay and the shortcut publisher are checked by `./gradlew test`
+    // instead of waiting for a device.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

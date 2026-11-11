@@ -279,6 +279,7 @@ The pattern list knows the housekeeping notifications someone wrote down in adva
 
 Subtasks:
 - [x] `LearnedNoiseRepository`: counts dismissals per app and title, with a SharedPreferences implementation capped at 200 entries (13 unit tests)
+- [x] The SharedPreferences implementation is tested too, not just its in-memory twin (11 tests under Robolectric, `SharedPrefsLearnedNoiseRepositoryTest`). The twin cannot answer the three questions a real store can get wrong: whether a lesson survives the process dying, whether a title containing the `|` separator comes back intact, and whether the cap evicts the single-dismissal filler rather than the title dismissed five times.
 - [x] Three dismissals silence a title; one completion unlearns it, because acting on one proves it mattered
 - [x] The lesson is per app **and** per title: silencing one promo must not silence the whole app
 - [x] Titles are folded for case, accents and spacing, so a vendor reformatting its own message does not reset the count
@@ -309,7 +310,7 @@ Subtasks:
 - [x] Failures are swallowed: no launcher should crash because a system surface refused a shortcut
 - [x] No new dependency; `androidx.core` was already here
 
-- [x] Written down as instrumented tests (`DeviceOnlyFeaturesTest`): the shortcut reaches the system, carries the right task id, and goes away when the task does. `./gradlew connectedDebugAndroidTest` runs them; this container has no emulator, so they have not been executed here.
+- [x] Checked, not just written down. `DeviceFeaturesJvmTest` runs on the JVM under Robolectric, so `./gradlew test` proves the shortcut reaches the system, carries the right task id, does not pile up when published twice, and goes away when the task does. The publisher swallows every failure by design, so these read the shortcut back out of the system rather than asking it not to crash. **Executed here: 9 tests, 0 failures.** `DeviceOnlyFeaturesTest` keeps the same checks against a real phone's own `ShortcutManager`, via `./gradlew connectedDebugAndroidTest`.
 
 ### US-22: An intention opens the screen, not the app ✅
 **As a user, when a task says "ligar para Miguel" I want the tap to open the dialer with Miguel in it, not the phone app's front door.**
@@ -374,7 +375,8 @@ Subtasks:
 - [x] Rendered and checked before handover (`SettingsSemanticSearchOffPreview`, `...OnPreview`)
 
 - [x] Offer the model download from settings when the status is DOWNLOADABLE. `SemanticSearchStatus` keeps the five states apart (9 unit tests) so settings can never show "on" while nothing happens, and the download only ever starts because the user tapped it.
-- [x] Written down as instrumented tests (`DeviceOnlyFeaturesTest`), so checking the model on a real phone is `./gradlew connectedDebugAndroidTest` rather than someone remembering to look. They cannot run in this container, which has no emulator and no device.
+- [x] The half that does not need AICore is checked here. `DeviceFeaturesJvmTest` pins what a machine with no model must do: `availability()` answers `UNAVAILABLE` instead of throwing, `rank` comes back empty, `download()` leaves the model absent rather than crashing, and `SearchWithMeaning` still finds Itaú from "itau" while "banco" finds nothing invented. That is the promise the whole feature rests on, and it is now a test rather than a claim. **Executed here, inside the 9 above.**
+- [ ] Whether Gemini Nano answers *well* is the one question left, and only a phone with AICore can settle it: `./gradlew connectedDebugAndroidTest` runs `DeviceOnlyFeaturesTest` there. No emulator in this container (no `/dev/kvm`), and no device attached.
 
 **Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
 
@@ -443,7 +445,24 @@ When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whic
 - [ ] Use proper lifecycle observers to prevent memory leaks
 
 ### TD-02: Testing and Quality Assurance
-- [ ] Write unit tests for Task model and repository
+
+**Room migrations are replayed by `./gradlew test`, not only on a phone.** ✅
+`WillDatabaseMigrationJvmTest` builds the version 7 `tasks` table in raw SQL,
+runs the real migrations through to 10 and opens the database with Room.
+Opening is the assertion: Room compares every migrated table against its
+entity and throws when they differ, so SQL that drifts from the entity fails
+in CI rather than on an upgrade. Robolectric gives it real SQLite on the JVM.
+
+The test was checked against a deliberate break: changing the migrated
+`rawTitle` column from `TEXT` to `INTEGER` fails all five of its cases. A
+green migration test that cannot fail is worse than none, so this is worth
+redoing whenever the migrations change shape.
+
+Robolectric downloads its `android-all` jar with its own HTTP client. Where
+that cannot reach the network, `./gradlew test -Probolectric.dependency.dir=DIR`
+points it at a directory holding the jars and turns its offline mode on.
+
+- [x] Write unit tests for Task model and repository
 - [ ] Create integration tests for notification processing
 - [ ] Implement UI tests for core user flows
 - [ ] Add automated accessibility testing

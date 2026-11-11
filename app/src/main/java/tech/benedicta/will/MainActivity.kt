@@ -15,6 +15,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -232,6 +233,31 @@ class MainActivity : ComponentActivity() {
         ActiveTaskOverlayService.hide(this)
         onboardingVm?.refresh()
         launcherVm?.refresh()
+        reviewWithModel()
+    }
+
+    /**
+     * The model's share of the notification work, run here because this is the
+     * only place it can run at all: ML Kit's GenAI APIs answer
+     * `BACKGROUND_USE_BLOCKED` anywhere but the top foreground app, and a
+     * foreground service does not get around it.
+     *
+     * Everything that needs no model already happened when the notification
+     * arrived. This only ever catches up, so a failure leaves the feed
+     * exactly as the model-free path built it.
+     */
+    private fun reviewWithModel() {
+        val application = application as WillApplication
+        lifecycleScope.launch {
+            runCatching {
+                val since = application.modelReviewWatermark.lastReviewed()
+                val watermark = application.modelReviewPass.review(
+                    all = application.taskRepository.getAllTasks().first(),
+                    since = since
+                )
+                application.modelReviewWatermark.markReviewed(watermark)
+            }
+        }
     }
 
     private fun isNotificationListenerEnabled(): Boolean =

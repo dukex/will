@@ -17,6 +17,7 @@ import tech.benedicta.will.infrastructure.AndroidPermissionInspector
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.infrastructure.SharedPrefsDerivedIntentionPreference
 import tech.benedicta.will.infrastructure.SharedPrefsLearnedNoiseRepository
+import tech.benedicta.will.infrastructure.SharedPrefsModelReviewWatermark
 import tech.benedicta.will.infrastructure.SharedPrefsModelTriageLog
 import tech.benedicta.will.infrastructure.SharedPrefsModelTriagePreference
 import tech.benedicta.will.infrastructure.SharedPrefsOnboardingRepository
@@ -39,7 +40,8 @@ import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.notification.GeminiNanoIntentions
 import tech.benedicta.will.notification.GeminiNanoTriage
-import tech.benedicta.will.notification.ModelIntentionClassifier
+import tech.benedicta.will.notification.IntentionKind
+import tech.benedicta.will.notification.ModelReviewPass
 import tech.benedicta.will.notification.ModelTriageLog
 import tech.benedicta.will.notification.SemanticNoiseReader
 import tech.benedicta.will.notification.IntentionExtractor
@@ -103,17 +105,13 @@ class WillApplication : Application() {
     }
 
     /**
-     * The category first, on every device, and the model only for a
-     * notification whose category said nothing. With the switch off this is
-     * exactly `IntentionExtractor` and nothing else.
+     * The notification path's reader: the system's own category and nothing
+     * else. The model cannot be reached from a background service at all, so
+     * it is deliberately absent here and runs in [modelReviewPass] instead,
+     * from the foreground.
      */
     val intentionReader: ReadIntentionWithMeaning by lazy {
-        val model = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            GeminiNanoIntentions(enabled = { derivedIntentionPreference.enabledNow() })
-        } else {
-            SemanticIntentionReader.Unavailable
-        }
-        ReadIntentionWithMeaning(IntentionExtractor(), model)
+        ReadIntentionWithMeaning(IntentionExtractor(), SemanticIntentionReader.Unavailable)
     }
 
     val learnedNoiseRepository: LearnedNoiseRepository by lazy {
@@ -126,25 +124,47 @@ class WillApplication : Application() {
     }
 
     /**
-     * Patterns, then what the user taught Will, then the model. The cheap and
-     * trustworthy answers come first and most notifications never get past
-     * them; the model is asked last, only when the user turned it on, and
-     * every drop it makes is listed in `data & privacy` before it takes
-     * effect.
+     * The patterns, then what the user taught Will. Both are free and need no
+     * model, which is what lets them run as the notification arrives. The
+     * model's share of triage happens in [modelReviewPass].
      */
     val intentionClassifier: IntentionClassifier by lazy {
-        val cheap = LearnedIntentionClassifier(PatternIntentionClassifier(), learnedNoiseRepository)
-        val model = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            GeminiNanoTriage()
-        } else {
-            SemanticNoiseReader.Unavailable
-        }
-        ModelIntentionClassifier(
-            cheap = cheap,
-            model = model,
+        LearnedIntentionClassifier(PatternIntentionClassifier(), learnedNoiseRepository)
+    }
+
+    /**
+     * Everything the model does, run from the foreground because that is the
+     * only place ML Kit's GenAI APIs work: a call from a background service
+     * comes back `BACKGROUND_USE_BLOCKED`.
+     */
+    val modelReviewPass: ModelReviewPass by lazy {
+        val onThisPhone = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        ModelReviewPass(
+            tasks = taskRepository,
+            triage = if (onThisPhone) GeminiNanoTriage() else SemanticNoiseReader.Unavailable,
+            reader = if (onThisPhone) {
+                GeminiNanoIntentions(enabled = { true })
+            } else {
+                SemanticIntentionReader.Unavailable
+            },
             log = modelTriageLog,
-            enabled = { modelTriagePreference.enabledNow() }
+            phrase = { kind, subject ->
+                when (kind) {
+                    IntentionKind.REPLY -> getString(R.string.derived_reply_to, subject)
+                    IntentionKind.CALL_BACK -> getString(R.string.derived_call_back, subject)
+                    IntentionKind.CONFIRM -> getString(R.string.derived_confirm, subject)
+                    IntentionKind.PAY -> getString(R.string.derived_pay, subject)
+                    IntentionKind.ATTEND -> getString(R.string.derived_attend, subject)
+                }
+            },
+            triageEnabled = { modelTriagePreference.enabledNow() },
+            readingEnabled = { derivedIntentionPreference.enabledNow() }
         )
+    }
+
+    /** Where the last review got to, so a pass does not redo the whole feed. */
+    val modelReviewWatermark: SharedPrefsModelReviewWatermark by lazy {
+        SharedPrefsModelReviewWatermark(this)
     }
     val appFilterRepository: AppFilterRepository by lazy {
         SharedPrefsAppFilterRepository(this)

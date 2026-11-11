@@ -59,6 +59,7 @@ import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.ModelDrop
 import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
@@ -429,6 +430,8 @@ private fun WillScreen(
                 .isEnabled().collectAsState(initial = false)
             val derivedIntentionsEnabled by application.derivedIntentionPreference
                 .isEnabled().collectAsState(initial = false)
+            val modelTriageEnabled by application.modelTriagePreference
+                .isEnabled().collectAsState(initial = false)
             var modelAvailability by remember { mutableStateOf(ModelAvailability.UNAVAILABLE) }
             var availabilityRevision by remember { mutableIntStateOf(0) }
             LaunchedEffect(availabilityRevision, semanticSearchEnabled) {
@@ -460,6 +463,10 @@ private fun WillScreen(
                     scope.launch { application.derivedIntentionPreference.setEnabled(enabled) }
                 },
                 modelOnThisPhone = modelAvailability == ModelAvailability.AVAILABLE,
+                modelTriageEnabled = modelTriageEnabled,
+                onModelTriageChange = { enabled ->
+                    scope.launch { application.modelTriagePreference.setEnabled(enabled) }
+                },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
                 accessibilityServiceGranted = accessibilityServiceGranted,
@@ -494,20 +501,34 @@ private fun WillScreen(
         Screen.PrivacySettings -> {
             val application = context.applicationContext as WillApplication
             var silenced by remember { mutableStateOf(emptyList<SilencedNotification>()) }
+            var modelDrops by remember { mutableStateOf(emptyList<ModelDrop>()) }
             var silencedRevision by remember { mutableIntStateOf(0) }
             LaunchedEffect(silencedRevision) {
                 silenced = application.learnedNoiseRepository.silenced()
+                modelDrops = application.modelTriageLog.dropped()
             }
             PrivacySettings(
                 onBack = { currentScreen = Screen.Settings },
                 onDeleteAllTasks = {
                     taskVm.deleteAllTasks()
-                    silencedRevision++
+                    // What the model hid is derived from the same stream, so
+                    // "delete all data" has to take it too.
+                    scope.launch {
+                        application.modelTriageLog.forgetEverything()
+                        silencedRevision++
+                    }
                 },
                 silencedNotifications = silenced,
                 onForgetSilenced = { entry ->
                     scope.launch {
                         application.learnedNoiseRepository.forget(entry.sourcePackage, entry.title)
+                        silencedRevision++
+                    }
+                },
+                modelDrops = modelDrops,
+                onShowAgain = { drop ->
+                    scope.launch {
+                        application.modelTriageLog.showAgain(drop.sourcePackage, drop.title)
                         silencedRevision++
                     }
                 }

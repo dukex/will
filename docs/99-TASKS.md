@@ -410,7 +410,25 @@ Subtasks:
 
 **Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
 
-### US-15: On-device notification triage ⬜ still open for triage; the model itself is no longer blocked
+### US-15: On-device notification triage ✅ done, with the audit surface that makes it allowed
+
+**As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
+
+Shipped: `TriagePrompt` asks Gemini Nano whether a notification is housekeeping, `ModelIntentionClassifier` places it behind the cheap rules, and `ModelTriageLog` makes every drop visible and undoable. 43 unit tests, 10 of them against the store that ships, under Robolectric.
+
+The order is the design:
+
+1. the patterns run first, then what the user taught Will by dismissing things. Both are free and more trustworthy than a guess, and most notifications never get past them;
+2. a shape the user has already rescued once is never judged again;
+3. only then is the model asked, and only when the switch is on.
+
+**The reading is lopsided because the costs are.** Only an unambiguous verdict of noise drops anything. Silence, prose, a hedge, two verdicts at once, a refusal, a timeout, an error and an answer in a shape the parser will not read all keep. The parser requires the answer to *be* the verdict rather than contain it, which a test caught: `{"verdict":"noise"}` matched a containment check, and a model answering in a shape it was not asked for is one to disregard rather than read creatively.
+
+**The audit surface is the precondition, not a nicety.** CLAUDE.md says what Will learns to hide has to be visible and undoable. Every drop is written to the log before it takes effect, `data & privacy` lists it, and "show again" both restores it and stops the model judging that shape again, because an undo that only applied to the past would have the user undoing the same notification every week. "Delete all task history" takes the list and the rescues with it.
+
+**Its own switch and its own prefs file**, off by default. This is the only switch in Will that can keep something from the user, so neither of the other two model switches carries it.
+
+### The routes measured before any of that ⬜ kept for the record
 
 **2026-11 correction.** "Blocked on data" was true of every route measured below, and all of them were *trained* classifiers: ML Kit, MediaPipe, LiteRT and the hand-rolled linear model each need labelled examples. A **prompt** needs none, and `com.google.mlkit:genai-prompt` has shipped since US-25 for semantic app search, so the size, the Play Services dependency, the telemetry transport and the `tools:overrideLibrary` in both manifests are already paid for. The conclusion below ("what would unblock it is data") held only because nobody asked the model in words.
 

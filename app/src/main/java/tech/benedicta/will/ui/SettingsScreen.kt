@@ -59,6 +59,8 @@ fun SettingsScreen(
     derivedIntentionsEnabled: Boolean = false,
     onDerivedIntentionsChange: (Boolean) -> Unit = {},
     modelOnThisPhone: Boolean = false,
+    modelTriageEnabled: Boolean = false,
+    onModelTriageChange: (Boolean) -> Unit = {},
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -329,6 +331,68 @@ fun SettingsScreen(
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = if (derivedIntentionsEnabled) WillAccent else WillTextTertiary
+                        )
+                    }
+                }
+                item {
+                    // The third switch, and the only one that decides whether
+                    // something reaches the user at all. Letting either of the
+                    // other two carry it would be deciding that for them.
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = modelOnThisPhone) {
+                                onModelTriageChange(!modelTriageEnabled)
+                            }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Switch
+                                contentDescription = when {
+                                    !modelOnThisPhone ->
+                                        "hiding housekeeping needs the on-device model, " +
+                                            "which is not on this phone"
+                                    modelTriageEnabled ->
+                                        "hiding housekeeping is on; tap to turn it off"
+                                    else -> "hiding housekeeping is off; tap to turn it on"
+                                }
+                            },
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "hide housekeeping notifications",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = when {
+                                    !modelOnThisPhone ->
+                                        "needs the on-device model, which is not on this phone. " +
+                                            "the built-in list still catches the usual chatter"
+                                    modelTriageEnabled ->
+                                        "on — the model reads what the built-in list missed and " +
+                                            "keeps it off your feed. everything it hides is " +
+                                            "listed in data & privacy, with a way back. when it " +
+                                            "is unsure, it keeps"
+                                    else ->
+                                        "off — the built-in list and what you have thrown away " +
+                                            "already filter your feed. turning this on lets the " +
+                                            "on-device model hide what they missed. this is the " +
+                                            "only switch that can keep something from you"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = when {
+                                !modelOnThisPhone -> "unsupported"
+                                modelTriageEnabled -> "on"
+                                else -> "off"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (modelTriageEnabled) WillAccent else WillTextTertiary
                         )
                     }
                 }

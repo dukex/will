@@ -50,6 +50,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.AppLaunchAction
 import tech.benedicta.will.launcher.AppLaunchGate
 import tech.benedicta.will.launcher.AppMentionResolver
+import tech.benedicta.will.launcher.ModelAvailability
+import tech.benedicta.will.launcher.SemanticSearchStatus
 import tech.benedicta.will.launcher.IntentionActionLauncher
 import tech.benedicta.will.launcher.IntentionActionResolver
 import tech.benedicta.will.launcher.LauncherApp
@@ -423,11 +425,31 @@ private fun WillScreen(
             val application = context.applicationContext as WillApplication
             val semanticSearchEnabled by application.semanticSearchPreference
                 .isEnabled().collectAsState(initial = false)
+            var modelAvailability by remember { mutableStateOf(ModelAvailability.UNAVAILABLE) }
+            var availabilityRevision by remember { mutableIntStateOf(0) }
+            LaunchedEffect(availabilityRevision, semanticSearchEnabled) {
+                modelAvailability = application.semanticSearchModel.availability()
+            }
             SettingsScreen(
                 onBack = { currentScreen = Screen.Home },
                 semanticSearchEnabled = semanticSearchEnabled,
                 onSemanticSearchChange = { enabled ->
-                    scope.launch { application.semanticSearchPreference.setEnabled(enabled) }
+                    scope.launch {
+                        application.semanticSearchPreference.setEnabled(enabled)
+                        availabilityRevision++
+                    }
+                },
+                semanticSearchStatus = SemanticSearchStatus.of(
+                    enabled = semanticSearchEnabled,
+                    availability = modelAvailability
+                ),
+                onDownloadSemanticModel = {
+                    scope.launch {
+                        // Reflect the download starting, then the result.
+                        modelAvailability = ModelAvailability.DOWNLOADING
+                        application.semanticSearchModel.download()
+                        availabilityRevision++
+                    }
                 },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,

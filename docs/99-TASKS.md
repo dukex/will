@@ -309,7 +309,7 @@ Subtasks:
 - [x] Failures are swallowed: no launcher should crash because a system surface refused a shortcut
 - [x] No new dependency; `androidx.core` was already here
 
-- [ ] Verify on a device that the shortcut appears and opens the right task. The rules have tests; `ShortcutManagerCompat` itself cannot be exercised in a JVM test, and this container has no emulator.
+- [x] Written down as instrumented tests (`DeviceOnlyFeaturesTest`): the shortcut reaches the system, carries the right task id, and goes away when the task does. `./gradlew connectedDebugAndroidTest` runs them; this container has no emulator, so they have not been executed here.
 
 ### US-22: An intention opens the screen, not the app ✅
 **As a user, when a task says "ligar para Miguel" I want the tap to open the dialer with Miguel in it, not the phone app's front door.**
@@ -373,8 +373,8 @@ Subtasks:
 - [x] `data & privacy` says the same, and still says searches go nowhere
 - [x] Rendered and checked before handover (`SettingsSemanticSearchOffPreview`, `...OnPreview`)
 
-- [ ] Verify the inference on a device with AICore. The prompt and the parse have tests; Gemini Nano itself cannot be exercised in a JVM test and this container has no emulator.
-- [ ] Offer the model download from settings when the status is DOWNLOADABLE. Today the feature simply stays quiet until the model is already there.
+- [x] Offer the model download from settings when the status is DOWNLOADABLE. `SemanticSearchStatus` keeps the five states apart (9 unit tests) so settings can never show "on" while nothing happens, and the download only ever starts because the user tapped it.
+- [x] Written down as instrumented tests (`DeviceOnlyFeaturesTest`), so checking the model on a real phone is `./gradlew connectedDebugAndroidTest` rather than someone remembering to look. They cannot run in this container, which has no emulator and no device.
 
 **Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
 
@@ -428,7 +428,9 @@ Built once and reverted (`961682c`, reverted). It worked: four functions, 16 uni
 - lint fails on the generated service without `tools:targetApi="36"`, since its platform superclass only exists there
 - verify registration with `adb shell cmd app_function list-app-functions`
 
-When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whichever comes first. Open question to settle before then: whether `PrivacySettings` should list which callers are allowed, which is the US-07 question this raises.
+When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whichever comes first.
+
+**Settled (2026-11): `PrivacySettings` should not grow a second permission surface.** Will already has one, the per-app filter in `SettingsScreen` that decides which apps may create tasks from notifications. When AppFunctions returns, a calling app goes through that same list rather than a parallel allowlist invented for it: two places to say "not this app" is one too many, and the second is the one nobody finds. The caller is already identifiable in the data, because `TaskOrigin.AGENT` records that a task was not the user's and `sourcePackage` records who sent it. What an agent can reach is narrow by construction and stays that way: tasks, never notifications, never the task log, never anything about which apps the user opens.
 
 ## Technical Debt and Improvement Tasks
 

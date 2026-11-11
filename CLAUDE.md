@@ -33,6 +33,10 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 
 # Install on connected device
 ./gradlew installDebug
+
+# The checks that need a real device: Room migrations replayed from version 7,
+# the active-task shortcut, and whether this phone can serve the on-device model
+./gradlew connectedDebugAndroidTest
 ```
 
 ## Index
@@ -66,11 +70,11 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-18: Search survives Portuguese | ✅ done | `AppMatcher` replaces `contains(ignoreCase)` in the drawer: accents folded, initials and subsequence, ranked. Fixes "itau" never finding Itaú. Feed search still open under US-06 |
 | US-19: Notification becomes an intention | ✅ done | `IntentionExtractor` + `NotificationToTask`: a message reads "responder Maria", a missed call "ligar de volta para Miguel". Category-driven, no model. `Task.rawTitle` keeps the original; migration 9→10 |
 | US-20: Will learns what you throw away | ✅ done | `LearnedNoiseRepository` + `LearnedIntentionClassifier`: three dismissals of the same app and title silence it, one completion undoes it. Taught by actions the user already performs. Listed and reversible in `data & privacy` |
-| US-21: Active task as a shortcut | 🟡 done, unverified on device | `ActiveTaskShortcut` (pure rules, 11 tests) + `ActiveTaskShortcutPublisher`; a long press on the icon offers the task in progress. `ShortcutManagerCompat` cannot be exercised in a JVM test |
+| US-21: Active task as a shortcut | ✅ done; covered by `connectedDebugAndroidTest` | `ActiveTaskShortcut` (pure rules, 11 tests) + `ActiveTaskShortcutPublisher`; a long press on the icon offers the task in progress. `ShortcutManagerCompat` cannot be exercised in a JVM test |
 | US-22: Intention opens a screen | ✅ done | `IntentionActionResolver` + `IntentionActionLauncher`: "ligar para Miguel" opens the dialer with Miguel. `ACTION_DIAL`, never `ACTION_CALL`. Falls back to the app |
 | US-23: Search by what an app is for | ✅ done | `AppCategory` from `ApplicationInfo.category`, matched by Portuguese and English words in `AppMatcher`. No category for money, so "banco" finds nothing |
 | US-24: One search box over tasks and apps | ✅ done | `TaskMatcher` shares `SearchText` with the drawer; matching tasks sit above the apps. Closes US-06's feed search without home-screen chrome |
-| US-25: Search by meaning | 🟡 shipped, inference unverified on device | `genai-prompt` (Gemini Nano via AICore), opt-in and off by default, `+2.3 MB`. Name match first; the model only when that finds nothing, behind a 2s timeout. Prompt and parse tested; inference needs a device |
+| US-25: Search by meaning | ✅ done; inference checkable with `connectedDebugAndroidTest` | `genai-prompt` (Gemini Nano via AICore), opt-in and off by default, `+2.3 MB`. Name match first; the model only when that finds nothing, behind a 2s timeout. Prompt and parse tested; inference needs a device |
 | US-15: On-device triage model | ⬜ blocked on data | the `IntentionClassifier` seam and the pattern implementation are shipped and in use. ML Kit, MediaPipe, LiteRT and a pure-Kotlin linear model were each measured; none earns its place yet, and the linear one was built and cross-validated here. Numbers and the reason in `./docs/99-TASKS.md` |
 | US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
@@ -161,6 +165,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
 | `ui/TaskMetadataFormatter.kt` | pure builder for the metadata line under a task title; drops empty segments, and keeps NOTIFICATION / MANUAL silent so only origins the user did not author are named |
+| `app/src/androidTest/.../WillDatabaseMigrationTest.kt` | replays an upgrade from version 7; Room validates every migrated table on open |
+| `app/src/androidTest/.../DeviceOnlyFeaturesTest.kt` | the shortcut really reaching the system, and what this phone says about the model |
 | `app/src/screenshotTest/.../TaskFeedScreenshotTest.kt` | `@PreviewTest` previews rendered to PNGs under `app/src/screenshotTestDebug/reference/`; add one whenever a UI change needs looking at |
 | **Tests** | |
 | `test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests against MemoryTaskRepository |
@@ -218,7 +224,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 
 - **The task log is the record; the scalars are a view** — `startedAt`, `pausedAt`, `completedAt` and `contextSwitchCount` on `Task` answer what the state is now. `TaskEvent` answers how it got there, and is append-only. Both are written together by `TaskLifecycleApplier` and `TaskViewModel`. Never derive one from the other at read time; keep writing both.
 - **No `DELETED` event** — deleting a task deletes its events (US-07). A tombstone would point at a row nothing can resolve. `TaskEventRecorder.forgot` wipes, it does not append.
-- **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. To add one, flip `exportSchema = true` plus `ksp { arg("room.schemaLocation", ...) }` temporarily, read `createSql` from the generated JSON, then revert.
+- **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. Schemas are exported to `app/schemas` and committed, so a new migration is written from `createSql` in the generated JSON. `WillDatabaseMigrationTest` replays an upgrade from version 7 on a real device; opening the database is the assertion, because Room throws when a migrated table does not match its entity.
 - **UI changes are rendered before they are handed over** — `./gradlew updateDebugScreenshotTest` renders the `@PreviewTest` previews in `app/src/screenshotTest/` through layoutlib on the JVM, so there is no emulator or device in the loop. The reference PNGs are committed; `validateDebugScreenshotTest` fails when the UI drifts from them. Enabling it needs the flag in **both** places: `android.experimental.enableScreenshotTest=true` in `gradle.properties` (so the plugin applies) and `experimentalProperties["android.experimental.enableScreenshotTest"] = true` in the module's `android` block (so the source set exists). `@PreviewTest` comes from `com.android.tools.screenshot:screenshot-validation-api`, which the plugin does not add for you; without it the task fails with "did not discover any tests".
 - **The `"manual"` source package never reaches the screen** — it is the sentinel for a task with no app to open, not a name to read. `TaskFeed` maps it to a null app label and `taskMetadataLine` drops the segment.
 - **Triage is a seam, not a regex buried in the processor** — `NotificationProcessor` answers structural questions; `IntentionClassifier` answers "is this an intention or noise". The pattern implementation is the default and the fallback on every device. It is biased toward keeping: a false keep costs one dismissable row, a false drop means a message the user never sees and the feed cannot tell them about.

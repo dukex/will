@@ -34,10 +34,12 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 # Install on connected device
 ./gradlew installDebug
 
-# Replays the Room migrations and the Android halves of the shortcut and the
-# model on a real phone. The same checks run on the JVM under Robolectric as
-# part of `./gradlew test`, so this confirms them against the SQLite and the
-# AICore that actually ship rather than being the only place they are checked
+# The only question no JVM can settle: whether Gemini Nano answers *well*.
+# `ModelAnswersWellTest` asks the real model the obvious cases and checks the
+# obvious answers; it skips rather than fails on a phone without AICore. Also
+# replays the Room migrations and the Android halves of the shortcut and the
+# model against the SQLite and the AICore that actually ship, both of which
+# `./gradlew test` already covers under Robolectric
 ./gradlew connectedDebugAndroidTest
 
 # Where Robolectric cannot download its own `android-all` jar (an offline or
@@ -188,7 +190,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `app/src/test/.../launcher/DeviceFeaturesJvmTest.kt` | the shortcut read back out of the system, and the model's absence reported rather than thrown |
 | `app/src/test/.../infrastructure/SharedPrefsLearnedNoiseRepositoryTest.kt` | the learned-noise store that actually ships, under Robolectric: a lesson surviving a restart, a title with a `|` in it, and the 200-entry cap keeping what was dismissed most |
 | `app/src/androidTest/.../WillDatabaseMigrationTest.kt` | the same replay against the device's own SQLite, which is the one that ships |
-| `app/src/androidTest/.../DeviceOnlyFeaturesTest.kt` | what a phone *with* AICore says about the model; the only question a JVM cannot answer |
+| `app/src/androidTest/.../DeviceOnlyFeaturesTest.kt` | what a phone *with* AICore says about the model's presence |
+| `app/src/androidTest/.../notification/ModelAnswersWellTest.kt` | whether Nano answers *well*: obvious housekeeping judged noise, a message from a person never judged noise, an invitation read as something to confirm. The floor, not the hard cases; if these fail the prompts need work before either switch is worth offering |
 | `app/src/screenshotTest/.../TaskFeedScreenshotTest.kt` | `@PreviewTest` previews rendered to PNGs under `app/src/screenshotTestDebug/reference/`; add one whenever a UI change needs looking at |
 | **Tests** | |
 | `test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests against MemoryTaskRepository |

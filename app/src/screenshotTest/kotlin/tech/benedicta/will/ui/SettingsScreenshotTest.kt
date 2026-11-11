@@ -162,3 +162,28 @@ private fun SettingsDerivedIntentionsOffPreview() {
         )
     }
 }
+
+/** All three model switches, which are three different decisions. */
+@PreviewTest
+@Preview(name = "settings all three model switches", widthDp = 412, heightDp = 1000, showBackground = true)
+@Composable
+private fun SettingsModelTriageOnPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.ON,
+            derivedIntentionsEnabled = true,
+            modelOnThisPhone = true,
+            modelTriageEnabled = true,
+            viewModel = viewModel
+        )
+    }
+}

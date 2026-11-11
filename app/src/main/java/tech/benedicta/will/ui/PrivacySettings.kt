@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import tech.benedicta.will.ui.theme.Spacing
+import tech.benedicta.will.notification.ModelDrop
 import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.ui.theme.WillAccent
 import tech.benedicta.will.ui.theme.WillBorder
@@ -51,7 +52,9 @@ fun PrivacySettings(
     onBack: () -> Unit,
     onDeleteAllTasks: () -> Unit,
     silencedNotifications: List<SilencedNotification> = emptyList(),
-    onForgetSilenced: (SilencedNotification) -> Unit = {}
+    onForgetSilenced: (SilencedNotification) -> Unit = {},
+    modelDrops: List<ModelDrop> = emptyList(),
+    onShowAgain: (ModelDrop) -> Unit = {}
 ) {
     val safeDrawing = WindowInsets.safeDrawing.asPaddingValues()
 
@@ -88,7 +91,7 @@ fun PrivacySettings(
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item {
                 Text(
-                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. the two on-device model switches in settings are separate: search by meaning sends the model what you typed and your app names, and reading notifications sends it what a notification said. both run google's model on this device and ship google's libraries with the app; nothing is sent anywhere, and reading a notification can never hide one.",
+                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. the three on-device model switches in settings are separate on purpose: search by meaning sends the model what you typed and your app names, reading notifications sends it what a notification said and can only change a title, and hiding housekeeping is the only one that can keep something from you. everything that last one hides is listed below with a way back. all three run google's model on this device and ship google's libraries with the app; nothing is sent anywhere.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = WillTextSecondary,
                     modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
@@ -124,8 +127,70 @@ fun PrivacySettings(
             }
 
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
+            item { SectionHeader("notifications the model hid") }
+            item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
+            if (modelDrops.isEmpty()) {
+                item {
+                    Text(
+                        text = "none. with the model switched on in settings, anything it judges housekeeping is listed here first, so nothing is ever hidden without you being able to find it and bring it back.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = WillTextSecondary,
+                        modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                    )
+                }
+            } else {
+                items(modelDrops) { drop ->
+                    ModelDropRow(drop = drop, onShowAgain = { onShowAgain(drop) })
+                    HorizontalDivider(color = WillBorder, thickness = 1.dp)
+                }
+            }
+
+            item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item { DeleteHistoryRow(onDeleteAllTasks) }
         }
+    }
+}
+
+/**
+ * One notification the model hid, and the way back.
+ *
+ * Bringing it back does two things: this one reappears, and the model is
+ * never allowed to judge that shape again. An undo that only applied to the
+ * past would have the user undoing the same notification every week.
+ */
+@Composable
+private fun ModelDropRow(drop: ModelDrop, onShowAgain: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = Spacing.touchTarget)
+            .padding(horizontal = Spacing.xl, vertical = Spacing.md),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = drop.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Text(
+                text = drop.sourcePackage,
+                style = MaterialTheme.typography.labelSmall,
+                color = WillTextSecondary,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+        Text(
+            text = "show again",
+            style = MaterialTheme.typography.labelSmall,
+            color = WillAccent,
+            modifier = Modifier
+                .clickable { onShowAgain() }
+                .padding(Spacing.sm)
+                .semantics {
+                    contentDescription = "show ${drop.title} again, and stop the model hiding it"
+                }
+        )
     }
 }
 

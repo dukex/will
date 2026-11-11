@@ -17,6 +17,8 @@ import tech.benedicta.will.infrastructure.AndroidPermissionInspector
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
 import tech.benedicta.will.infrastructure.SharedPrefsDerivedIntentionPreference
 import tech.benedicta.will.infrastructure.SharedPrefsLearnedNoiseRepository
+import tech.benedicta.will.infrastructure.SharedPrefsModelTriageLog
+import tech.benedicta.will.infrastructure.SharedPrefsModelTriagePreference
 import tech.benedicta.will.infrastructure.SharedPrefsOnboardingRepository
 import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskEventRepository
@@ -36,6 +38,10 @@ import tech.benedicta.will.lifecycle.TaskLifecycleApplier
 import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.notification.GeminiNanoIntentions
+import tech.benedicta.will.notification.GeminiNanoTriage
+import tech.benedicta.will.notification.ModelIntentionClassifier
+import tech.benedicta.will.notification.ModelTriageLog
+import tech.benedicta.will.notification.SemanticNoiseReader
 import tech.benedicta.will.notification.IntentionExtractor
 import tech.benedicta.will.notification.ReadIntentionWithMeaning
 import tech.benedicta.will.notification.SemanticIntentionReader
@@ -113,8 +119,32 @@ class WillApplication : Application() {
     val learnedNoiseRepository: LearnedNoiseRepository by lazy {
         SharedPrefsLearnedNoiseRepository(this)
     }
+    val modelTriageLog: ModelTriageLog by lazy { SharedPrefsModelTriageLog(this) }
+
+    val modelTriagePreference: SharedPrefsModelTriagePreference by lazy {
+        SharedPrefsModelTriagePreference(this)
+    }
+
+    /**
+     * Patterns, then what the user taught Will, then the model. The cheap and
+     * trustworthy answers come first and most notifications never get past
+     * them; the model is asked last, only when the user turned it on, and
+     * every drop it makes is listed in `data & privacy` before it takes
+     * effect.
+     */
     val intentionClassifier: IntentionClassifier by lazy {
-        LearnedIntentionClassifier(PatternIntentionClassifier(), learnedNoiseRepository)
+        val cheap = LearnedIntentionClassifier(PatternIntentionClassifier(), learnedNoiseRepository)
+        val model = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            GeminiNanoTriage()
+        } else {
+            SemanticNoiseReader.Unavailable
+        }
+        ModelIntentionClassifier(
+            cheap = cheap,
+            model = model,
+            log = modelTriageLog,
+            enabled = { modelTriagePreference.enabledNow() }
+        )
     }
     val appFilterRepository: AppFilterRepository by lazy {
         SharedPrefsAppFilterRepository(this)

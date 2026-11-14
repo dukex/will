@@ -12,6 +12,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import tech.benedicta.will.launcher.GeminiNanoAppSearch
 import tech.benedicta.will.launcher.ModelAvailability
+import tech.benedicta.will.task.GeminiNanoTaskSearch
+import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskSearchPrompt
 
 /**
  * Whether Gemini Nano answers *well*, which is the one question no JVM can
@@ -183,6 +186,47 @@ class ModelAnswersWellTest {
                 "model said: ${rawReading("Banco", text)}",
             null,
             read
+        )
+    }
+
+    // --- searching your own tasks by meaning ---
+
+    @Test
+    fun a_word_for_what_a_task_is_about_finds_it() {
+        requireModel()
+        val feed = listOf(
+            Task(id = 1, title = "pagar o boleto do Itaú", text = "", sourcePackage = "com.itau", createdAt = 0L),
+            Task(id = 2, title = "responder Maria", text = "", sourcePackage = "com.whatsapp", createdAt = 0L),
+            Task(id = 3, title = "comprar pão", text = "", sourcePackage = "manual", createdAt = 0L)
+        )
+
+        val found = runBlocking {
+            GeminiNanoTaskSearch(enabled = { true }).rank("banco", feed)
+        }
+
+        assertEquals(
+            "\"banco\" is the word no amount of letter matching reaches. " +
+                "model said: ${runBlocking { rawAnswer(TaskSearchPrompt.build("banco", feed)!!) }}",
+            listOf(1L),
+            found.map { it.id }
+        )
+    }
+
+    @Test
+    fun a_word_that_fits_nothing_returns_nothing_rather_than_a_guess() {
+        requireModel()
+        val feed = listOf(
+            Task(id = 1, title = "comprar pão", text = "", sourcePackage = "manual", createdAt = 0L)
+        )
+
+        val found = runBlocking {
+            GeminiNanoTaskSearch(enabled = { true }).rank("passaporte", feed)
+        }
+
+        assertTrue(
+            "a search with no answer must come back empty. " +
+                "model said: ${runBlocking { rawAnswer(TaskSearchPrompt.build("passaporte", feed)!!) }}",
+            found.isEmpty()
         )
     }
 }

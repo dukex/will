@@ -244,7 +244,9 @@ fun SettingsScreen(
                                 text = when (semanticSearchStatus) {
                                     SemanticSearchStatus.ON ->
                                         "on — finds apps by what they are for, using Google's " +
-                                            "on-device model. only when the name search finds nothing"
+                                            "on-device model, only when the name search finds " +
+                                            "nothing. with the switch below also on, it searches " +
+                                            "your open tasks the same way"
                                     SemanticSearchStatus.NEEDS_DOWNLOAD ->
                                         "the model is not on this phone yet. tap to download it, " +
                                             "which uses your connection once"

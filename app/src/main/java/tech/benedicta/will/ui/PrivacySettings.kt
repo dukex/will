@@ -91,7 +91,7 @@ fun PrivacySettings(
             item { HorizontalDivider(color = WillBorder, thickness = 1.dp) }
             item {
                 Text(
-                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. the three on-device model switches in settings are separate on purpose: search by meaning sends the model what you typed and your app names, reading notifications sends it what a notification said and can only change a title, and hiding housekeeping is the only one that can keep something from you. everything that last one hides is listed below with a way back. all three run google's model on this device and ship google's libraries with the app; nothing is sent anywhere.",
+                    text = "on this device only. no accounts, no cloud sync, no analytics, no third-party data sharing. the three on-device model switches in settings are separate on purpose: search by meaning sends the model what you typed and your app names, reading notifications sends it what a notification said and can only change a title (with both on, a search that finds nothing by name also offers it your open tasks), and hiding housekeeping is the only one that can keep something from you. everything that last one hides is listed below with a way back. all three run google's model on this device and ship google's libraries with the app; nothing is sent anywhere.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = WillTextSecondary,
                     modifier = Modifier.padding(horizontal = Spacing.xl, vertical = Spacing.md)

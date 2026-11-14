@@ -277,7 +277,7 @@ Subtasks:
 
 - [x] The same matcher over the task feed — shipped under US-24, which put tasks and apps in one box rather than adding a field to the home screen.
 - [x] Searching what the notification said, not only the title it was given. `TaskMatcher` reads `title`, `rawTitle` and `text`, ranked so any title hit beats any message hit. The message is matched literally: `hasSubsequence` over a paragraph matches nearly any short query, which would make every task match everything (6 tests, one of them that exact trap).
-- [ ] This is matching, not meaning. "money" will not find the bank app. That needs embeddings, which is the blocked US-15 problem.
+- [x] Meaning, not only matching, on both halves of the box. For apps that shipped under US-25; `TaskSearchWithMeaning` now does the same for tasks (20 unit tests), so "banco" reaches the task about a boleto. No embeddings needed: the same prompt route that unblocked US-15 answers this, numbering the tasks so the reply can only name one the user already has. It needs both model switches on, because a task title usually carries what a notification said.
 
 ### US-19: A notification becomes what to do about it ✅
 **As a user, I want a message from Maria to read "responder Maria" in my feed, instead of just "Maria".**
@@ -419,7 +419,7 @@ Subtasks:
 
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 
-Shipped: `TriagePrompt` asks Gemini Nano whether a notification is housekeeping, `ModelIntentionClassifier` places it behind the cheap rules, and `ModelTriageLog` makes every drop visible and undoable. 43 unit tests, 10 of them against the store that ships, under Robolectric.
+Shipped: `TriagePrompt` asks Gemini Nano whether a notification is housekeeping, `ModelReviewPass` places it behind the cheap rules and runs it from the foreground, and `ModelTriageLog` makes every drop visible and undoable. 10 of the tests run against the store that ships, under Robolectric.
 
 The order is the design:
 

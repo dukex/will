@@ -11,7 +11,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import tech.benedicta.will.infrastructure.memory.MemoryModelTriageLog
 import tech.benedicta.will.infrastructure.memory.MemoryTaskRepository
+import tech.benedicta.will.task.GeminiNanoTaskSearch
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskMatcher
+import tech.benedicta.will.task.TaskSearchWithMeaning
 
 /**
  * The real `GeminiNanoTriage` and `GeminiNanoIntentions`, against the real ML
@@ -130,5 +133,28 @@ class GeminiDegradationJvmTest {
         assertEquals("with both switches on and no model, nothing may be hidden", 1, remaining.size)
         assertEquals("Experimente o premium", remaining.single().title)
         assertTrue(log.dropped().isEmpty())
+    }
+
+    // --- task search: the shipped class, with no model behind it ---
+
+    @Test
+    fun `with no AICore the real task search finds nothing and breaks nothing`() = runBlocking {
+        val feed = listOf(
+            Task(id = 1, title = "pagar o boleto do Itaú", text = "", sourcePackage = "com.itau", createdAt = 0L)
+        )
+        val search = TaskSearchWithMeaning(
+            TaskMatcher(),
+            GeminiNanoTaskSearch(enabled = { true })
+        )
+
+        assertEquals(
+            "the word match still works, on every device",
+            listOf(1L),
+            search.filter(feed, "boleto").map { it.id }
+        )
+        assertTrue(
+            "no model, so no meaning, and nothing invented",
+            search.filter(feed, "banco").isEmpty()
+        )
     }
 }

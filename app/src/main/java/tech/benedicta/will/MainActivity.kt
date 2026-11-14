@@ -38,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -410,8 +411,19 @@ private fun WillScreen(
     var showIntentInputSheet by remember { mutableStateOf(false) }
     val appMentionResolver = remember { AppMentionResolver(context.packageName) }
     val taskMatcher = remember { TaskMatcher() }
-    val matchingTasks = remember(tasks, appSearchQuery) {
+    // The word match is instant and shows at once. Meaning only fills in
+    // afterwards, and only when the words found nothing, so turning the model
+    // on never puts a wait in front of a search that already worked.
+    val byWords = remember(tasks, appSearchQuery) {
         taskMatcher.filter(tasks, appSearchQuery)
+    }
+    val matchingTasks by produceState(byWords, byWords, tasks, appSearchQuery) {
+        value = byWords
+        if (byWords.isEmpty() && appSearchQuery.isNotBlank()) {
+            value = (context.applicationContext as WillApplication)
+                .taskSearch
+                .filter(tasks, appSearchQuery)
+        }
     }
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->

@@ -58,7 +58,11 @@ import tech.benedicta.will.task.Task
 import tech.benedicta.will.task.TaskEventRecorder
 import tech.benedicta.will.task.TaskEventRepository
 import tech.benedicta.will.task.TaskOrigin
+import tech.benedicta.will.task.GeminiNanoTaskSearch
+import tech.benedicta.will.task.SemanticTaskSearch
+import tech.benedicta.will.task.TaskMatcher
 import tech.benedicta.will.task.TaskRepository
+import tech.benedicta.will.task.TaskSearchWithMeaning
 import tech.benedicta.will.task.isActive
 
 data class OverlayEvent(val action: String, val taskId: Long)
@@ -112,6 +116,27 @@ class WillApplication : Application() {
      */
     val intentionReader: ReadIntentionWithMeaning by lazy {
         ReadIntentionWithMeaning(IntentionExtractor(), SemanticIntentionReader.Unavailable)
+    }
+
+    /**
+     * Searching the user's own tasks by meaning. It needs **both** model
+     * switches on, because it combines what each one covers: the search
+     * switch is consent for the model to answer searches, and the reading
+     * switch is consent for it to see what a notification said. A task title
+     * is usually the second, so neither switch alone is enough.
+     */
+    val taskSearch: TaskSearchWithMeaning by lazy {
+        val model = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            GeminiNanoTaskSearch(
+                enabled = {
+                    semanticSearchPreference.enabledNow() &&
+                        derivedIntentionPreference.enabledNow()
+                }
+            )
+        } else {
+            SemanticTaskSearch.Unavailable
+        }
+        TaskSearchWithMeaning(TaskMatcher(), model)
     }
 
     val learnedNoiseRepository: LearnedNoiseRepository by lazy {

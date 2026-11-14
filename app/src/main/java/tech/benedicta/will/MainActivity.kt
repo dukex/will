@@ -15,6 +15,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -32,8 +34,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -47,15 +52,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.AppLaunchAction
 import tech.benedicta.will.launcher.AppLaunchGate
+import tech.benedicta.will.launcher.AppMentionResolver
+import tech.benedicta.will.launcher.ModelAvailability
+import tech.benedicta.will.launcher.SemanticSearchStatus
+import tech.benedicta.will.launcher.IntentionActionLauncher
+import tech.benedicta.will.launcher.IntentionActionResolver
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.ModelDrop
+import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
+import tech.benedicta.will.task.AttentionRange
 import tech.benedicta.will.task.FocusDashboardViewModel
+import tech.benedicta.will.task.startOfDay
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskMatcher
 import tech.benedicta.will.task.TaskOrigin
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.TaskStatus
@@ -152,11 +167,16 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val launcherVm: LauncherViewModel = viewModel(
-                    factory = LauncherViewModel.factory(appRepository)
+                    factory = LauncherViewModel.factory(appRepository, app.appSearch)
                 )
                 this@MainActivity.launcherVm = launcherVm
                 taskVm = viewModel(
-                    factory = TaskViewModel.Factory(taskRepository, app.taskEventRecorder)
+                    factory = TaskViewModel.Factory(
+                        taskRepository,
+                        app.taskEventRecorder,
+                        app.taskEventRepository,
+                        app.learnedNoiseRepository
+                    )
                 )
 
                 val appFilterVm: AppFilterViewModel = viewModel(
@@ -171,16 +191,20 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val filteredApps by launcherVm.filteredApps.collectAsState()
+                val allApps by launcherVm.apps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
+                val suggestedFinished by taskVm.completionSuggestions.collectAsState()
                 val pinnedApps by pinnedAppsVm.pinnedApps.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
                 WillScreen(
                     apps = filteredApps,
+                    allApps = allApps,
                     appSearchQuery = appSearchQuery,
                     onAppSearchQueryChange = launcherVm::setQuery,
                     tasks = tasks,
+                    suggestedFinished = suggestedFinished,
                     taskVm = taskVm,
                     appFilterVm = appFilterVm,
                     pinnedApps = pinnedApps,
@@ -211,6 +235,34 @@ class MainActivity : ComponentActivity() {
         ActiveTaskOverlayService.hide(this)
         onboardingVm?.refresh()
         launcherVm?.refresh()
+        reviewWithModel()
+    }
+
+    /**
+     * The model's share of the notification work, run here because this is the
+     * only place it can run at all: ML Kit's GenAI APIs answer
+     * `BACKGROUND_USE_BLOCKED` anywhere but the top foreground app, and a
+     * foreground service does not get around it.
+     *
+     * Everything that needs no model already happened when the notification
+     * arrived. This only ever catches up, so a failure leaves the feed
+     * exactly as the model-free path built it.
+     */
+    private fun reviewWithModel() {
+        val application = application as WillApplication
+        // Default, not the lifecycle scope's main dispatcher: a pass can hold
+        // several five-second inference timeouts end to end, and the home
+        // screen must stay answerable throughout.
+        lifecycleScope.launch(Dispatchers.Default) {
+            runCatching {
+                val since = application.modelReviewWatermark.lastReviewed()
+                val watermark = application.modelReviewPass.review(
+                    all = application.taskRepository.getAllTasks().first(),
+                    since = since
+                )
+                application.modelReviewWatermark.markReviewed(watermark)
+            }
+        }
     }
 
     private fun isNotificationListenerEnabled(): Boolean =
@@ -246,6 +298,12 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun launchTask(context: android.content.Context, task: Task) {
+    // The intention's own verb names a screen more precisely than the app
+    // does: "ligar para Miguel" wants the dialer with Miguel in it, not the
+    // phone app's front door. Falls through to the app when nothing matches.
+    IntentionActionResolver().resolve(task.title)?.let { resolved ->
+        if (IntentionActionLauncher(context).launch(resolved)) return
+    }
     if (task.shortcutId != null && launchShortcut(context, task.sourcePackage, task.shortcutId)) return
     launchAppByPackage(context, task.sourcePackage)
 }
@@ -277,7 +335,9 @@ private fun AppDrawerOverlay(
     onQueryChange: (String) -> Unit,
     onLaunchApp: (LauncherApp) -> Unit,
     onDismiss: () -> Unit,
-    onLongPressApp: (LauncherApp) -> Unit = {}
+    onLongPressApp: (LauncherApp) -> Unit = {},
+    matchingTasks: List<Task> = emptyList(),
+    onTapTask: (Task) -> Unit = {}
 ) {
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     val nestedScrollConnection = remember {
@@ -314,6 +374,8 @@ private fun AppDrawerOverlay(
             onLaunchApp = onLaunchApp,
             onDismiss = onDismiss,
             onLongPressApp = onLongPressApp,
+            matchingTasks = matchingTasks,
+            onTapTask = onTapTask,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -325,9 +387,11 @@ private fun AppDrawerOverlay(
 @Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
+    allApps: List<LauncherApp>,
     appSearchQuery: String,
     onAppSearchQueryChange: (String) -> Unit,
     tasks: List<Task>,
+    suggestedFinished: Set<Long>,
     taskVm: TaskViewModel,
     appFilterVm: AppFilterViewModel,
     pinnedApps: List<LauncherApp>,
@@ -345,6 +409,22 @@ private fun WillScreen(
     var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
+    val appMentionResolver = remember { AppMentionResolver(context.packageName) }
+    val taskMatcher = remember { TaskMatcher() }
+    // The word match is instant and shows at once. Meaning only fills in
+    // afterwards, and only when the words found nothing, so turning the model
+    // on never puts a wait in front of a search that already worked.
+    val byWords = remember(tasks, appSearchQuery) {
+        taskMatcher.filter(tasks, appSearchQuery)
+    }
+    val matchingTasks by produceState(byWords, byWords, tasks, appSearchQuery) {
+        value = byWords
+        if (byWords.isEmpty() && appSearchQuery.isNotBlank()) {
+            value = (context.applicationContext as WillApplication)
+                .taskSearch
+                .filter(tasks, appSearchQuery)
+        }
+    }
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
         scope.launch {
@@ -387,8 +467,48 @@ private fun WillScreen(
 
     when (currentScreen) {
         Screen.Settings -> {
+            val application = context.applicationContext as WillApplication
+            val semanticSearchEnabled by application.semanticSearchPreference
+                .isEnabled().collectAsState(initial = false)
+            val derivedIntentionsEnabled by application.derivedIntentionPreference
+                .isEnabled().collectAsState(initial = false)
+            val modelTriageEnabled by application.modelTriagePreference
+                .isEnabled().collectAsState(initial = false)
+            var modelAvailability by remember { mutableStateOf(ModelAvailability.UNAVAILABLE) }
+            var availabilityRevision by remember { mutableIntStateOf(0) }
+            LaunchedEffect(availabilityRevision, semanticSearchEnabled) {
+                modelAvailability = application.semanticSearchModel.availability()
+            }
             SettingsScreen(
                 onBack = { currentScreen = Screen.Home },
+                semanticSearchEnabled = semanticSearchEnabled,
+                onSemanticSearchChange = { enabled ->
+                    scope.launch {
+                        application.semanticSearchPreference.setEnabled(enabled)
+                        availabilityRevision++
+                    }
+                },
+                semanticSearchStatus = SemanticSearchStatus.of(
+                    enabled = semanticSearchEnabled,
+                    availability = modelAvailability
+                ),
+                onDownloadSemanticModel = {
+                    scope.launch {
+                        // Reflect the download starting, then the result.
+                        modelAvailability = ModelAvailability.DOWNLOADING
+                        application.semanticSearchModel.download()
+                        availabilityRevision++
+                    }
+                },
+                derivedIntentionsEnabled = derivedIntentionsEnabled,
+                onDerivedIntentionsChange = { enabled ->
+                    scope.launch { application.derivedIntentionPreference.setEnabled(enabled) }
+                },
+                modelOnThisPhone = modelAvailability == ModelAvailability.AVAILABLE,
+                modelTriageEnabled = modelTriageEnabled,
+                onModelTriageChange = { enabled ->
+                    scope.launch { application.modelTriagePreference.setEnabled(enabled) }
+                },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
                 accessibilityServiceGranted = accessibilityServiceGranted,
@@ -399,16 +519,61 @@ private fun WillScreen(
         }
         Screen.FocusDashboard -> {
             val allTasks by taskVm.tasks.collectAsState()
+            val application = context.applicationContext as WillApplication
+            var range by remember { mutableStateOf(AttentionRange.WEEK) }
+            // One day further back than the range: a task started just before
+            // the window is what opens the first stretch inside it, and
+            // AttentionHistory clips whatever falls outside.
+            val since = remember(range) {
+                startOfDay(System.currentTimeMillis()) - range.days * MILLIS_PER_DAY
+            }
+            val events by application.taskEventRepository
+                .eventsSince(since)
+                .collectAsState(initial = emptyList())
             FocusDashboard(
-                viewModel = remember(allTasks) { FocusDashboardViewModel(allTasks) },
-                onBack = { currentScreen = Screen.Home }
+                viewModel = remember(allTasks, events, range) {
+                    FocusDashboardViewModel(allTasks, events, range)
+                },
+                onBack = { currentScreen = Screen.Home },
+                range = range,
+                onRangeChange = { range = it }
             )
             return
         }
         Screen.PrivacySettings -> {
+            val application = context.applicationContext as WillApplication
+            var silenced by remember { mutableStateOf(emptyList<SilencedNotification>()) }
+            var modelDrops by remember { mutableStateOf(emptyList<ModelDrop>()) }
+            var silencedRevision by remember { mutableIntStateOf(0) }
+            LaunchedEffect(silencedRevision) {
+                silenced = application.learnedNoiseRepository.silenced()
+                modelDrops = application.modelTriageLog.dropped()
+            }
             PrivacySettings(
                 onBack = { currentScreen = Screen.Settings },
-                onDeleteAllTasks = { taskVm.deleteAllTasks() }
+                onDeleteAllTasks = {
+                    taskVm.deleteAllTasks()
+                    // What the model hid is derived from the same stream, so
+                    // "delete all data" has to take it too.
+                    scope.launch {
+                        application.modelTriageLog.forgetEverything()
+                        silencedRevision++
+                    }
+                },
+                silencedNotifications = silenced,
+                onForgetSilenced = { entry ->
+                    scope.launch {
+                        application.learnedNoiseRepository.forget(entry.sourcePackage, entry.title)
+                        silencedRevision++
+                    }
+                },
+                modelDrops = modelDrops,
+                onShowAgain = { drop ->
+                    scope.launch {
+                        application.modelTriageLog.showAgain(drop.sourcePackage, drop.title)
+                        silencedRevision++
+                    }
+                }
             )
             return
         }
@@ -462,6 +627,7 @@ private fun WillScreen(
                         taskVm.markDone(task)
                     },
                     header = pinnedHeader,
+                    suggestedFinished = suggestedFinished,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -482,7 +648,13 @@ private fun WillScreen(
                     onQueryChange = onAppSearchQueryChange,
                     onLaunchApp = onLaunchApp,
                     onDismiss = { appDrawerOpen = false },
-                    onLongPressApp = onLongPressApp
+                    onLongPressApp = onLongPressApp,
+                    matchingTasks = matchingTasks,
+                    onTapTask = { task ->
+                        onSetPendingActiveTask(task)
+                        taskVm.setActiveTask(task)
+                        launchTask(context, task)
+                    }
                 )
 
                 SnackbarHost(
@@ -521,11 +693,16 @@ private fun WillScreen(
         IntentInputSheet(
             onDismiss = { showIntentInputSheet = false },
             onAddTask = { title ->
+                // An intention that names an app gets that app as its target,
+                // so tapping the task opens it. Before this a typed task had
+                // nowhere to go and the tap did nothing.
+                val mentioned = appMentionResolver.resolve(title, allApps)
                 taskVm.addTask(
                     Task(
                         title = title,
                         text = "",
-                        sourcePackage = TaskOrigin.MANUAL_SOURCE_PACKAGE,
+                        sourcePackage = mentioned?.packageName
+                            ?: TaskOrigin.MANUAL_SOURCE_PACKAGE,
                         createdAt = System.currentTimeMillis(),
                         origin = TaskOrigin.MANUAL
                     )
@@ -535,3 +712,6 @@ private fun WillScreen(
         )
     }
 }
+
+/** Only used to widen the event query; day boundaries come from `startOfDay`. */
+private const val MILLIS_PER_DAY = 24 * 60 * 60 * 1000L

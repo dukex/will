@@ -26,7 +26,8 @@ data class TaskEntity(
     val unreadCount: Int = 1,
     val shortcutId: String? = null,
     @ColumnInfo(defaultValue = DEFAULT_ORIGIN)
-    val origin: String = DEFAULT_ORIGIN
+    val origin: String = DEFAULT_ORIGIN,
+    val rawTitle: String? = null
 ) {
     fun toTask() = Task(
         id = id,
@@ -42,7 +43,8 @@ data class TaskEntity(
         conversationKey = conversationKey,
         unreadCount = unreadCount,
         shortcutId = shortcutId,
-        origin = TaskOrigin.fromStored(origin)
+        origin = TaskOrigin.fromStored(origin),
+        rawTitle = rawTitle
     )
 
     companion object {
@@ -64,5 +66,6 @@ fun Task.toEntity() = TaskEntity(
     conversationKey = conversationKey,
     unreadCount = unreadCount,
     shortcutId = shortcutId,
-    origin = origin.name
+    origin = origin.name,
+    rawTitle = rawTitle
 )

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskOrigin
 import tech.benedicta.will.task.TaskStatus
 import tech.benedicta.will.task.status
 import tech.benedicta.will.ui.theme.Spacing
@@ -52,6 +53,7 @@ fun TaskFeed(
     onTap: (Task) -> Unit = {},
     onMarkDone: (Task) -> Unit = {},
     header: (LazyListScope.() -> Unit)? = null,
+    suggestedFinished: Set<Long> = emptySet(),
     modifier: Modifier = Modifier
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
@@ -103,7 +105,8 @@ fun TaskFeed(
                 TaskItem(
                     task = task,
                     onTap = onTap,
-                    onMarkDone = onMarkDone
+                    onMarkDone = onMarkDone,
+                    looksFinished = task.id in suggestedFinished
                 )
                 HorizontalDivider(color = WillBorder, thickness = 1.dp)
             }
@@ -118,7 +121,8 @@ fun TaskFeed(
                 TaskItem(
                     task = task,
                     onTap = onTap,
-                    onMarkDone = onMarkDone
+                    onMarkDone = onMarkDone,
+                    looksFinished = task.id in suggestedFinished
                 )
                 HorizontalDivider(color = WillBorder, thickness = 1.dp)
             }
@@ -179,14 +183,22 @@ private fun EmptyState(
 private fun TaskItem(
     task: Task,
     onTap: (Task) -> Unit,
-    onMarkDone: (Task) -> Unit
+    onMarkDone: (Task) -> Unit,
+    looksFinished: Boolean = false
 ) {
     val context = LocalContext.current
-    val appName = remember(task.sourcePackage) {
-        runCatching {
-            val info = context.packageManager.getApplicationInfo(task.sourcePackage, 0)
-            context.packageManager.getApplicationLabel(info).toString()
-        }.getOrDefault(task.sourcePackage)
+    // Null when the task points at no app: the sentinel is storage, not a name
+    // the user should read. An uninstalled app still falls back to its package,
+    // which is the most honest thing left to show.
+    val appLabel = remember(task.sourcePackage) {
+        if (task.sourcePackage == TaskOrigin.MANUAL_SOURCE_PACKAGE) {
+            null
+        } else {
+            runCatching {
+                val info = context.packageManager.getApplicationInfo(task.sourcePackage, 0)
+                context.packageManager.getApplicationLabel(info).toString()
+            }.getOrDefault(task.sourcePackage)
+        }
     }
 
     Row(
@@ -211,9 +223,14 @@ private fun TaskItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            val unreadSuffix = if (task.unreadCount > 1) " · ${task.unreadCount} new" else ""
             Text(
-                text = "$appName · ${formatTimestamp(task.createdAt)}$unreadSuffix",
+                text = taskMetadataLine(
+                    appLabel = appLabel,
+                    origin = task.origin,
+                    time = formatTimestamp(task.createdAt),
+                    unreadCount = task.unreadCount,
+                    looksFinished = looksFinished
+                ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp)

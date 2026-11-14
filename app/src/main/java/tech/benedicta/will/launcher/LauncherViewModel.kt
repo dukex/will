@@ -15,7 +15,8 @@ import kotlinx.coroutines.launch
 
 class LauncherViewModel(
     private val repository: AppRepository,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val search: SearchWithMeaning = SearchWithMeaning(AppMatcher(), SemanticAppSearch.Unavailable)
 ) : ViewModel() {
 
     private val _apps = MutableStateFlow<List<LauncherApp>>(emptyList())
@@ -24,8 +25,8 @@ class LauncherViewModel(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
-    val filteredApps: StateFlow<List<LauncherApp>> = _apps.combine(_query) { list, q ->
-        if (q.isBlank()) list else list.filter { it.name.contains(q, ignoreCase = true) }
+    val filteredApps: StateFlow<List<LauncherApp>> = _apps.combine(_query) { list, query ->
+        search.filter(list, query)
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     fun setQuery(query: String) { _query.value = query }
@@ -41,11 +42,14 @@ class LauncherViewModel(
     }
 
     companion object {
-        fun factory(repository: AppRepository): ViewModelProvider.Factory =
+        fun factory(
+            repository: AppRepository,
+            search: SearchWithMeaning = SearchWithMeaning(AppMatcher(), SemanticAppSearch.Unavailable)
+        ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    LauncherViewModel(repository) as T
+                    LauncherViewModel(repository, search = search) as T
             }
     }
 }

@@ -10,6 +10,12 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <!-- The genai libraries declare minSdk 26. Will stays installable on 24
+         and 25, where semantic search is simply never reachable: every call
+         site is gated on Build.VERSION.SDK_INT and on the feature being both
+         enabled and available. -->
+    <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.prompt,com.google.mlkit.genai.common" />
+
     <application
         android:name=".WillApplication"
         android:allowBackup="true"

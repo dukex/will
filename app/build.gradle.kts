@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 plugins {
@@ -5,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.screenshot)
 }
 
 val keystoreProps = Properties().apply {
@@ -49,11 +51,43 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
+    }
+    testOptions {
+        unitTests {
+            // Robolectric needs the merged resources and manifest to build an
+            // application context.
+            isIncludeAndroidResources = true
+        }
+    }
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+ksp {
+    // Exported so WillDatabaseMigrationTest can replay a real upgrade, and so
+    // a migration can be written from the schema rather than from memory.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+android {
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
+}
+
+tasks.withType<Test>().configureEach {
+    // Robolectric downloads its `android-all` jar with its own HTTP client,
+    // which a sandboxed or offline build cannot always reach. Point it at a
+    // directory already holding those jars and it stops asking the network:
+    //   ./gradlew test -Probolectric.dependency.dir=/path/to/jars
+    providers.gradleProperty("robolectric.dependency.dir").orNull?.let { directory ->
+        systemProperty("robolectric.offline", "true")
+        systemProperty("robolectric.dependency.dir", directory)
     }
 }
 
@@ -83,13 +117,26 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // On-device semantic search, Gemini Nano through AICore. Opt-in at
+    // runtime and absent from every device that cannot serve it.
+    implementation(libs.mlkit.genai.prompt)
+
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
+    screenshotTestImplementation(libs.android.screenshot.validation.api)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    // Robolectric runs the Android framework on the JVM, so the migration
+    // replay and the shortcut publisher are checked by `./gradlew test`
+    // instead of waiting for a device.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

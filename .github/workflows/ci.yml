@@ -24,13 +24,19 @@ jobs:
           java-version: "21"
           cache: gradle
 
+      # Robolectric fetches its `android-all` jar with its own client, into
+      # ~/.m2/repository rather than anywhere under ~/.gradle. Without it on
+      # this list every run re-downloads about 145 MB. The version catalog is
+      # in the key because that is where dependency versions live here, so a
+      # bump has to miss the cache and write a new entry.
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+            ~/.m2/repository
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 

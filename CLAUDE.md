@@ -304,8 +304,9 @@ We work as XP (eXtreme Programming) pair programmers. These rules are **mandator
 6. **TDD cycle** — Red → Green → Refactor. No exceptions.
 7. **[IMPORTANT] E2E / regression tests** — After implementing a full feature or user flow, write an E2E test that exercises the integrated path. Unit tests catch isolated logic errors; E2E tests catch integration bugs that are invisible to unit tests.
 8. **Atomic conventional commits** — Commit often, one logical change per commit. Use conventional commit format. `feat:` and `fix:` messages target the final user (they generate the changelog) — write them as user-facing descriptions, promoting the new feature, not technical notes.
-9. **[IMPORTANT] Regression test after a bug report** — When a bug is reported, write a test that reproduces the bug before fixing it. This ensures the bug is fully understood and prevents regressions in the future.
-10. **site/docs/changelog.md** — After finish a feature, update the changelog with a user-facing description of the change. Group changes by user story or feature, not by technical details.
+9. **[IMPORTANT] Open the PR early, and often** — one PR per subject, opened as soon as that subject's first commit is pushed, never saved up for the end. Work spanning several subjects becomes a stack of PRs, each standing on its own and each mergeable without waiting on the others. Do not ask whether to open one; open it. The failure mode this exists to prevent already happened: `claude/launcher-ai-readiness-jqk7x6` collected 27 commits across 139 files before anyone could look at it (PR #8), and the review cost is what paid for the convenience of not stopping.
+10. **[IMPORTANT] Regression test after a bug report** — When a bug is reported, write a test that reproduces the bug before fixing it. This ensures the bug is fully understood and prevents regressions in the future.
+11. **site/docs/changelog.md** — After finish a feature, update the changelog with a user-facing description of the change. Group changes by user story or feature, not by technical details.
 
 ## Basic Rules
 

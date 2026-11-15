@@ -28,14 +28,22 @@ class GeminiNanoAppSearch(
     private val timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS
 ) : SemanticAppSearch, SemanticSearchModel {
 
+    /**
+     * Only the system saying so reports the phone as unsupported. `getClient()`
+     * and `checkStatus()` both reach AICore and both can throw, and a question
+     * that failed is not an answer: it becomes [ModelAvailability.UNKNOWN] so
+     * settings can say it could not check rather than claiming this phone
+     * cannot run the model.
+     */
     override suspend fun availability(): ModelAvailability = runCatching {
         when (Generation.getClient().checkStatus()) {
             FeatureStatus.AVAILABLE -> ModelAvailability.AVAILABLE
             FeatureStatus.DOWNLOADABLE -> ModelAvailability.DOWNLOADABLE
             FeatureStatus.DOWNLOADING -> ModelAvailability.DOWNLOADING
-            else -> ModelAvailability.UNAVAILABLE
+            FeatureStatus.UNAVAILABLE -> ModelAvailability.UNAVAILABLE
+            else -> ModelAvailability.UNKNOWN
         }
-    }.getOrDefault(ModelAvailability.UNAVAILABLE)
+    }.getOrDefault(ModelAvailability.UNKNOWN)
 
     /**
      * Runs to completion so settings can show the result rather than guessing.

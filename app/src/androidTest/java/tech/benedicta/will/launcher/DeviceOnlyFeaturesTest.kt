@@ -62,7 +62,7 @@ class DeviceOnlyFeaturesTest {
         assertEquals("responder Maria", shortcut.longLabel)
         assertEquals(
             7L,
-            shortcut.intent?.getLongExtra(ActiveTaskShortcutPublisher.EXTRA_TASK_ID, -1L)
+            shortcut.intent.getLongExtra(ActiveTaskShortcutPublisher.EXTRA_TASK_ID, -1L)
         )
         publisher.publish(null)
     }

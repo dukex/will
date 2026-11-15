@@ -35,13 +35,21 @@ fun taskMetadataLine(
 /**
  * How the origin reads in the feed, or null when it should stay quiet.
  *
- * A notification the user already saw and a task they typed are the ordinary
- * ways a task appears, and naming them would add a word to every row without
- * telling the user anything. [TaskOrigin.SHARED] and [TaskOrigin.AGENT] are
- * the cases they did not author in Will, and those are worth a word.
+ * The test is whether the word changes what the row means, which is a wider
+ * rule than the authorship one this started as. A notification the user
+ * already saw and a task they typed are the ordinary ways a task appears, and
+ * naming them spends a word on every row to say nothing.
+ *
+ * The other three each change something. [TaskOrigin.SHARED] and
+ * [TaskOrigin.AGENT] were not written in Will. [TaskOrigin.PROVIDER] was
+ * written by the user, but it does not only live here: finishing it travels,
+ * and deleting it in the other service removes it from this feed. That is
+ * worth a word even though the user wrote it. It will carry the provider's own
+ * name once a task records which provider it came from.
  */
 private fun TaskOrigin.feedLabel(): String? = when (this) {
     TaskOrigin.NOTIFICATION, TaskOrigin.MANUAL -> null
     TaskOrigin.SHARED -> "shared"
     TaskOrigin.AGENT -> "from agent"
+    TaskOrigin.PROVIDER -> "synced"
 }

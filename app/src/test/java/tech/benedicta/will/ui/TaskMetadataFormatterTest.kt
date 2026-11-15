@@ -107,13 +107,24 @@ class TaskMetadataFormatterTest {
         assertEquals("shared · 14:32", line)
     }
 
+    /**
+     * The rule is not authorship. It is whether the word changes what the row
+     * means. A notification and a typed task are the ordinary ways a task
+     * appears here, and naming them spends a word on every row to say nothing.
+     * The other three each change something: SHARED and AGENT were not written
+     * in Will, and PROVIDER does not only live here, so finishing it travels
+     * and deleting it elsewhere removes it.
+     */
     @Test
-    fun `only the origins the user did not author are spelled out`() {
+    fun `an origin is spelled out only when the word changes what the row means`() {
         val spelledOut = TaskOrigin.entries.filter { origin ->
             taskMetadataLine(null, origin, "14:32", 1) != "14:32"
         }
 
-        assertEquals(listOf(TaskOrigin.SHARED, TaskOrigin.AGENT), spelledOut)
+        assertEquals(
+            listOf(TaskOrigin.SHARED, TaskOrigin.AGENT, TaskOrigin.PROVIDER),
+            spelledOut
+        )
     }
 
 
@@ -136,5 +147,19 @@ class TaskMetadataFormatterTest {
         val line = taskMetadataLine("Slack", TaskOrigin.SHARED, "14:32", 3, looksFinished = true)
 
         assertEquals("Slack · shared · 14:32 · 3 new · looks finished", line)
+    }
+
+    @Test
+    fun `a task that lives in another service says so`() {
+        assertEquals(
+            "it is worth a word: it says why the row is here and where finishing it lands",
+            "synced \u00b7 09:41",
+            taskMetadataLine(
+                appLabel = null,
+                time = "09:41",
+                origin = TaskOrigin.PROVIDER,
+                unreadCount = 1
+            )
+        )
     }
 }

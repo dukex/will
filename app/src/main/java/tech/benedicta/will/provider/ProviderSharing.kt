@@ -44,6 +44,11 @@ object ProviderSharing {
 
     private fun TaskOrigin.isAuthoredByUser(): Boolean = when (this) {
         TaskOrigin.MANUAL, TaskOrigin.SHARED, TaskOrigin.AGENT -> true
+
+        // Already on the user's own account, where they wrote it. Sending it
+        // back is an update, not a disclosure.
+        TaskOrigin.PROVIDER -> true
+
         TaskOrigin.NOTIFICATION -> false
     }
 }

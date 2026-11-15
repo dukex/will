@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import tech.benedicta.will.notification.AppFilterViewModel
 import tech.benedicta.will.ui.theme.Spacing
+import tech.benedicta.will.launcher.ModelAvailability
 import tech.benedicta.will.launcher.SemanticSearchStatus
 import tech.benedicta.will.ui.theme.WillAccent
 import tech.benedicta.will.ui.theme.WillBorder
@@ -56,6 +57,11 @@ fun SettingsScreen(
     onSemanticSearchChange: (Boolean) -> Unit = {},
     semanticSearchStatus: SemanticSearchStatus = SemanticSearchStatus.OFF,
     onDownloadSemanticModel: () -> Unit = {},
+    derivedIntentionsEnabled: Boolean = false,
+    onDerivedIntentionsChange: (Boolean) -> Unit = {},
+    modelAvailability: ModelAvailability = ModelAvailability.UNKNOWN,
+    modelTriageEnabled: Boolean = false,
+    onModelTriageChange: (Boolean) -> Unit = {},
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -242,7 +248,9 @@ fun SettingsScreen(
                                 text = when (semanticSearchStatus) {
                                     SemanticSearchStatus.ON ->
                                         "on — finds apps by what they are for, using Google's " +
-                                            "on-device model. only when the name search finds nothing"
+                                            "on-device model, only when the name search finds " +
+                                            "nothing. with the switch below also on, it searches " +
+                                            "your open tasks the same way"
                                     SemanticSearchStatus.NEEDS_DOWNLOAD ->
                                         "the model is not on this phone yet. tap to download it, " +
                                             "which uses your connection once"
@@ -272,6 +280,199 @@ fun SettingsScreen(
                             color = if (semanticSearchStatus.canStartDownload ||
                                 semanticSearchStatus == SemanticSearchStatus.ON
                             ) WillAccent else WillTextTertiary
+                        )
+                    }
+                }
+                item {
+                    // `SemanticSearchStatus.of` is the only place this mapping
+                    // lives. A Boolean here reported four different states as
+                    // "unsupported", so a phone that had merely not downloaded
+                    // the model was told it could never run one.
+                    val readingStatus = SemanticSearchStatus.of(
+                        enabled = derivedIntentionsEnabled,
+                        availability = modelAvailability
+                    )
+
+                    // Its own switch, never folded into the one above:
+                    // agreeing to send the model a search term is not
+                    // agreeing to send it what a notification said.
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = readingStatus.canToggle || readingStatus.canStartDownload
+                            ) {
+                                if (readingStatus.canStartDownload) {
+                                    onDownloadSemanticModel()
+                                } else {
+                                    onDerivedIntentionsChange(!derivedIntentionsEnabled)
+                                }
+                            }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Switch
+                                contentDescription = when (readingStatus) {
+                                    SemanticSearchStatus.UNSUPPORTED ->
+                                        "reading notifications needs the on-device model, " +
+                                            "which this phone cannot run"
+                                    SemanticSearchStatus.UNKNOWN ->
+                                        "whether this phone can read notifications with the " +
+                                            "model could not be checked"
+                                    SemanticSearchStatus.NEEDS_DOWNLOAD ->
+                                        "reading notifications needs its model; tap to " +
+                                            "download it"
+                                    SemanticSearchStatus.DOWNLOADING ->
+                                        "the model for reading notifications is downloading"
+                                    SemanticSearchStatus.ON ->
+                                        "reading notifications is on; tap to turn it off"
+                                    SemanticSearchStatus.OFF ->
+                                        "reading notifications is off; tap to turn it on"
+                                }
+                            },
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "read what a notification asks for",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = when {
+                                    readingStatus == SemanticSearchStatus.UNSUPPORTED ->
+                                        "this phone cannot run the on-device model. " +
+                                            "notifications arrive with the title they were sent with"
+                                    readingStatus == SemanticSearchStatus.UNKNOWN ->
+                                        "asking the system about the model failed, so there is " +
+                                            "nothing to report. notifications arrive with the " +
+                                            "title they were sent with"
+                                    readingStatus == SemanticSearchStatus.NEEDS_DOWNLOAD ->
+                                        "the model is not on this phone yet. tap to download it, " +
+                                            "which uses your connection once"
+                                    readingStatus == SemanticSearchStatus.DOWNLOADING ->
+                                        "downloading the model. notifications keep arriving " +
+                                            "while it comes"
+                                    derivedIntentionsEnabled ->
+                                        "on — a notification only your words can explain, like " +
+                                            "\"confirme sua presença\", becomes what it is asking " +
+                                            "for. the model reads it on your phone, next time you " +
+                                            "open will, and the original title is kept"
+                                    else ->
+                                        "off — a message or a missed call already becomes an " +
+                                            "intention without any model. turning this on lets " +
+                                            "the on-device model read the rest. it never hides a " +
+                                            "notification"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = when (readingStatus) {
+                                SemanticSearchStatus.UNSUPPORTED -> "unsupported"
+                                SemanticSearchStatus.UNKNOWN -> "no answer"
+                                SemanticSearchStatus.NEEDS_DOWNLOAD -> "download"
+                                SemanticSearchStatus.DOWNLOADING -> "downloading"
+                                SemanticSearchStatus.ON -> "on"
+                                SemanticSearchStatus.OFF -> "off"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (derivedIntentionsEnabled) WillAccent else WillTextTertiary
+                        )
+                    }
+                }
+                item {
+                    val triageStatus = SemanticSearchStatus.of(
+                        enabled = modelTriageEnabled,
+                        availability = modelAvailability
+                    )
+
+                    // The third switch, and the only one that decides whether
+                    // something reaches the user at all. Letting either of the
+                    // other two carry it would be deciding that for them.
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = triageStatus.canToggle || triageStatus.canStartDownload
+                            ) {
+                                if (triageStatus.canStartDownload) {
+                                    onDownloadSemanticModel()
+                                } else {
+                                    onModelTriageChange(!modelTriageEnabled)
+                                }
+                            }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Switch
+                                contentDescription = when (triageStatus) {
+                                    SemanticSearchStatus.UNSUPPORTED ->
+                                        "hiding housekeeping needs the on-device model, " +
+                                            "which this phone cannot run"
+                                    SemanticSearchStatus.UNKNOWN ->
+                                        "whether this phone can hide housekeeping with the " +
+                                            "model could not be checked"
+                                    SemanticSearchStatus.NEEDS_DOWNLOAD ->
+                                        "hiding housekeeping needs its model; tap to download it"
+                                    SemanticSearchStatus.DOWNLOADING ->
+                                        "the model for hiding housekeeping is downloading"
+                                    SemanticSearchStatus.ON ->
+                                        "hiding housekeeping is on; tap to turn it off"
+                                    SemanticSearchStatus.OFF ->
+                                        "hiding housekeeping is off; tap to turn it on"
+                                }
+                            },
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "hide housekeeping notifications",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = when {
+                                    triageStatus == SemanticSearchStatus.UNSUPPORTED ->
+                                        "this phone cannot run the on-device model. " +
+                                            "the built-in list still catches the usual chatter"
+                                    triageStatus == SemanticSearchStatus.UNKNOWN ->
+                                        "asking the system about the model failed, so there is " +
+                                            "nothing to report. the built-in list still catches " +
+                                            "the usual chatter"
+                                    triageStatus == SemanticSearchStatus.NEEDS_DOWNLOAD ->
+                                        "the model is not on this phone yet. tap to download it, " +
+                                            "which uses your connection once"
+                                    triageStatus == SemanticSearchStatus.DOWNLOADING ->
+                                        "downloading the model. the built-in list is filtering " +
+                                            "meanwhile"
+                                    modelTriageEnabled ->
+                                        "on — next time you open will, the model reads what " +
+                                            "the built-in list missed and takes it off your " +
+                                            "feed. everything it hides is listed in data & " +
+                                            "privacy, with a way back. when it is unsure, it keeps"
+                                    else ->
+                                        "off — the built-in list and what you have thrown away " +
+                                            "already filter your feed. turning this on lets the " +
+                                            "on-device model hide what they missed. this is the " +
+                                            "only switch that can keep something from you"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = when (triageStatus) {
+                                SemanticSearchStatus.UNSUPPORTED -> "unsupported"
+                                SemanticSearchStatus.UNKNOWN -> "no answer"
+                                SemanticSearchStatus.NEEDS_DOWNLOAD -> "download"
+                                SemanticSearchStatus.DOWNLOADING -> "downloading"
+                                SemanticSearchStatus.ON -> "on"
+                                SemanticSearchStatus.OFF -> "off"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (modelTriageEnabled) WillAccent else WillTextTertiary
                         )
                     }
                 }

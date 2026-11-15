@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.launcher.ModelAvailability
 import tech.benedicta.will.launcher.SemanticSearchStatus
 import tech.benedicta.will.notification.AppNotificationFilter
 import tech.benedicta.will.ui.theme.WillTheme
@@ -113,12 +114,89 @@ private fun SettingsSemanticSearchUnsupportedPreview() {
 }
 
 /**
- * The state that used to be shown as "unsupported". Asking the system failed,
- * which says nothing about the phone, so the row says that and names the one
- * thing worth trying.
+ * Both model switches on, side by side, because they are separate decisions
+ * and the screen has to make that readable rather than imply one switch.
  */
 @PreviewTest
-@Preview(name = "settings when the model could not be checked", widthDp = 412, heightDp = 720, showBackground = true)
+@Preview(name = "settings reading notifications on", widthDp = 412, heightDp = 860, showBackground = true)
+@Composable
+private fun SettingsDerivedIntentionsOnPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.ON,
+            derivedIntentionsEnabled = true,
+            modelAvailability = ModelAvailability.AVAILABLE,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** The ordinary case: the model is here, and the user has not asked for it. */
+@PreviewTest
+@Preview(name = "settings reading notifications off", widthDp = 412, heightDp = 860, showBackground = true)
+@Composable
+private fun SettingsDerivedIntentionsOffPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.OFF,
+            derivedIntentionsEnabled = false,
+            modelAvailability = ModelAvailability.AVAILABLE,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** All three model switches, which are three different decisions. */
+@PreviewTest
+@Preview(name = "settings all three model switches", widthDp = 412, heightDp = 1000, showBackground = true)
+@Composable
+private fun SettingsModelTriageOnPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.ON,
+            derivedIntentionsEnabled = true,
+            modelAvailability = ModelAvailability.AVAILABLE,
+            modelTriageEnabled = true,
+            viewModel = viewModel
+        )
+    }
+}
+
+/**
+ * The state that used to be shown as "unsupported". Asking the system failed,
+ * which says nothing about the phone, so the row says that and names the one
+ * thing worth trying. The notification rows report the same state, for the
+ * same reason: nothing was established.
+ */
+@PreviewTest
+@Preview(name = "settings when the model could not be checked", widthDp = 412, heightDp = 860, showBackground = true)
 @Composable
 private fun SettingsSemanticSearchUnknownPreview() {
     val viewModel: AppFilterViewModel = viewModel(
@@ -133,6 +211,62 @@ private fun SettingsSemanticSearchUnknownPreview() {
             accessibilityServiceGranted = true,
             semanticSearchEnabled = false,
             semanticSearchStatus = SemanticSearchStatus.UNKNOWN,
+            derivedIntentionsEnabled = false,
+            modelAvailability = ModelAvailability.UNKNOWN,
+            viewModel = viewModel
+        )
+    }
+}
+
+/**
+ * The state a Boolean used to report as "unsupported": a phone that can run
+ * the model and simply has not downloaded it yet. All three rows now offer the
+ * download instead of telling the user their phone cannot do it.
+ */
+@PreviewTest
+@Preview(name = "settings with the model still to download", widthDp = 412, heightDp = 1000, showBackground = true)
+@Composable
+private fun SettingsModelNeedsDownloadPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.NEEDS_DOWNLOAD,
+            derivedIntentionsEnabled = true,
+            modelTriageEnabled = true,
+            modelAvailability = ModelAvailability.DOWNLOADABLE,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** And the state this phone is actually in: the system says it cannot. */
+@PreviewTest
+@Preview(name = "settings on a phone that cannot run the model", widthDp = 412, heightDp = 1000, showBackground = true)
+@Composable
+private fun SettingsModelUnsupportedPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.UNSUPPORTED,
+            derivedIntentionsEnabled = false,
+            modelTriageEnabled = false,
+            modelAvailability = ModelAvailability.UNAVAILABLE,
             viewModel = viewModel
         )
     }

@@ -15,6 +15,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
@@ -36,6 +38,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -59,6 +62,7 @@ import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.ModelDrop
 import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
@@ -231,6 +235,34 @@ class MainActivity : ComponentActivity() {
         ActiveTaskOverlayService.hide(this)
         onboardingVm?.refresh()
         launcherVm?.refresh()
+        reviewWithModel()
+    }
+
+    /**
+     * The model's share of the notification work, run here because this is the
+     * only place it can run at all: ML Kit's GenAI APIs answer
+     * `BACKGROUND_USE_BLOCKED` anywhere but the top foreground app, and a
+     * foreground service does not get around it.
+     *
+     * Everything that needs no model already happened when the notification
+     * arrived. This only ever catches up, so a failure leaves the feed
+     * exactly as the model-free path built it.
+     */
+    private fun reviewWithModel() {
+        val application = application as WillApplication
+        // Default, not the lifecycle scope's main dispatcher: a pass can hold
+        // several five-second inference timeouts end to end, and the home
+        // screen must stay answerable throughout.
+        lifecycleScope.launch(Dispatchers.Default) {
+            runCatching {
+                val since = application.modelReviewWatermark.lastReviewed()
+                val watermark = application.modelReviewPass.review(
+                    all = application.taskRepository.getAllTasks().first(),
+                    since = since
+                )
+                application.modelReviewWatermark.markReviewed(watermark)
+            }
+        }
     }
 
     private fun isNotificationListenerEnabled(): Boolean =
@@ -379,8 +411,19 @@ private fun WillScreen(
     var showIntentInputSheet by remember { mutableStateOf(false) }
     val appMentionResolver = remember { AppMentionResolver(context.packageName) }
     val taskMatcher = remember { TaskMatcher() }
-    val matchingTasks = remember(tasks, appSearchQuery) {
+    // The word match is instant and shows at once. Meaning only fills in
+    // afterwards, and only when the words found nothing, so turning the model
+    // on never puts a wait in front of a search that already worked.
+    val byWords = remember(tasks, appSearchQuery) {
         taskMatcher.filter(tasks, appSearchQuery)
+    }
+    val matchingTasks by produceState(byWords, byWords, tasks, appSearchQuery) {
+        value = byWords
+        if (byWords.isEmpty() && appSearchQuery.isNotBlank()) {
+            value = (context.applicationContext as WillApplication)
+                .taskSearch
+                .filter(tasks, appSearchQuery)
+        }
     }
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
@@ -427,6 +470,10 @@ private fun WillScreen(
             val application = context.applicationContext as WillApplication
             val semanticSearchEnabled by application.semanticSearchPreference
                 .isEnabled().collectAsState(initial = false)
+            val derivedIntentionsEnabled by application.derivedIntentionPreference
+                .isEnabled().collectAsState(initial = false)
+            val modelTriageEnabled by application.modelTriagePreference
+                .isEnabled().collectAsState(initial = false)
             var modelAvailability by remember { mutableStateOf(ModelAvailability.UNAVAILABLE) }
             var availabilityRevision by remember { mutableIntStateOf(0) }
             LaunchedEffect(availabilityRevision, semanticSearchEnabled) {
@@ -452,6 +499,15 @@ private fun WillScreen(
                         application.semanticSearchModel.download()
                         availabilityRevision++
                     }
+                },
+                derivedIntentionsEnabled = derivedIntentionsEnabled,
+                onDerivedIntentionsChange = { enabled ->
+                    scope.launch { application.derivedIntentionPreference.setEnabled(enabled) }
+                },
+                modelAvailability = modelAvailability,
+                modelTriageEnabled = modelTriageEnabled,
+                onModelTriageChange = { enabled ->
+                    scope.launch { application.modelTriagePreference.setEnabled(enabled) }
                 },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
@@ -487,20 +543,34 @@ private fun WillScreen(
         Screen.PrivacySettings -> {
             val application = context.applicationContext as WillApplication
             var silenced by remember { mutableStateOf(emptyList<SilencedNotification>()) }
+            var modelDrops by remember { mutableStateOf(emptyList<ModelDrop>()) }
             var silencedRevision by remember { mutableIntStateOf(0) }
             LaunchedEffect(silencedRevision) {
                 silenced = application.learnedNoiseRepository.silenced()
+                modelDrops = application.modelTriageLog.dropped()
             }
             PrivacySettings(
                 onBack = { currentScreen = Screen.Settings },
                 onDeleteAllTasks = {
                     taskVm.deleteAllTasks()
-                    silencedRevision++
+                    // What the model hid is derived from the same stream, so
+                    // "delete all data" has to take it too.
+                    scope.launch {
+                        application.modelTriageLog.forgetEverything()
+                        silencedRevision++
+                    }
                 },
                 silencedNotifications = silenced,
                 onForgetSilenced = { entry ->
                     scope.launch {
                         application.learnedNoiseRepository.forget(entry.sourcePackage, entry.title)
+                        silencedRevision++
+                    }
+                },
+                modelDrops = modelDrops,
+                onShowAgain = { drop ->
+                    scope.launch {
+                        application.modelTriageLog.showAgain(drop.sourcePackage, drop.title)
                         silencedRevision++
                     }
                 }

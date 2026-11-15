@@ -89,6 +89,17 @@ tasks.withType<Test>().configureEach {
         systemProperty("robolectric.offline", "true")
         systemProperty("robolectric.dependency.dir", directory)
     }
+
+    // A failure on CI is all anyone gets to work with: the HTML report stays on
+    // the runner. Without this the console prints the file and line and drops
+    // the message, so an assertion written to say what it actually saw says
+    // nothing where it matters most.
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showStackTraces = true
+        showCauses = true
+    }
 }
 
 dependencies {

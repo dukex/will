@@ -275,8 +275,9 @@ Subtasks:
 - [x] Ties keep the repository's alphabetical order
 - [x] Replaces the filter in `LauncherViewModel`; its eight existing tests still pass unchanged
 
-- [ ] The same matcher over the task feed. US-06 still lists feed search as open, and it needs a search field in the home screen, which is a UI decision of its own.
-- [ ] This is matching, not meaning. "money" will not find the bank app. That needs embeddings, which is the blocked US-15 problem.
+- [x] The same matcher over the task feed — shipped under US-24, which put tasks and apps in one box rather than adding a field to the home screen.
+- [x] Searching what the notification said, not only the title it was given. `TaskMatcher` reads `title`, `rawTitle` and `text`, ranked so any title hit beats any message hit. The message is matched literally: `hasSubsequence` over a paragraph matches nearly any short query, which would make every task match everything (6 tests, one of them that exact trap).
+- [x] Meaning, not only matching, on both halves of the box. For apps that shipped under US-25; `TaskSearchWithMeaning` now does the same for tasks (20 unit tests), so "banco" reaches the task about a boleto. No embeddings needed: the same prompt route that unblocked US-15 answers this, numbering the tasks so the reply can only name one the user already has. It needs both model switches on, because a task title usually carries what a notification said.
 
 ### US-19: A notification becomes what to do about it ✅
 **As a user, I want a message from Maria to read "responder Maria" in my feed, instead of just "Maria".**
@@ -299,7 +300,7 @@ Subtasks:
 No language model, and no guessing at what a sentence means. It reads a category the system already attaches, which is why it can be exact. Typed intentions never pass through here: `01-IDEA.md` promises those stay "exatamente como o usuário a escreveu", and that promise is intact.
 
 - [ ] Show the original title in the feed. It is in the data; nothing renders it yet, and the derived title already contains the sender, so nothing is currently hidden.
-- [ ] Richer kinds than reply and call back. "Confirme sua presença" is an intention too, but reading that needs the model work blocked under US-15.
+- [x] Richer kinds than reply and call back, read by the on-device model. `IntentionKind` gained `CONFIRM`, `PAY` and `ATTEND`; `IntentionPrompt` asks Gemini Nano which one a notification is asking for and `ReadIntentionWithMeaning` consults it only when no category answered (25 unit tests). Opt-in, off by default, and separate from the search switch.
 
 ### US-20: Will learns what you throw away ✅
 **As a user, I want Will to stop showing me the notification I keep deleting, without me having to go and configure anything.**
@@ -405,11 +406,42 @@ Subtasks:
 
 - [x] Offer the model download from settings when the status is DOWNLOADABLE. `SemanticSearchStatus` keeps the five states apart (9 unit tests) so settings can never show "on" while nothing happens, and the download only ever starts because the user tapped it.
 - [x] The half that does not need AICore is checked here. `DeviceFeaturesJvmTest` pins what a machine with no model must do: `availability()` answers `UNAVAILABLE` instead of throwing, `rank` comes back empty, `download()` leaves the model absent rather than crashing, and `SearchWithMeaning` still finds Itaú from "itau" while "banco" finds nothing invented. That is the promise the whole feature rests on, and it is now a test rather than a claim. **Executed here, inside the 9 above.**
-- [ ] Whether Gemini Nano answers *well* is the one question left, and only a phone with AICore can settle it: `./gradlew connectedDebugAndroidTest` runs `DeviceOnlyFeaturesTest` there. No emulator in this container (no `/dev/kvm`), and no device attached.
+- [x] **Confirmed and fixed: ML Kit GenAI inference only runs in the top foreground app.** The official overview states that a call from anywhere else returns `ErrorCode.BACKGROUND_USE_BLOCKED`, and that a foreground service does not get around it. Both model-backed notification features were calling the model from `WillNotificationListenerService`, a background service, so as first built they would have done nothing on a real phone, burning a 5s timeout per notification to find that out.
+
+  The fix is `ModelReviewPass`, run from `MainActivity.onResume`, which is the only place the model can be reached. Everything needing no model still happens the moment a notification lands: the task is created, the category is read, the pattern list and what the user taught Will both run. The model catches up afterwards, reading titles the category could not and removing what it judges housekeeping, with every removal listed before it takes effect. `ModelIntentionClassifier` was deleted with the old wiring rather than left as a class nothing calls.
+
+  Semantic app search was never affected: it runs from the launcher, in the foreground, which is presumably why nothing caught this earlier.
+- [ ] Whether Gemini Nano answers *well* is the one question left, and only a phone with AICore can settle it. It is now a test rather than something to remember to look at: `ModelAnswersWellTest` asks the real model the obvious cases (a download finishing is noise, a message from a person never is, "Confirme sua presença" reads as something to confirm) and skips rather than fails without AICore. `./gradlew connectedDebugAndroidTest` runs it. Not run here: no emulator in this container (no `/dev/kvm`, no `vmx`/`svm`), and no device attached. Whether any emulator could answer it is itself unclear: Google publishes no supported-device list and no official word on emulator support, and the one source found saying AICore is absent from emulators is a third-party tutorial. If any of those fail on a real phone, the prompts need work before either model switch is worth offering.
 
 **Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
 
-### US-15: On-device notification triage ⬜ blocked on data, not on code
+### US-15: On-device notification triage ✅ done, with the audit surface that makes it allowed
+
+**As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
+
+Shipped: `TriagePrompt` asks Gemini Nano whether a notification is housekeeping, `ModelReviewPass` places it behind the cheap rules and runs it from the foreground, and `ModelTriageLog` makes every drop visible and undoable. 10 of the tests run against the store that ships, under Robolectric.
+
+The order is the design:
+
+1. the patterns run first, then what the user taught Will by dismissing things. Both are free and more trustworthy than a guess, and most notifications never get past them;
+2. a shape the user has already rescued once is never judged again;
+3. only then is the model asked, and only when the switch is on.
+
+**The reading is lopsided because the costs are.** Only an unambiguous verdict of noise drops anything. Silence, prose, a hedge, two verdicts at once, a refusal, a timeout, an error and an answer in a shape the parser will not read all keep. The parser requires the answer to *be* the verdict rather than contain it, which a test caught: `{"verdict":"noise"}` matched a containment check, and a model answering in a shape it was not asked for is one to disregard rather than read creatively.
+
+**The audit surface is the precondition, not a nicety.** CLAUDE.md says what Will learns to hide has to be visible and undoable. Every drop is written to the log before it takes effect, `data & privacy` lists it, and "show again" both restores it and stops the model judging that shape again, because an undo that only applied to the past would have the user undoing the same notification every week. "Delete all task history" takes the list and the rescues with it.
+
+**Its own switch and its own prefs file**, off by default. This is the only switch in Will that can keep something from the user, so neither of the other two model switches carries it.
+
+### The routes measured before any of that ⬜ kept for the record
+
+**2026-11 correction.** "Blocked on data" was true of every route measured below, and all of them were *trained* classifiers: ML Kit, MediaPipe, LiteRT and the hand-rolled linear model each need labelled examples. A **prompt** needs none, and `com.google.mlkit:genai-prompt` has shipped since US-25 for semantic app search, so the size, the Play Services dependency, the telemetry transport and the `tools:overrideLibrary` in both manifests are already paid for. The conclusion below ("what would unblock it is data") held only because nobody asked the model in words.
+
+That route is now built, and used for **reading** a notification rather than dropping one: `IntentionPrompt` + `ReadIntentionWithMeaning`, closing US-19's open item.
+
+**Triage by model is still not done, and that is a decision rather than a gap.** Reading can only change a title, so a wrong answer costs a title the user disagrees with over an original `rawTitle` still holds. Dropping is different: a wrong answer is a message the user never sees and the feed cannot tell them about, which is the one failure this product has said repeatedly it will not accept. CLAUDE.md already sets the price of admission: "What Will learns to hide has to be visible and undoable", as US-20's silenced list is. A model-backed triage therefore needs its own audit surface, listing what it dropped with a way back, before it is worth building. That is the next story, not a line item.
+
+### The routes measured before any of that ⬜ kept for the record
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 
 Shipped so far: the `IntentionClassifier` seam and `PatternIntentionClassifier`, with English and Portuguese patterns, accent-folded. That part is done and in use.

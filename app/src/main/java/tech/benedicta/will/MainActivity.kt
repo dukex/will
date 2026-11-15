@@ -504,7 +504,7 @@ private fun WillScreen(
                 onDerivedIntentionsChange = { enabled ->
                     scope.launch { application.derivedIntentionPreference.setEnabled(enabled) }
                 },
-                modelOnThisPhone = modelAvailability == ModelAvailability.AVAILABLE,
+                modelAvailability = modelAvailability,
                 modelTriageEnabled = modelTriageEnabled,
                 onModelTriageChange = { enabled ->
                     scope.launch { application.modelTriagePreference.setEnabled(enabled) }

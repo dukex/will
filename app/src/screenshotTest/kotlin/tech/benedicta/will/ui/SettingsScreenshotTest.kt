@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.launcher.ModelAvailability
 import tech.benedicta.will.launcher.SemanticSearchStatus
 import tech.benedicta.will.notification.AppNotificationFilter
 import tech.benedicta.will.ui.theme.WillTheme
@@ -133,7 +134,7 @@ private fun SettingsDerivedIntentionsOnPreview() {
             semanticSearchEnabled = true,
             semanticSearchStatus = SemanticSearchStatus.ON,
             derivedIntentionsEnabled = true,
-            modelOnThisPhone = true,
+            modelAvailability = ModelAvailability.AVAILABLE,
             viewModel = viewModel
         )
     }
@@ -157,7 +158,7 @@ private fun SettingsDerivedIntentionsOffPreview() {
             semanticSearchEnabled = false,
             semanticSearchStatus = SemanticSearchStatus.OFF,
             derivedIntentionsEnabled = false,
-            modelOnThisPhone = true,
+            modelAvailability = ModelAvailability.AVAILABLE,
             viewModel = viewModel
         )
     }
@@ -181,7 +182,7 @@ private fun SettingsModelTriageOnPreview() {
             semanticSearchEnabled = true,
             semanticSearchStatus = SemanticSearchStatus.ON,
             derivedIntentionsEnabled = true,
-            modelOnThisPhone = true,
+            modelAvailability = ModelAvailability.AVAILABLE,
             modelTriageEnabled = true,
             viewModel = viewModel
         )
@@ -191,8 +192,8 @@ private fun SettingsModelTriageOnPreview() {
 /**
  * The state that used to be shown as "unsupported". Asking the system failed,
  * which says nothing about the phone, so the row says that and names the one
- * thing worth trying. `modelOnThisPhone` is false here for the same reason:
- * nothing was established.
+ * thing worth trying. The notification rows report the same state, for the
+ * same reason: nothing was established.
  */
 @PreviewTest
 @Preview(name = "settings when the model could not be checked", widthDp = 412, heightDp = 860, showBackground = true)
@@ -211,7 +212,61 @@ private fun SettingsSemanticSearchUnknownPreview() {
             semanticSearchEnabled = false,
             semanticSearchStatus = SemanticSearchStatus.UNKNOWN,
             derivedIntentionsEnabled = false,
-            modelOnThisPhone = false,
+            modelAvailability = ModelAvailability.UNKNOWN,
+            viewModel = viewModel
+        )
+    }
+}
+
+/**
+ * The state a Boolean used to report as "unsupported": a phone that can run
+ * the model and simply has not downloaded it yet. All three rows now offer the
+ * download instead of telling the user their phone cannot do it.
+ */
+@PreviewTest
+@Preview(name = "settings with the model still to download", widthDp = 412, heightDp = 1000, showBackground = true)
+@Composable
+private fun SettingsModelNeedsDownloadPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = true,
+            semanticSearchStatus = SemanticSearchStatus.NEEDS_DOWNLOAD,
+            derivedIntentionsEnabled = true,
+            modelTriageEnabled = true,
+            modelAvailability = ModelAvailability.DOWNLOADABLE,
+            viewModel = viewModel
+        )
+    }
+}
+
+/** And the state this phone is actually in: the system says it cannot. */
+@PreviewTest
+@Preview(name = "settings on a phone that cannot run the model", widthDp = 412, heightDp = 1000, showBackground = true)
+@Composable
+private fun SettingsModelUnsupportedPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.UNSUPPORTED,
+            derivedIntentionsEnabled = false,
+            modelTriageEnabled = false,
+            modelAvailability = ModelAvailability.UNAVAILABLE,
             viewModel = viewModel
         )
     }

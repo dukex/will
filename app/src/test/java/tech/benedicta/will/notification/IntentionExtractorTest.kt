@@ -44,6 +44,8 @@ class IntentionExtractorTest {
     fun `a message count suffix is not part of anyone's name`() {
         assertEquals("Maria", extract("Maria (3 messages)")?.subject)
         assertEquals("Maria", extract("Maria (2 mensagens)")?.subject)
+        assertEquals("Maria", extract("Maria (3 mensajes)")?.subject)
+        assertEquals("Maria", extract("Maria (1 mensaje)")?.subject)
     }
 
     @Test

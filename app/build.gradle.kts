@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.gradle.api.tasks.PathSensitivity
 import java.util.Properties
 
 plugins {
@@ -101,4 +102,14 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+tasks.withType<Test>().configureEach {
+    inputs.files(
+        layout.projectDirectory.dir("src/main/res").asFileTree.matching {
+            include("values*/strings.xml")
+        }
+    )
+        .withPropertyName("stringResources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

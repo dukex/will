@@ -1,0 +1,9 @@
+<resources>
+    <string name="accessibility_service_label">Seguimiento de tareas de Will</string>
+    <string name="accessibility_service_description">Registra a qué app cambias, para que Will mida el tiempo en la tarea y los cambios de contexto de la tarea activa. Solo lee el nombre del paquete en primer plano. Nada sale del dispositivo.</string>
+    <string name="share_target_label">enviar a Will</string>
+    <string name="share_task_added">tarea añadida</string>
+    <string name="share_nothing_to_add">nada que añadir</string>
+    <string name="derived_reply_to">responder a %1$s</string>
+    <string name="derived_call_back">devolver la llamada a %1$s</string>
+</resources>

@@ -111,6 +111,13 @@ class DeviceFeaturesJvmTest {
 
     // --- the on-device model, on a machine that has no AICore ---
 
+    /**
+     * This JVM has no AICore, so the call throws, which is the one case the
+     * whole distinction exists for: a question that failed is not the system
+     * answering that the device cannot serve the model. Asserting
+     * [ModelAvailability.UNAVAILABLE] here is what let settings tell someone
+     * their phone could not run it when nothing had established that.
+     */
     @Test
     fun `asking the model whether it is here answers instead of throwing`() {
         val model = GeminiNanoAppSearch(enabled = { true })
@@ -118,8 +125,9 @@ class DeviceFeaturesJvmTest {
         val availability = runBlocking { model.availability() }
 
         assertEquals(
-            "with no AICore there is no model, and that is an answer",
-            ModelAvailability.UNAVAILABLE,
+            "with no AICore the question cannot be asked, which is not the same " +
+                "as the system saying the device is unsupported",
+            ModelAvailability.UNKNOWN,
             availability
         )
     }
@@ -153,7 +161,8 @@ class DeviceFeaturesJvmTest {
         runBlocking { model.download() }
 
         assertEquals(
-            ModelAvailability.UNAVAILABLE,
+            "a download that could not even start leaves the question unanswered",
+            ModelAvailability.UNKNOWN,
             runBlocking { model.availability() }
         )
     }

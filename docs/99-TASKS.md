@@ -197,6 +197,120 @@ Subtasks:
 - [x] `Task.isAuthoredElsewhere` for SHARED and AGENT
 - [ ] Show it in the feed — the data is there, `TaskFeed` does not render it yet
 
+### US-16: Inferred completion ✅
+**As a user, I want Will to point out the tasks I have probably already dealt with, so clearing the feed is one tap instead of a memory exercise.**
+
+US-04 gave up on automatic completion because deciding from inside another app would have meant `canRetrieveWindowContent=true`, and that costs more privacy than the brand promise allows. The task log from US-12 reopens the question on the right side of that line: the inference sees timestamps, event types and package names, which is all the accessibility service ever exposed, and no content at all.
+
+Subtasks:
+- [x] `CompletionInference`, pure and with no Android dependency (15 unit tests)
+- [x] The rule, in order: the task is open; it was actually started; the user spent at least 30 seconds on it; nothing has happened for 20 minutes; the last event is under 24 hours old
+- [x] A notification nobody opened is never suggested, however long it sits. That is the property that keeps the feature from quietly burying unread work
+- [x] `TaskViewModel.completionSuggestions`, recomputed on a slow tick because a task becomes suggestable by time passing with no event to wake a flow
+- [x] The feed says `looks finished` as the last metadata segment. No badge, no accent, no new touch target: the checkbox that was already there is still the action
+- [x] End-to-end test over repository, recorder, log and view model (`CompletionSuggestionIntegrationTest`)
+- [x] Rendered and checked before handover (`TaskFeedSuggestionsPreview`)
+- [ ] Tune the thresholds against real use. 20 minutes and 30 seconds are reasoned, not measured, and they are constructor parameters so they can move without touching the rule
+- [ ] Decide whether an ignored suggestion should eventually stop being shown. Today it is derived, so it persists until the task changes
+
+This is also the first thing that reads the task log. Before it, US-12 was write-only.
+
+### US-17: Typed intentions find their app ✅
+**As a user, when I type "mandar o contrato no WhatsApp" I want tapping that task to open WhatsApp, instead of nothing happening.**
+
+A typed task was created with `sourcePackage = "manual"`, which is the sentinel for "no app to open". Tapping it called `getLaunchIntentForPackage("manual")`, got null, and did nothing. Every typed task was a dead end.
+
+Subtasks:
+- [x] `AppMentionResolver`: finds the installed app whose name the user wrote, accent-folded and case-insensitive, whole words only (13 unit tests)
+- [x] Wired into the typed-task path, so the task is created pointing at that app
+- [x] The launcher itself is never the target, which would be a loop
+- [x] One- and two-letter app names are ignored: they collide with ordinary words too often to be a signal
+- [x] Earliest mention wins, longest name breaks a tie, so "Google Chat" beats a bare "Chat"
+- [x] The resolution is visible before it is used: the feed already shows the app on the metadata line, so the user sees where the tap will go
+
+Deliberately literal. It resolves a name the user actually typed and does not guess that "pagar boleto" means a bank, because being wrong sends them into the wrong app. When it is unsure the task stays untargeted, which is what used to happen to every typed task.
+
+- [ ] Resolving an intention to a *screen* rather than an app, which is what `01-IDEA.md` wants from deep links. That needs reading the installed apps' declared intent filters and is a story of its own.
+
+### US-18: Search that survives Portuguese ✅
+**As a user typing in the app drawer, I want to find Itaú by typing "itau", and Google Drive by typing "gd".**
+
+The drawer filtered with `name.contains(query, ignoreCase = true)`. Ignoring case does nothing about accents, so `itau` never found "Itaú" and `configuracoes` never found "Configurações". On a phone used in Portuguese that failed several times a day.
+
+Subtasks:
+- [x] `AppMatcher`, pure and with no Android dependency (15 unit tests)
+- [x] Accents folded on both sides, so the query and the name meet in the middle
+- [x] Initials of a multi-word name: `gd` finds Google Drive
+- [x] Subsequence of the letters in order: `wapp` finds WhatsApp, `tlgrm` finds Telegram, and `ppaw` finds nothing
+- [x] Ranked, so a name that starts with the query beats one that merely contains it, and a scattered subsequence comes last
+- [x] Ties keep the repository's alphabetical order
+- [x] Replaces the filter in `LauncherViewModel`; its eight existing tests still pass unchanged
+
+- [ ] The same matcher over the task feed. US-06 still lists feed search as open, and it needs a search field in the home screen, which is a UI decision of its own.
+- [ ] This is matching, not meaning. "money" will not find the bank app. That needs embeddings, which is the blocked US-15 problem.
+
+### US-19: A notification becomes what to do about it ✅
+**As a user, I want a message from Maria to read "responder Maria" in my feed, instead of just "Maria".**
+
+This is the thesis of `01-IDEA.md`: "um alerta de mensagem se transforme na tarefa 'Responder Contato'". Until now the feed mirrored the notification; the task was titled with the sender's name and the user had to supply the verb themselves.
+
+Subtasks:
+- [x] `IntentionExtractor`, pure, reading the notification's own category (15 unit tests)
+- [x] A message or an email becomes replying to the sender; a missed call becomes calling back
+- [x] `Sender: message` titles yield the sender, and `(3 messages)` suffixes are not part of anyone's name
+- [x] A title long enough to be the message itself is left alone: that notification carries no sender to reply to
+- [x] Everything that is not a conversation arrives exactly as it was, which is most notifications
+- [x] `Task.rawTitle` keeps the original, so the derivation is reversible and auditable. Migration 9→10
+- [x] The phrasing comes from a string resource, so it follows the phone's language. `values-pt` ships the Portuguese
+- [x] `NotificationToTask` holds the whole conversion so it can be tested; the service keeps only what needs Android (8 tests)
+- [x] The conversation key still follows the original title, so two messages from Maria stay one task
+- [x] Triage judges the original title, not the derived one: the noise patterns are written against vendor wording
+- [x] Rendered and checked before handover (`TaskFeedDerivedPreview`)
+
+No language model, and no guessing at what a sentence means. It reads a category the system already attaches, which is why it can be exact. Typed intentions never pass through here: `01-IDEA.md` promises those stay "exatamente como o usuário a escreveu", and that promise is intact.
+
+- [ ] Show the original title in the feed. It is in the data; nothing renders it yet, and the derived title already contains the sender, so nothing is currently hidden.
+- [ ] Richer kinds than reply and call back. "Confirme sua presença" is an intention too, but reading that needs the model work blocked under US-15.
+
+### US-20: Will learns what you throw away ✅
+**As a user, I want Will to stop showing me the notification I keep deleting, without me having to go and configure anything.**
+
+The pattern list knows the housekeeping notifications someone wrote down in advance. It cannot know that *this* phone gets a weekly promo from one shop that this user never once acted on. That part has to be learned from the user, and the signal already exists in what they do.
+
+Subtasks:
+- [x] `LearnedNoiseRepository`: counts dismissals per app and title, with a SharedPreferences implementation capped at 200 entries (13 unit tests)
+- [x] Three dismissals silence a title; one completion unlearns it, because acting on one proves it mattered
+- [x] The lesson is per app **and** per title: silencing one promo must not silence the whole app
+- [x] Titles are folded for case, accents and spacing, so a vendor reformatting its own message does not reset the count
+- [x] `LearnedIntentionClassifier` composes it with the patterns; cheap check first (7 unit tests)
+- [x] Taught by actions the user already performs: deleting an unfinished notification task teaches noise, finishing one teaches the opposite
+- [x] Only notification tasks teach. A task you typed or an app shared in is never a complaint about a notification
+- [x] Tidying up an already-finished task from the done screen teaches nothing
+- [x] Visible and reversible: `data & privacy` lists what was silenced, with "show again" per entry
+- [x] "delete all task history" forgets everything learned
+- [x] End-to-end test of the loop as the user lives it (6 tests)
+- [x] Rendered and checked before handover (`PrivacySettingsSilencedPreview`)
+
+This is the "learn from the user's own stream" idea from US-15, built without a model. Three dismissals is a reasoned threshold, not a measured one.
+
+- [ ] The same signal, kept as labelled examples, is what US-15's model needs. Nothing here stores enough for that yet, and doing so is a privacy decision of its own.
+
+### US-21: What you are working on, reachable from outside Will ✅
+**As a user, I want a long press on the Will icon to offer the task I am in the middle of.**
+
+Completes the agent-surface list from the AI-readiness direction. `will://task` lets anything put a task in; this lets the system read out the one task that matters right now.
+
+Subtasks:
+- [x] `ActiveTaskShortcut`, pure, deciding what to publish and how to label it (11 unit tests)
+- [x] Only a task that is actually in progress; nothing finished and nothing untouched
+- [x] A stable shortcut id, so the shortcut is replaced rather than piling up
+- [x] Labels cut to what the system renders, rather than the shortcut being rejected
+- [x] `ActiveTaskShortcutPublisher` pushes and removes it, following the active task
+- [x] Failures are swallowed: no launcher should crash because a system surface refused a shortcut
+- [x] No new dependency; `androidx.core` was already here
+
+- [ ] Verify on a device that the shortcut appears and opens the right task. The rules have tests; `ShortcutManagerCompat` itself cannot be exercised in a JVM test, and this container has no emulator.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

@@ -14,5 +14,10 @@ data class Task(
     val conversationKey: String? = null,
     val unreadCount: Int = 1,
     val shortcutId: String? = null,
-    val origin: TaskOrigin = TaskOrigin.NOTIFICATION
+    val origin: TaskOrigin = TaskOrigin.NOTIFICATION,
+    /**
+     * The notification's own title, when [title] was derived from it. Null
+     * when the title is exactly what arrived, which is the usual case.
+     */
+    val rawTitle: String? = null
 )

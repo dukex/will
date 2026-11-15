@@ -5,16 +5,24 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import tech.benedicta.will.notification.LearnedNoiseRepository
 
 class TaskViewModel(
     private val repository: TaskRepository,
     private val events: TaskEventRecorder,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val eventLog: TaskEventRepository,
+    private val learnedNoise: LearnedNoiseRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val inference: CompletionInference = CompletionInference(),
+    private val now: () -> Long = System::currentTimeMillis
 ) : ViewModel() {
 
     val tasks: StateFlow<List<Task>> = repository.getAllTasks()
@@ -23,6 +31,45 @@ class TaskViewModel(
     val activeTask: StateFlow<Task?> = repository.getAllTasks()
         .map { list -> list.firstOrNull { it.isActive } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /**
+     * Tasks the log suggests are already finished. A hint for the feed, never
+     * an action: completing is still the user's tap.
+     *
+     * A task becomes suggestable purely by time passing, with no event to wake
+     * a flow, so this re-reads on a slow tick. [SharingStarted.WhileSubscribed]
+     * stops the tick when nothing is looking at the feed.
+     */
+    val completionSuggestions: StateFlow<Set<Long>> = combine(
+        repository.getAllTasks(),
+        eventLog.eventsSince(inference.historyWindow(now())),
+        ticker()
+    ) { tasks, events, instant ->
+        inference.suggestedTaskIds(tasks, events, instant)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
+    /**
+     * Throwing away a notification you never finished says it was not worth a
+     * row. Only notifications teach this: a task you typed or an app sent in
+     * is not something Will should learn to hide.
+     */
+    private suspend fun Task.teachDismissed() {
+        if (origin != TaskOrigin.NOTIFICATION || completedAt != null) return
+        learnedNoise.recordDismissed(sourcePackage, rawTitle ?: title)
+    }
+
+    /** Acting on one proves it mattered, whatever was learned before. */
+    private suspend fun Task.teachKept() {
+        if (origin != TaskOrigin.NOTIFICATION) return
+        learnedNoise.recordKept(sourcePackage, rawTitle ?: title)
+    }
+
+    private fun ticker() = flow {
+        while (true) {
+            emit(now())
+            delay(SUGGESTION_REFRESH_MILLIS)
+        }
+    }
 
     fun setActiveTask(task: Task) {
         viewModelScope.launch(dispatcher) {
@@ -43,10 +90,12 @@ class TaskViewModel(
                         task.copy(completedAt = System.currentTimeMillis(), conversationKey = null)
                     )
                     events.completed(task.id)
+                    task.teachKept()
                 }
                 ACTION_DELETE -> {
                     repository.deleteTask(task)
                     events.forgot(task.id)
+                    task.teachDismissed()
                 }
                 // "later" leaves the task open and only drops it from active,
                 // which clearActiveTask below turns into a pause.
@@ -57,6 +106,8 @@ class TaskViewModel(
     }
 
     companion object {
+        private const val SUGGESTION_REFRESH_MILLIS = 60_000L
+
         const val ACTION_DONE = "tech.benedicta.will.TASK_DONE"
         const val ACTION_DELETE = "tech.benedicta.will.TASK_DELETE"
         const val ACTION_LATER = "tech.benedicta.will.TASK_LATER"
@@ -83,6 +134,7 @@ class TaskViewModel(
             repository.clearConversationKey(task.id)
             repository.deleteTask(task)
             events.forgot(task.id)
+            task.teachDismissed()
         }
     }
 
@@ -93,6 +145,7 @@ class TaskViewModel(
                 task.copy(completedAt = System.currentTimeMillis(), conversationKey = null)
             )
             events.completed(task.id)
+            task.teachKept()
         }
     }
 
@@ -107,15 +160,18 @@ class TaskViewModel(
         viewModelScope.launch(dispatcher) {
             repository.deleteAllTasks()
             events.forgotEverything()
+            learnedNoise.forgetEverything()
         }
     }
 
     class Factory(
         private val repository: TaskRepository,
-        private val events: TaskEventRecorder
+        private val events: TaskEventRecorder,
+        private val eventLog: TaskEventRepository,
+        private val learnedNoise: LearnedNoiseRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T =
-            TaskViewModel(repository, events) as T
+            TaskViewModel(repository, events, eventLog, learnedNoise) as T
     }
 }

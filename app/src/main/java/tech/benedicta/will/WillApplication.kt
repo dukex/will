@@ -15,16 +15,20 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import tech.benedicta.will.infrastructure.AndroidPermissionInspector
 import tech.benedicta.will.infrastructure.SharedPrefsAppFilterRepository
+import tech.benedicta.will.infrastructure.SharedPrefsLearnedNoiseRepository
 import tech.benedicta.will.infrastructure.SharedPrefsOnboardingRepository
 import tech.benedicta.will.infrastructure.SharedPrefsPinnedAppsRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskEventRepository
 import tech.benedicta.will.infrastructure.room.RoomTaskRepository
 import tech.benedicta.will.infrastructure.room.WillDatabase
+import tech.benedicta.will.launcher.ActiveTaskShortcutPublisher
 import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.lifecycle.TaskLifecycleApplier
 import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
 import tech.benedicta.will.notification.IntentionClassifier
+import tech.benedicta.will.notification.LearnedIntentionClassifier
+import tech.benedicta.will.notification.LearnedNoiseRepository
 import tech.benedicta.will.notification.PatternIntentionClassifier
 import tech.benedicta.will.onboarding.OnboardingRepository
 import tech.benedicta.will.onboarding.PermissionInspector
@@ -51,8 +55,11 @@ class WillApplication : Application() {
     val taskEventRecorder: TaskEventRecorder by lazy {
         TaskEventRecorder(taskEventRepository)
     }
+    val learnedNoiseRepository: LearnedNoiseRepository by lazy {
+        SharedPrefsLearnedNoiseRepository(this)
+    }
     val intentionClassifier: IntentionClassifier by lazy {
-        PatternIntentionClassifier()
+        LearnedIntentionClassifier(PatternIntentionClassifier(), learnedNoiseRepository)
     }
     val appFilterRepository: AppFilterRepository by lazy {
         SharedPrefsAppFilterRepository(this)
@@ -80,6 +87,10 @@ class WillApplication : Application() {
             repository = taskRepository,
             events = taskEventRecorder
         )
+    }
+
+    private val activeTaskShortcuts: ActiveTaskShortcutPublisher by lazy {
+        ActiveTaskShortcutPublisher(this)
     }
 
     private val _overlayEvents = MutableSharedFlow<OverlayEvent>(
@@ -126,6 +137,12 @@ class WillApplication : Application() {
                 .map { it?.id }
                 .distinctUntilChanged()
                 .collect { taskLifecycleApplier.resetForActiveTaskChange() }
+        }
+        // What the user is working on is reachable from outside Will, through
+        // the shortcut a long press on the icon shows.
+        applicationScope.launch {
+            // StateFlow already conflates, so no distinctUntilChanged here.
+            activeTaskFlow.collect { activeTaskShortcuts.publish(it) }
         }
     }
 }

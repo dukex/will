@@ -3,6 +3,12 @@
 ## [unreleased]
 
 ### added
+- a long press on the Will icon offers the task you are in the middle of, so what you are working on is one gesture away from anywhere
+- Will stops showing the notification you keep throwing away — delete the same one three times and it stops reaching your feed. Finish one and it comes back, because acting on it proves it mattered. You can see everything it silenced, and undo any of it, under data & privacy. It only learns from notifications you deleted without finishing, never from tasks you typed yourself
+- Will now speaks Portuguese — the texts the launcher itself writes follow your phone's language, including the new task titles it derives from your notifications
+- your feed now says what to do, not who it was from — a WhatsApp message from Maria reads "responder Maria", a missed call reads "ligar de volta para Miguel". Anything that is not a conversation, like a bank alert, arrives exactly as it was. The wording follows your phone's language, and the original title is kept so nothing is lost
+- a task you type now opens the app you mentioned — write "mandar o contrato no WhatsApp" and tapping the task opens WhatsApp. Before this, typing a task gave you something that did nothing when tapped. Will only follows an app name you actually wrote; it does not try to guess which app you meant
+- Will points out what you have probably already done — a task you opened, spent time on and left alone now reads "looks finished" in the feed, so clearing it is one tap on the checkbox that was already there. It never completes anything by itself, and a notification you never opened is never suggested, however long it has been sitting there. Worked out from timestamps and app names only, nothing from inside your apps
 - housekeeping notifications in Spanish no longer clutter the feed — "Descargando archivo", "Carga completada", "Actualización completada", "Próxima alarma" and the rest of the chatter are now recognised and skipped, with or without accents, the same way the English and Portuguese ones already were. A message from a person that merely mentions one of those words still reaches you
 - notifications in Portuguese no longer clutter the feed — "Baixando vídeo", "Carregamento concluído", "Atualização concluída", "Sua hora de dormir começa" and the rest of the housekeeping chatter are now recognised and skipped, in Portuguese as well as English, with or without accents
 - the feed says when a task was not yours — a task another app shared into Will reads "shared" next to the app it came from, and one an agent wrote reads "from agent". a notification or something you typed says nothing extra, because that is the ordinary case and naming it would add a word to every row
@@ -23,6 +29,7 @@
 - pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
 
 ### fixed
+- searching the app drawer now works in Portuguese — typing "itau" finds Itaú and "configuracoes" finds Configurações. Accents used to make the app invisible to its own name. You can also type initials ("gd" for Google Drive) or just the consonants ("tlgrm" for Telegram), and the closest match comes first
 - only the task you are working on is highlighted as active — every other started-but-not-finished task now shows as paused, with its own muted dot, so the home screen reflects what you are actually doing right now
 - uninstalled apps no longer linger in the pinned row — the launcher refreshes its app list every time you return home, so pins for apps you removed disappear automatically
 - WhatsApp and other messengers no longer spam the feed — repeated notifications from the same chat collapse into a single task and the tap always opens the most recent message

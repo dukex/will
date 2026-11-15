@@ -53,6 +53,7 @@ fun TaskFeed(
     onTap: (Task) -> Unit = {},
     onMarkDone: (Task) -> Unit = {},
     header: (LazyListScope.() -> Unit)? = null,
+    suggestedFinished: Set<Long> = emptySet(),
     modifier: Modifier = Modifier
 ) {
     val insets = WindowInsets.safeDrawing.asPaddingValues()
@@ -104,7 +105,8 @@ fun TaskFeed(
                 TaskItem(
                     task = task,
                     onTap = onTap,
-                    onMarkDone = onMarkDone
+                    onMarkDone = onMarkDone,
+                    looksFinished = task.id in suggestedFinished
                 )
                 HorizontalDivider(color = WillBorder, thickness = 1.dp)
             }
@@ -119,7 +121,8 @@ fun TaskFeed(
                 TaskItem(
                     task = task,
                     onTap = onTap,
-                    onMarkDone = onMarkDone
+                    onMarkDone = onMarkDone,
+                    looksFinished = task.id in suggestedFinished
                 )
                 HorizontalDivider(color = WillBorder, thickness = 1.dp)
             }
@@ -180,7 +183,8 @@ private fun EmptyState(
 private fun TaskItem(
     task: Task,
     onTap: (Task) -> Unit,
-    onMarkDone: (Task) -> Unit
+    onMarkDone: (Task) -> Unit,
+    looksFinished: Boolean = false
 ) {
     val context = LocalContext.current
     // Null when the task points at no app: the sentinel is storage, not a name
@@ -224,7 +228,8 @@ private fun TaskItem(
                     appLabel = appLabel,
                     origin = task.origin,
                     time = formatTimestamp(task.createdAt),
-                    unreadCount = task.unreadCount
+                    unreadCount = task.unreadCount,
+                    looksFinished = looksFinished
                 ),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

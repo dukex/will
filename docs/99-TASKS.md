@@ -335,7 +335,32 @@ At a threshold safe enough to lose no real message it catches about a quarter of
 
 The failures say what is missing. Out of fold the model scored `Tom: alarm did not go off, running late` at 0.989 noise and `Meeting starts in 10 minutes` at 0.93: exactly the boundary where a message mentions a housekeeping word. 347 invented examples cannot teach that.
 
-**What would unblock it** is data, and Will is sitting on the source. The launcher already sees every notification, and `TaskEvent` already records what the user does with each task. An opt-in, on-device record of titles against keep-or-dismiss gives a training set that is both larger and drawn from the user's own stream rather than from someone's guesses. That is the prerequisite, and it is a user story of its own before any model is worth adding.
+**What would unblock it** is data, and the stream is there even though the record is not. The launcher sees every notification and `TaskEvent` records what the user does with each task, but nothing currently retains a labelled pair, and two deliberate rules are why:
+
+- `LearnedNoiseRepository.recordKept` **removes** the entry. Acting on a notification is exactly the positive example a classifier needs, and it is the moment Will forgets. The store is for silencing, so unlearning is the right behaviour there; it just means the positive class is never kept.
+- `TaskEventRecorder.forgot(taskId)` deletes the task's events when the task is deleted (US-07, and `TaskEventType` has no `DELETED` for the same reason). Throwing a notification away is the negative example, and it is the moment the trail is erased.
+
+What survives is the negative class as a count per shape, capped at 200 entries with the least-dismissed evicted. That is correct for deciding what to silence and useless for training anything.
+
+So the prerequisite is not reading data Will already has. It is choosing to keep some, which is a new kind of retention and therefore needs its own opt-in. See PT-03.
+
+### PT-03: a record worth training on ⬜ not started
+
+**So that a model can one day be trained on this user's own notifications rather than on invented examples, Will keeps a labelled record of what the user kept and what they threw away.**
+
+This exists because Gemini Nano is not available on every phone, and in particular not on the primary user's: a Motorola Edge 60 Fusion answers `FeatureStatus.UNAVAILABLE`, so every model-backed feature is inert there. LiteRT is the only clean runtime measured, and it needs a model, and a model needs this.
+
+Subtasks:
+- [ ] Opt-in, off by default, its own preference and its own prefs file. Keeping a history of notification titles is a different ask from anything the user has already agreed to, and `One opt-in does not carry another` already applies
+- [ ] Records `(sourcePackage, title, kept|dismissed)` from the signals already in use: deleting a task unfinished is a dismissal, finishing one is a keep. Nothing new to teach and no new permission
+- [ ] Capped, with the eviction rule chosen so both classes survive. The existing 200-entry least-dismissed eviction would empty the positive class first
+- [ ] Listed in `data & privacy` with a count and a way to delete it, because CLAUDE.md requires what Will learns to be visible and undoable, and "delete all task history" takes it
+- [ ] Changes no current behaviour: the pattern list, the learned-noise store and the feed all work exactly as they do now
+- [ ] A way to read the count, so "is there enough yet" is answerable without guessing
+
+**It has a cold start, and that is the honest cost.** The record is worth nothing until the user has run Will for weeks. Until then the pattern list and what the user has already thrown away carry the feed, which is what they do today. No model, no LiteRT and no change to the feed are part of this task.
+
+**Why a PT rather than a US.** It delivers the user almost nothing by itself, which fails INVEST's *Valuable*. Calling it a user story would be dressing a prerequisite as a feature; the repo already has PT-01 and PT-02 for exactly this.
 
 ### US-14: AppFunctions surface ⬜ deferred
 **As a user, I want an assistant or agent on my phone to be able to put work on my home screen and see what I am holding, without anything leaving the device.**

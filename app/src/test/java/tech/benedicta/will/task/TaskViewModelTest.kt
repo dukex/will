@@ -17,6 +17,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import tech.benedicta.will.infrastructure.memory.MemoryLearnedNoiseRepository
 import tech.benedicta.will.infrastructure.memory.MemoryTaskEventRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,9 +35,16 @@ class TaskViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun viewModelFor(repo: TaskRepository): TaskViewModel {
+        val log = MemoryTaskEventRepository()
+        return TaskViewModel(
+            repo, TaskEventRecorder(log), log, MemoryLearnedNoiseRepository(), testDispatcher
+        )
+    }
+
     @Test
     fun `tasks state starts empty when repository is empty`() = runTest {
-        val viewModel = TaskViewModel(FakeViewModelTaskRepository(), TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(FakeViewModelTaskRepository())
 
         assertTrue(viewModel.tasks.value.isEmpty())
     }
@@ -45,7 +53,7 @@ class TaskViewModelTest {
     fun `tasks state reflects repository tasks`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "A", text = "body", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
 
         assertEquals(1, viewModel.tasks.value.size)
         assertEquals("A", viewModel.tasks.value[0].title)
@@ -54,7 +62,7 @@ class TaskViewModelTest {
     @Test
     fun `addTask inserts task into repository`() = runTest {
         val repo = FakeViewModelTaskRepository()
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val task = Task(title = "New task", text = "body", sourcePackage = "pkg", createdAt = 0L)
 
         viewModel.addTask(task)
@@ -67,7 +75,7 @@ class TaskViewModelTest {
     fun `deleteTask removes task from repository`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
 
         viewModel.deleteTask(viewModel.tasks.value[0])
 
@@ -78,7 +86,7 @@ class TaskViewModelTest {
     fun `markDone sets completedAt on the task`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
 
         viewModel.markDone(viewModel.tasks.value[0])
 
@@ -93,7 +101,7 @@ class TaskViewModelTest {
     fun `handleOverlayAction ACTION_DONE marks task as done`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val taskId = viewModel.tasks.value[0].id
 
         viewModel.handleOverlayAction("tech.benedicta.will.TASK_DONE", taskId)
@@ -107,7 +115,7 @@ class TaskViewModelTest {
     fun `handleOverlayAction ACTION_DELETE removes task`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val taskId = viewModel.tasks.value[0].id
 
         viewModel.handleOverlayAction("tech.benedicta.will.TASK_DELETE", taskId)
@@ -119,7 +127,7 @@ class TaskViewModelTest {
     fun `handleOverlayAction ACTION_LATER leaves task unchanged`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val taskId = viewModel.tasks.value[0].id
 
         viewModel.handleOverlayAction("tech.benedicta.will.TASK_LATER", taskId)
@@ -141,7 +149,7 @@ class TaskViewModelTest {
                 conversationKey = "com.whatsapp:maria"
             )
         )
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val taskId = viewModel.tasks.value[0].id
 
         viewModel.handleOverlayAction("tech.benedicta.will.TASK_LATER", taskId)
@@ -158,7 +166,7 @@ class TaskViewModelTest {
     fun `handleOverlayAction with unknown taskId is a no-op`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
 
         viewModel.handleOverlayAction("tech.benedicta.will.TASK_DONE", taskId = 999L)
 
@@ -169,7 +177,7 @@ class TaskViewModelTest {
     fun `handleOverlayAction clears active task state`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "Buy milk", text = "", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         viewModel.setActiveTask(viewModel.tasks.value[0])
         val taskId = viewModel.tasks.value[0].id
 
@@ -181,7 +189,7 @@ class TaskViewModelTest {
     @Test
     fun `addTaskAndStart inserts task and marks it active`() = runTest {
         val repo = FakeViewModelTaskRepository()
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val task = Task(
             title = "Reply Maria",
             text = "",
@@ -201,7 +209,7 @@ class TaskViewModelTest {
     @Test
     fun `addTaskAndStart does not insert with isActive=true (avoids transient double-active)`() = runTest {
         val repo = FakeViewModelTaskRepository()
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
 
         viewModel.addTaskAndStart(
             Task(title = "X", text = "", sourcePackage = "p", createdAt = 0L)
@@ -220,7 +228,7 @@ class TaskViewModelTest {
         repo.insertTask(
             Task(title = "Old", text = "", sourcePackage = "com.old", createdAt = 0L, startedAt = 500L)
         )
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
 
         viewModel.addTaskAndStart(
             Task(title = "New", text = "", sourcePackage = "com.new", createdAt = 1000L)
@@ -235,7 +243,7 @@ class TaskViewModelTest {
     fun `markDone persists completedAt timestamp`() = runTest {
         val repo = FakeViewModelTaskRepository()
         repo.insertTask(Task(title = "A", text = "b", sourcePackage = "pkg", createdAt = 0L))
-        val viewModel = TaskViewModel(repo, TaskEventRecorder(MemoryTaskEventRepository()), testDispatcher)
+        val viewModel = viewModelFor(repo)
         val before = System.currentTimeMillis()
 
         viewModel.markDone(viewModel.tasks.value[0])
@@ -250,7 +258,9 @@ class TaskViewModelTest {
     private fun viewModelWithLog(
         repo: FakeViewModelTaskRepository,
         log: MemoryTaskEventRepository
-    ) = TaskViewModel(repo, TaskEventRecorder(log), testDispatcher)
+    ) = TaskViewModel(
+        repo, TaskEventRecorder(log), log, MemoryLearnedNoiseRepository(), testDispatcher
+    )
 
     @Test
     fun `adding a task logs it as created`() = runTest {

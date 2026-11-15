@@ -32,7 +32,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,11 +49,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.AppLaunchAction
 import tech.benedicta.will.launcher.AppLaunchGate
+import tech.benedicta.will.launcher.AppMentionResolver
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
 import tech.benedicta.will.launcher.SystemAppRepository
 import tech.benedicta.will.notification.AppFilterViewModel
+import tech.benedicta.will.notification.SilencedNotification
 import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
@@ -156,7 +160,12 @@ class MainActivity : ComponentActivity() {
                 )
                 this@MainActivity.launcherVm = launcherVm
                 taskVm = viewModel(
-                    factory = TaskViewModel.Factory(taskRepository, app.taskEventRecorder)
+                    factory = TaskViewModel.Factory(
+                        taskRepository,
+                        app.taskEventRecorder,
+                        app.taskEventRepository,
+                        app.learnedNoiseRepository
+                    )
                 )
 
                 val appFilterVm: AppFilterViewModel = viewModel(
@@ -171,16 +180,20 @@ class MainActivity : ComponentActivity() {
                 )
 
                 val filteredApps by launcherVm.filteredApps.collectAsState()
+                val allApps by launcherVm.apps.collectAsState()
                 val appSearchQuery by launcherVm.query.collectAsState()
                 val tasks by taskVm.tasks.collectAsState()
+                val suggestedFinished by taskVm.completionSuggestions.collectAsState()
                 val pinnedApps by pinnedAppsVm.pinnedApps.collectAsState()
                 val notificationPermissionGranted = isNotificationListenerEnabled()
 
                 WillScreen(
                     apps = filteredApps,
+                    allApps = allApps,
                     appSearchQuery = appSearchQuery,
                     onAppSearchQueryChange = launcherVm::setQuery,
                     tasks = tasks,
+                    suggestedFinished = suggestedFinished,
                     taskVm = taskVm,
                     appFilterVm = appFilterVm,
                     pinnedApps = pinnedApps,
@@ -325,9 +338,11 @@ private fun AppDrawerOverlay(
 @Composable
 private fun WillScreen(
     apps: List<LauncherApp>,
+    allApps: List<LauncherApp>,
     appSearchQuery: String,
     onAppSearchQueryChange: (String) -> Unit,
     tasks: List<Task>,
+    suggestedFinished: Set<Long>,
     taskVm: TaskViewModel,
     appFilterVm: AppFilterViewModel,
     pinnedApps: List<LauncherApp>,
@@ -345,6 +360,7 @@ private fun WillScreen(
     var currentScreen by remember { mutableStateOf(Screen.Home) }
     var appDrawerOpen by remember { mutableStateOf(false) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
+    val appMentionResolver = remember { AppMentionResolver(context.packageName) }
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
         scope.launch {
@@ -406,9 +422,25 @@ private fun WillScreen(
             return
         }
         Screen.PrivacySettings -> {
+            val application = context.applicationContext as WillApplication
+            var silenced by remember { mutableStateOf(emptyList<SilencedNotification>()) }
+            var silencedRevision by remember { mutableIntStateOf(0) }
+            LaunchedEffect(silencedRevision) {
+                silenced = application.learnedNoiseRepository.silenced()
+            }
             PrivacySettings(
                 onBack = { currentScreen = Screen.Settings },
-                onDeleteAllTasks = { taskVm.deleteAllTasks() }
+                onDeleteAllTasks = {
+                    taskVm.deleteAllTasks()
+                    silencedRevision++
+                },
+                silencedNotifications = silenced,
+                onForgetSilenced = { entry ->
+                    scope.launch {
+                        application.learnedNoiseRepository.forget(entry.sourcePackage, entry.title)
+                        silencedRevision++
+                    }
+                }
             )
             return
         }
@@ -462,6 +494,7 @@ private fun WillScreen(
                         taskVm.markDone(task)
                     },
                     header = pinnedHeader,
+                    suggestedFinished = suggestedFinished,
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -521,11 +554,16 @@ private fun WillScreen(
         IntentInputSheet(
             onDismiss = { showIntentInputSheet = false },
             onAddTask = { title ->
+                // An intention that names an app gets that app as its target,
+                // so tapping the task opens it. Before this a typed task had
+                // nowhere to go and the tap did nothing.
+                val mentioned = appMentionResolver.resolve(title, allApps)
                 taskVm.addTask(
                     Task(
                         title = title,
                         text = "",
-                        sourcePackage = TaskOrigin.MANUAL_SOURCE_PACKAGE,
+                        sourcePackage = mentioned?.packageName
+                            ?: TaskOrigin.MANUAL_SOURCE_PACKAGE,
                         createdAt = System.currentTimeMillis(),
                         origin = TaskOrigin.MANUAL
                     )

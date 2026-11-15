@@ -110,3 +110,79 @@ private fun TaskFeedActivePreview() {
         )
     }
 }
+
+/** A feed where the log thinks two of the tasks were already dealt with. */
+@PreviewTest
+@Preview(name = "feed with finished suggestions", widthDp = 412, heightDp = 420, showBackground = true)
+@Composable
+private fun TaskFeedSuggestionsPreview() {
+    WillTheme {
+        TaskFeed(
+            tasks = listOf(
+                sampleTask(
+                    id = 1,
+                    title = "Sarah: can you review the PR today",
+                    sourcePackage = "com.slack",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 42
+                ),
+                sampleTask(
+                    id = 2,
+                    title = "pagar o boleto da luz",
+                    sourcePackage = TaskOrigin.MANUAL_SOURCE_PACKAGE,
+                    origin = TaskOrigin.MANUAL,
+                    minutesAgo = 95
+                ),
+                sampleTask(
+                    id = 3,
+                    title = "contract draft to read before friday",
+                    sourcePackage = "com.whatsapp",
+                    origin = TaskOrigin.SHARED,
+                    minutesAgo = 140
+                )
+            ),
+            suggestedFinished = setOf(1L, 3L),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        )
+    }
+}
+
+/** Conversation notifications read as what to do about them. */
+@PreviewTest
+@Preview(name = "feed with derived intentions", widthDp = 412, heightDp = 420, showBackground = true)
+@Composable
+private fun TaskFeedDerivedPreview() {
+    WillTheme {
+        TaskFeed(
+            tasks = listOf(
+                sampleTask(
+                    id = 1,
+                    title = "responder Maria",
+                    sourcePackage = "com.whatsapp",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 3,
+                    unreadCount = 2
+                ),
+                sampleTask(
+                    id = 2,
+                    title = "ligar de volta para Miguel",
+                    sourcePackage = "com.android.dialer",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 25
+                ),
+                sampleTask(
+                    id = 3,
+                    title = "Boleto vence hoje",
+                    sourcePackage = "com.itau",
+                    origin = TaskOrigin.NOTIFICATION,
+                    minutesAgo = 68
+                )
+            ),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        )
+    }
+}

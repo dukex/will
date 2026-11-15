@@ -82,6 +82,9 @@ class IntentionExtractor {
         private const val MAXIMUM_SUBJECT_LENGTH = 40
 
         private val MESSAGE_COUNT_SUFFIX =
-            Regex("\\s*\\(\\d+ (messages?|mensagens?|mensagem)\\).*$", RegexOption.IGNORE_CASE)
+            Regex(
+                "\\s*\\(\\d+ (messages?|mensagens?|mensagem|mensajes?)\\).*$",
+                RegexOption.IGNORE_CASE
+            )
     }
 }

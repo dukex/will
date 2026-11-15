@@ -311,6 +311,22 @@ Subtasks:
 
 - [ ] Verify on a device that the shortcut appears and opens the right task. The rules have tests; `ShortcutManagerCompat` itself cannot be exercised in a JVM test, and this container has no emulator.
 
+### US-26: Will speaks Spanish ✅
+
+Everything the launcher writes for itself, and everything it derives from a notification, already followed the phone's language through string resources. Only English and Portuguese existed, so a phone set to Spanish fell back to English: the accessibility prompt, the share sheet entry and the derived titles all read "reply to Maria". The noise patterns were in the same state, which was worse, because a feed that cannot recognise "Carga completada" is as noisy as it was before any of the triage work.
+
+Subtasks:
+- [x] Spanish housekeeping patterns in `PatternIntentionClassifier`, accent-folded like the others, so `ñ` folds to `n` and an unaccented title still matches
+- [x] A message from a person that merely mentions one of those words still reaches the feed: the patterns are anchored, not substring matches
+- [x] `values-es` ships the launcher's own strings and the derived phrasings: "responder a Maria", "devolver la llamada a Miguel"
+- [x] `(3 mensajes)` is read as a message count, not as part of the sender's name
+- [x] Key parity with `values-pt` is checked, so a string added to one language is not silently missing from the other
+
+The patterns are a list, and the list is the limit: a phone set to a language it does not cover keeps every notification. That is the safe direction, since a false keep costs one dismissable row and a false drop means a message the user never sees. It also means the quieter feed is a promise Will only keeps in three languages so far.
+
+- [ ] Spanish verbs in the typed-intention path, so "llamar a Quezia" resolves the way "ligar para Quezia" does. Waits on the slice that introduces the resolver.
+- [ ] Spanish category words in the drawer, so "juego" finds what "jogo" finds. Same slice.
+
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
 

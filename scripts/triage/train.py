@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""Trains the notification triage model and emits the Kotlin weights.
+
+The model is a logistic regression over hashed character n-grams. It is small
+on purpose: the weights ship as source, inference is a dot product in Kotlin,
+and the whole thing runs with no dependency and no native code.
+
+Run from the repository root:
+
+    python3 scripts/triage/train.py
+
+It rewrites app/src/main/java/tech/benedicta/will/notification/TriageModelWeights.kt
+and prints held-out accuracy. The features must stay in step with
+TriageFeatures.kt; both derive from hashedFeatures() below.
+"""
+
+import hashlib
+import pathlib
+import random
+import sys
+
+import numpy as np
+
+BUCKETS = 4096
+CHAR_NGRAMS = (3, 4, 5)
+SEED = 20261104
+
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+DATASET = ROOT / "scripts" / "triage" / "dataset.tsv"
+KOTLIN_OUT = (
+    ROOT
+    / "app"
+    / "src"
+    / "main"
+    / "java"
+    / "tech"
+    / "benedicta"
+    / "will"
+    / "notification"
+    / "TriageModelWeights.kt"
+)
+
+ACCENTS = str.maketrans("áàãâéêíóõôúç", "aaaaeeiooouc")
+
+
+def normalise(text):
+    """Must match TriageFeatures.normalise in Kotlin exactly."""
+    lowered = text.lower().translate(ACCENTS)
+    kept = [char if char.isalnum() or char.isspace() else " " for char in lowered]
+    return " ".join("".join(kept).split())
+
+
+def bucket(token):
+    """Must match TriageFeatures.bucket in Kotlin exactly."""
+    digest = hashlib.md5(token.encode("utf-8")).digest()
+    value = int.from_bytes(digest[:4], "big")
+    return value % BUCKETS
+
+
+def hashed_features(text):
+    """Must match TriageFeatures.featuresOf in Kotlin exactly."""
+    normalised = normalise(text)
+    if not normalised:
+        return {}
+    padded = f" {normalised} "
+    counts = {}
+    for size in CHAR_NGRAMS:
+        for start in range(len(padded) - size + 1):
+            counts[bucket(f"c{size}:{padded[start:start + size]}")] = (
+                counts.get(bucket(f"c{size}:{padded[start:start + size]}"), 0) + 1
+            )
+    words = normalised.split()
+    for word in words:
+        key = bucket(f"w:{word}")
+        counts[key] = counts.get(key, 0) + 1
+    for first, second in zip(words, words[1:]):
+        key = bucket(f"b:{first} {second}")
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def vectorise(texts):
+    matrix = np.zeros((len(texts), BUCKETS), dtype=np.float32)
+    for row, text in enumerate(texts):
+        for index, count in hashed_features(text).items():
+            matrix[row, index] = count
+        norm = np.linalg.norm(matrix[row])
+        if norm > 0:
+            matrix[row] /= norm
+    return matrix
+
+
+def load():
+    rows = []
+    for line in DATASET.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        label, text = line.split("\t", 1)
+        rows.append((1.0 if label == "noise" else 0.0, text))
+    return rows
+
+
+def train(features, labels, weight_per_row, epochs=4000, learning_rate=0.5, l2=2e-4):
+    weights = np.zeros(features.shape[1], dtype=np.float64)
+    bias = 0.0
+    for _ in range(epochs):
+        scores = features @ weights + bias
+        predictions = 1.0 / (1.0 + np.exp(-scores))
+        error = (predictions - labels) * weight_per_row
+        gradient = features.T @ error / len(labels) + l2 * weights
+        bias -= learning_rate * error.mean()
+        weights -= learning_rate * gradient
+    return weights, bias
+
+
+def evaluate(weights, bias, features, labels, threshold):
+    scores = features @ weights + bias
+    predicted_noise = (1.0 / (1.0 + np.exp(-scores))) >= threshold
+    actual_noise = labels == 1.0
+    true_noise = int((predicted_noise & actual_noise).sum())
+    false_noise = int((predicted_noise & ~actual_noise).sum())
+    kept_intentions = int((~predicted_noise & ~actual_noise).sum())
+    missed_noise = int((~predicted_noise & actual_noise).sum())
+    return {
+        "accuracy": float((predicted_noise == actual_noise).mean()),
+        "noise_caught": true_noise,
+        "noise_missed": missed_noise,
+        "intentions_kept": kept_intentions,
+        "intentions_dropped": false_noise,
+    }
+
+
+def quantise(weights):
+    scale = float(np.abs(weights).max()) / 127.0
+    if scale == 0:
+        scale = 1.0
+    quantised = np.clip(np.round(weights / scale), -127, 127).astype(np.int8)
+    return quantised, scale
+
+
+def to_hex(quantised):
+    return "".join(f"{int(value) & 0xFF:02x}" for value in quantised)
+
+
+def emit_kotlin(quantised, scale, bias, threshold, report):
+    hex_weights = to_hex(quantised)
+    chunks = [hex_weights[i : i + 96] for i in range(0, len(hex_weights), 96)]
+    body = "\n".join(f'        "{chunk}" +' for chunk in chunks)
+    body = body.rstrip(" +")
+    KOTLIN_OUT.write_text(
+        f'''package tech.benedicta.will.notification
+
+/**
+ * Weights for the notification triage model. Generated by
+ * `scripts/triage/train.py` from `scripts/triage/dataset.tsv`; do not edit by
+ * hand, retrain instead.
+ *
+ * A logistic regression over hashed character n-grams. The weights are
+ * quantised to one byte each and stored as hex so they stay diffable and the
+ * file carries no binary blob. A positive score means noise.
+ *
+ * Held out from training at generation time: {report["accuracy"]:.1%} accuracy,
+ * {report["intentions_dropped"]} of {report["intentions_dropped"] + report["intentions_kept"]} intentions wrongly dropped,
+ * {report["noise_caught"]} of {report["noise_caught"] + report["noise_missed"]} noise titles caught.
+ */
+internal object TriageModelWeights {{
+
+    const val BUCKETS: Int = {BUCKETS}
+
+    const val SCALE: Float = {scale!r}f
+
+    const val BIAS: Float = {float(bias)!r}f
+
+    /**
+     * Probability above which a title is treated as noise. Deliberately high:
+     * a wrongly kept notification costs one row the user dismisses, a wrongly
+     * dropped one is a message they never see.
+     */
+    const val NOISE_THRESHOLD: Float = {threshold!r}f
+
+    private const val PACKED: String =
+{body}
+
+    val weights: FloatArray by lazy {{
+        FloatArray(BUCKETS) {{ index ->
+            val byte = PACKED.substring(index * 2, index * 2 + 2).toInt(16)
+            val signed = if (byte > 127) byte - 256 else byte
+            signed * SCALE
+        }}
+    }}
+}}
+''',
+        encoding="utf-8",
+    )
+
+
+def main():
+    rows = load()
+    random.Random(SEED).shuffle(rows)
+    labels = np.array([label for label, _ in rows], dtype=np.float64)
+    texts = [text for _, text in rows]
+    features = vectorise(texts)
+
+    split = int(len(rows) * 0.75)
+    train_x, test_x = features[:split], features[split:]
+    train_y, test_y = labels[:split], labels[split:]
+
+    # Intentions are the expensive mistake, so they weigh more in the loss.
+    weight_per_row = np.where(train_y == 1.0, 1.0, 2.5)
+    weights, bias = train(train_x, train_y, weight_per_row)
+
+    threshold = 0.80
+    held_out = evaluate(weights, bias, test_x, test_y, threshold)
+    on_train = evaluate(weights, bias, train_x, train_y, threshold)
+
+    print(f"rows: {len(rows)}  train: {split}  held out: {len(rows) - split}")
+    print(f"train    : {on_train}")
+    print(f"held out : {held_out}")
+
+    quantised, scale = quantise(weights)
+    dequantised = quantised.astype(np.float64) * scale
+    after = evaluate(dequantised, bias, test_x, test_y, threshold)
+    print(f"quantised: {after}")
+
+    if after["intentions_dropped"] > held_out["intentions_dropped"]:
+        print("warning: quantisation dropped more intentions", file=sys.stderr)
+
+    emit_kotlin(quantised, scale, bias, threshold, after)
+    print(f"wrote {KOTLIN_OUT.relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    main()

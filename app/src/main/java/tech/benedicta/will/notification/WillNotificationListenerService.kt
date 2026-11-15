@@ -24,6 +24,9 @@ class WillNotificationListenerService : NotificationListenerService() {
     private val taskEvents by lazy {
         (application as WillApplication).taskEventRecorder
     }
+    private val classifier by lazy {
+        (application as WillApplication).intentionClassifier
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (sbn.packageName in NotificationProcessor.IGNORED_PACKAGES) return
@@ -54,6 +57,10 @@ class WillNotificationListenerService : NotificationListenerService() {
 
         scope.launch {
             if (!appFilterRepository.isEnabled(sbn.packageName)) return@launch
+            // Triage runs here rather than in onNotificationPosted: an
+            // implementation backed by a model has to be allowed to wait, and
+            // the notification callback thread cannot.
+            if (!classifier.isIntention(task.title, task.text, task.sourcePackage)) return@launch
             val upsert = repository.upsertByConversationKey(task)
             // A further message on a conversation that already has an open task
             // bumps that task; only a genuinely new one is a creation.

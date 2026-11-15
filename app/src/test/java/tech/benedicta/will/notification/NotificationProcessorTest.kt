@@ -5,6 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import tech.benedicta.will.task.Task
 
+// Whether a title is noise is PatternIntentionClassifierTest's subject now;
+// this covers the structural mapping only.
 class NotificationProcessorTest {
 
     private val processor = NotificationProcessor()
@@ -283,30 +285,6 @@ class NotificationProcessorTest {
     @Test
     fun `deskclock package is ignored`() {
         assertNull(processor.process("title", "body", "com.google.android.deskclock", 0L))
-    }
-
-    @Test
-    fun `returns null for system noise titles`() {
-        val noiseTitles = listOf(
-            "Downloading video",
-            "Downloading 2 videos",
-            "Downloading file",
-            "Charging complete",
-            "Update complete",
-            "Could not connect to Wi-Fi network",
-            "PARAQUIACON has no internet access",
-            "PARAQUIACON has limited connectivity",
-            "Upcoming alarm"
-        )
-        noiseTitles.forEach { title ->
-            val result = processor.process(title, "body", "com.example", 0L)
-            assertNull("Expected null for noise title: $title", result)
-        }
-    }
-
-    @Test
-    fun `bare app-name title is treated as noise summary`() {
-        assertNull(processor.process("WhatsApp", null, "com.whatsapp", 0L))
     }
 
     @Test

@@ -1,0 +1,347 @@
+noise	Baixando vídeo
+noise	Baixando 3 vídeos
+noise	Baixando arquivo
+noise	Baixando imagem
+noise	Baixando foto
+noise	Baixando documento
+noise	Download concluído
+noise	Carregamento concluído
+noise	Bateria carregada
+noise	Bateria com 15%
+noise	Bateria fraca
+noise	Economia de bateria ativada
+noise	Carregando lentamente
+noise	Atualização concluída
+noise	Atualização disponível
+noise	Instalando atualização do sistema
+noise	Sistema atualizado
+noise	Atualização de segurança instalada
+noise	Reinicie para concluir a atualização
+noise	Não foi possível conectar ao servidor
+noise	Falha na conexão
+noise	WIFI-CASA está sem acesso à internet
+noise	Rede sem acesso à internet
+noise	PARAQUIACON tem conectividade limitada
+noise	Wi-Fi conectado
+noise	Wi-Fi desconectado
+noise	Conectado à rede móvel
+noise	Próximo alarme
+noise	Alarme definido para 06:30
+noise	Alarme para amanhã às 7h
+noise	Volume do alarme está baixo
+noise	Sua hora de dormir começa às 23:00
+noise	Hora de dormir em 30 minutos
+noise	Modo não perturbe ativado
+noise	Modo não perturbe desativado
+noise	Captura de tela salva
+noise	Screenshot salvo na galeria
+noise	Gravação de tela iniciada
+noise	Gravação de tela salva
+noise	Armazenamento quase cheio
+noise	Espaço de armazenamento insuficiente
+noise	Libere espaço no dispositivo
+noise	Backup concluído
+noise	Backup em andamento
+noise	Fazendo backup das suas fotos
+noise	Sincronizando
+noise	Sincronização concluída
+noise	Falha na sincronização
+noise	VPN ativa
+noise	VPN conectada
+noise	USB para transferência de arquivos
+noise	Carregando este dispositivo via USB
+noise	Dados móveis desativados
+noise	Limite de dados móveis atingido
+noise	Aviso de uso de dados
+noise	Localização em uso
+noise	App está usando sua localização
+noise	Rodando em segundo plano
+noise	Executando em segundo plano
+noise	Toque para configurar
+noise	Toque para saber mais
+noise	Novo app instalado
+noise	App instalado com sucesso
+noise	Desinstalando app
+noise	Limpeza concluída
+noise	Otimizando apps
+noise	Otimização concluída
+noise	Reproduzindo música
+noise	Pausado
+noise	Tocando agora
+noise	Previsão do tempo para hoje
+noise	Chuva prevista para esta tarde
+noise	Alerta de temperatura
+noise	Veja as novidades da semana
+noise	Novidades do aplicativo
+noise	Experimente o novo recurso
+noise	Avalie o app na loja
+noise	Que tal experimentar o premium?
+noise	Modo avião ativado
+noise	Bluetooth conectado
+noise	Fone de ouvido conectado
+noise	Dispositivo pareado
+noise	Teclado alterado
+noise	Idioma do sistema alterado
+noise	Cartão SIM não detectado
+noise	Sem cartão SIM
+noise	Verificação de segurança concluída
+noise	Nenhuma ameaça encontrada
+noise	Protegido
+noise	Serviço em execução
+noise	Notificação do sistema
+noise	WhatsApp
+noise	Telegram
+noise	Gmail
+noise	Downloading video
+noise	Downloading 2 videos
+noise	Downloading file
+noise	Downloading image
+noise	Download complete
+noise	Charging complete
+noise	Battery full
+noise	Battery low
+noise	Battery saver is on
+noise	Charging slowly
+noise	Update complete
+noise	Update available
+noise	Installing system update
+noise	System updated
+noise	Security update installed
+noise	Restart to finish updating
+noise	Could not connect to server
+noise	Connection failed
+noise	HOME-WIFI has no internet access
+noise	Network has no internet access
+noise	GUEST-WIFI has limited connectivity
+noise	Wi-Fi connected
+noise	Wi-Fi disconnected
+noise	Connected to mobile network
+noise	Upcoming alarm
+noise	Alarm set for 6:30 AM
+noise	Alarm set for tomorrow at 7
+noise	Alarm volume is low
+noise	Your bedtime starts at 11:00 PM
+noise	Bedtime in 30 minutes
+noise	Do Not Disturb is on
+noise	Do Not Disturb is off
+noise	Screenshot saved
+noise	Screenshot saved to gallery
+noise	Screen recording started
+noise	Screen recording saved
+noise	Storage almost full
+noise	Not enough storage space
+noise	Free up space on your device
+noise	Backup complete
+noise	Backup in progress
+noise	Backing up your photos
+noise	Syncing
+noise	Sync complete
+noise	Sync failed
+noise	VPN is active
+noise	VPN connected
+noise	USB for file transfer
+noise	Charging this device via USB
+noise	Mobile data is off
+noise	Mobile data limit reached
+noise	Data usage warning
+noise	Location in use
+noise	App is using your location
+noise	Running in the background
+noise	Tap to set up
+noise	Tap to learn more
+noise	New app installed
+noise	App installed successfully
+noise	Uninstalling app
+noise	Cleanup complete
+noise	Optimizing apps
+noise	Optimization complete
+noise	Now playing
+noise	Paused
+noise	Weather for today
+noise	Rain expected this afternoon
+noise	Temperature alert
+noise	See what is new this week
+noise	What is new in the app
+noise	Try the new feature
+noise	Rate us on the Play Store
+noise	How about trying premium?
+noise	Airplane mode is on
+noise	Bluetooth connected
+noise	Headphones connected
+noise	Device paired
+noise	Keyboard changed
+noise	System language changed
+noise	No SIM card
+noise	SIM card not detected
+noise	Security scan complete
+noise	No threats found
+noise	Protected
+noise	Service is running
+noise	System notification
+intention	Maria: pode me mandar o contrato?
+intention	Quezia: passa no mercado na volta?
+intention	João: reunião amanhã às 10?
+intention	Pedro: me liga quando puder
+intention	Ana: você viu o e-mail que mandei?
+intention	Carlos: preciso da sua resposta hoje
+intention	Miguel: esqueci o material na escola
+intention	Joaquim: pode me buscar às 17h?
+intention	Grupo Família: 3 mensagens novas
+intention	Grupo Catequese: 5 mensagens novas
+intention	Lucas enviou um documento
+intention	Ana enviou uma mensagem de voz
+intention	Você foi mencionado em Engenharia
+intention	Chamada perdida de Miguel
+intention	Chamada de vídeo perdida
+intention	Ligação perdida às 14:32
+intention	Boleto vence hoje
+intention	Boleto da luz vence amanhã
+intention	Fatura disponível para pagamento
+intention	Fatura do cartão fecha hoje
+intention	Pagamento de R$ 212,40 agendado
+intention	Pix recebido de Carlos
+intention	Pix de R$ 150,00 recebido
+intention	Compra aprovada no cartão
+intention	Cobrança não reconhecida
+intention	Transferência agendada para amanhã
+intention	Seu limite foi alterado
+intention	Lembrete: consulta médica às 15h
+intention	Consulta com o dentista amanhã
+intention	Reunião de arquitetura começa em 10 minutos
+intention	Evento hoje: Escola Vocacional
+intention	Reunião com o Baldi em 15 minutos
+intention	Convite para reunião na sexta
+intention	Confirme sua presença no evento
+intention	Prazo de entrega amanhã
+intention	Tarefa vence hoje
+intention	Seu pedido chegou
+intention	Pedido saiu para entrega
+intention	Entregador a caminho
+intention	Seu pacote será entregue hoje
+intention	Pedido atrasado
+intention	Você tem 2 e-mails não lidos
+intention	Novo e-mail de Emerson
+intention	Novo comentário na sua PR
+intention	Revisão solicitada em will#7
+intention	Seu PR foi aprovado
+intention	Build falhou na main
+intention	Pipeline quebrou
+intention	Novo chamado atribuído a você
+intention	Documento compartilhado com você
+intention	Alguém comentou no seu documento
+intention	Renovação do passaporte disponível
+intention	Agende seu atendimento
+intention	Sua assinatura vence em 3 dias
+intention	Responda até sexta
+intention	Aguardando sua aprovação
+intention	Ação necessária na sua conta
+intention	Confirme seu endereço
+intention	Código de verificação: 884213
+intention	Alguém entrou na sua conta
+intention	Sarah: can you review the PR today?
+intention	John: are we still on for 10?
+intention	Emma: I need your answer by EOD
+intention	Mike: call me when you can
+intention	Dave: did you see my email?
+intention	Ana: sending the contract now
+intention	Design team: 4 new messages
+intention	You were mentioned in #engineering
+intention	Missed call from Mike
+intention	Missed video call
+intention	Meeting starts in 10 minutes
+intention	Reminder: dentist at 3pm
+intention	Calendar invite from Lucas
+intention	Event today: architecture review
+intention	Please confirm your attendance
+intention	Deadline tomorrow
+intention	Task due today
+intention	Your order has arrived
+intention	Out for delivery
+intention	Courier on the way
+intention	Your package arrives today
+intention	Delivery delayed
+intention	You have 2 unread emails
+intention	New email from Emerson
+intention	New comment on your pull request
+intention	Review requested on will#7
+intention	Your PR was approved
+intention	Build failed on main
+intention	Pipeline is broken
+intention	New ticket assigned to you
+intention	Document shared with you
+intention	Someone commented on your doc
+intention	Payment due tomorrow
+intention	Invoice available
+intention	Card payment approved
+intention	Unrecognised charge on your card
+intention	Transfer scheduled for tomorrow
+intention	Your subscription renews in 3 days
+intention	Action required on your account
+intention	Please confirm your address
+intention	Verification code: 884213
+intention	New sign-in to your account
+intention	Reply by Friday
+intention	Awaiting your approval
+intention	Flight check-in is open
+intention	Your appointment is confirmed
+intention	Ana: o download do contrato terminou, me avisa
+intention	Pedro: a atualização do sistema quebrou o build
+intention	João: minha bateria acabou, te ligo depois
+intention	Maria: salvei o screenshot, dá uma olhada
+intention	Carlos: o backup do servidor falhou, pode ver?
+intention	Quezia: o alarme não tocou, acordei atrasada
+intention	Lucas: sem internet aqui, me manda por e-mail
+intention	Miguel: esqueci o fone, pode trazer?
+intention	Sarah: the download finished, take a look
+intention	Mike: the system update broke the build
+intention	Emma: my battery died, call you later
+intention	Dave: I saved the screenshot, check it
+intention	John: the backup failed, can you look?
+intention	Ana: no internet here, email it to me
+intention	Tom: alarm did not go off, running late
+intention	Rita: forgot my headphones, can you bring them?
+intention	Reunião movida para as 14h
+intention	Reunião cancelada
+intention	Sala alterada para a 302
+intention	Seu voo atrasou 40 minutos
+intention	Check-in disponível
+intention	Portão de embarque alterado
+intention	Resultado do exame disponível
+intention	Receita pronta para retirada
+intention	Vacina agendada para quinta
+intention	Escola: reunião de pais na terça
+intention	Boletim disponível
+intention	Professor enviou um comunicado
+intention	Condomínio: assembleia no sábado
+intention	Encomenda na portaria
+intention	Visitante aguardando na portaria
+intention	Uber chegando em 2 minutos
+intention	Motorista a caminho
+intention	Corrida finalizada, avalie
+intention	Mesa reservada para hoje às 20h
+intention	Reserva confirmada
+intention	Meeting moved to 2pm
+intention	Meeting cancelled
+intention	Room changed to 302
+intention	Your flight is delayed 40 minutes
+intention	Check-in is available
+intention	Gate changed
+intention	Lab results are ready
+intention	Prescription ready for pickup
+intention	Vaccination booked for Thursday
+intention	School: parents meeting on Tuesday
+intention	Report card available
+intention	Teacher sent an announcement
+intention	Package at the front desk
+intention	Visitor waiting at reception
+intention	Your ride arrives in 2 minutes
+intention	Driver is on the way
+intention	Trip finished, rate your driver
+intention	Table booked for 8pm
+intention	Reservation confirmed
+intention	Rent is due in 2 days
+intention	Aluguel vence em 2 dias
+intention	Contrato aguardando assinatura
+intention	Contract awaiting signature
+intention	Assine o documento até sexta
+intention	Sign the document by Friday

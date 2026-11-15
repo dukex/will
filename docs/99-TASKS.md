@@ -197,6 +197,32 @@ Subtasks:
 - [x] `Task.isAuthoredElsewhere` for SHARED and AGENT
 - [ ] Show it in the feed — the data is there, `TaskFeed` does not render it yet
 
+### US-15: On-device notification triage ⬜ blocked on data, not on code
+**As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
+
+Shipped so far: the `IntentionClassifier` seam and `PatternIntentionClassifier`, with English and Portuguese patterns, accent-folded. That part is done and in use.
+
+The model behind the seam is not, and three routes were measured rather than guessed:
+
+**ML Kit (`com.google.mlkit:genai-prompt`)** — works, and the Kotlin 2.4.21 move unblocked it. Costs `+2.16 MB` on the APK, brings Play Services and `com.google.android.datatransport:transport-backend-cct` (a telemetry upload transport) into a launcher that promises nothing leaves the device, needs `tools:overrideLibrary` in both manifests because the library is minSdk 26 against the project's 24, and only runs where AICore supports Gemini Nano, never on an unlocked bootloader.
+
+**MediaPipe (`com.google.mediapipe:tasks-text`)** — rejected. `tasks-core` pulls the same `transport-backend-cct`, so it does not avoid the telemetry transport, and it costs 16 MB of native code on arm64 alone.
+
+**LiteRT (`com.google.ai.edge.litert:litert:1.4.2`)** — the only genuinely clean runtime: its sole dependency is `litert-api`, no Play, no telemetry, 4.5 MB native on arm64. Pin 1.x; 2.x adds `com.google.android.play:ai-delivery`. The blocker is the model, not the runtime. The two small text models served publicly do not fit: `universal_sentence_encoder.tflite` (5.9 MB) references `RaggedTensor`, so it needs the select-TF-ops delegate, which is tens of MB; `average_word_classifier.tflite` (758 KB) runs on builtin ops and carries its own vocab, but it is a trained sentiment classifier whose head cannot be relabelled without retraining.
+
+**A linear model in pure Kotlin** — built and measured here, and it does not earn its place yet. Logistic regression over hashed character n-grams, 347 hand-written labelled titles in `scripts/triage/`, trained with `scripts/triage/train.py`, five-fold cross-validation:
+
+| threshold | noise caught (of 180) | intentions wrongly dropped (of 167) |
+|-|-|-|
+| 0.95 | 93 (51.7%) | 4 |
+| 0.99 | 48 (26.7%) | 0 |
+
+At a threshold safe enough to lose no real message it catches about a quarter of the noise, which the pattern list already covers with far better precision. At a threshold where it catches half, it silently eats 2.4% of real messages, which this product cannot do. And "zero dropped" rests on 167 examples, so the true rate could still be near 2%.
+
+The failures say what is missing. Out of fold the model scored `Tom: alarm did not go off, running late` at 0.989 noise and `Meeting starts in 10 minutes` at 0.93: exactly the boundary where a message mentions a housekeeping word. 347 invented examples cannot teach that.
+
+**What would unblock it** is data, and Will is sitting on the source. The launcher already sees every notification, and `TaskEvent` already records what the user does with each task. An opt-in, on-device record of titles against keep-or-dismiss gives a training set that is both larger and drawn from the user's own stream rather than from someone's guesses. That is the prerequisite, and it is a user story of its own before any model is worth adding.
+
 ### US-14: AppFunctions surface ⬜ deferred
 **As a user, I want an assistant or agent on my phone to be able to put work on my home screen and see what I am holding, without anything leaving the device.**
 

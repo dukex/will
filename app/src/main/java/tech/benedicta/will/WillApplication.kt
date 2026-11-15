@@ -24,6 +24,8 @@ import tech.benedicta.will.launcher.PinnedAppsRepository
 import tech.benedicta.will.lifecycle.TaskLifecycleApplier
 import tech.benedicta.will.lifecycle.TaskLifecycleCoordinator
 import tech.benedicta.will.notification.AppFilterRepository
+import tech.benedicta.will.notification.IntentionClassifier
+import tech.benedicta.will.notification.PatternIntentionClassifier
 import tech.benedicta.will.onboarding.OnboardingRepository
 import tech.benedicta.will.onboarding.PermissionInspector
 import tech.benedicta.will.share.SharedTask
@@ -48,6 +50,9 @@ class WillApplication : Application() {
     }
     val taskEventRecorder: TaskEventRecorder by lazy {
         TaskEventRecorder(taskEventRepository)
+    }
+    val intentionClassifier: IntentionClassifier by lazy {
+        PatternIntentionClassifier()
     }
     val appFilterRepository: AppFilterRepository by lazy {
         SharedPrefsAppFilterRepository(this)

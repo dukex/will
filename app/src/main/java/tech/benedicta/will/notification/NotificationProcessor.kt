@@ -2,6 +2,12 @@ package tech.benedicta.will.notification
 
 import tech.benedicta.will.task.Task
 
+/**
+ * Structural mapping from a posted notification to a [Task]: what is blank,
+ * what the conversation key is, which flags mean "not a user-facing
+ * notification at all". Whether the content is worth the user's attention is
+ * [IntentionClassifier]'s judgement, not this one's.
+ */
 class NotificationProcessor {
 
     fun process(
@@ -21,8 +27,6 @@ class NotificationProcessor {
             !text.isNullOrBlank() -> text
             else -> return null
         }
-
-        if (isSystemNoise(resolvedTitle)) return null
 
         val resolvedText = if (!title.isNullOrBlank() && !text.isNullOrBlank()) text else ""
         val keySource = conversationTitle?.takeIf { it.isNotBlank() } ?: resolvedTitle
@@ -59,21 +63,5 @@ class NotificationProcessor {
             "com.google.android.deskclock",
             "com.motorola.ccc.ota",
         )
-
-        private val NOISE_PATTERNS: List<Regex> = listOf(
-            Regex("^Downloading (\\d+ )?(video|file|image|photo)", RegexOption.IGNORE_CASE),
-            Regex("^WhatsApp$", RegexOption.IGNORE_CASE),
-            Regex("^Charging complete$", RegexOption.IGNORE_CASE),
-            Regex("^Update complete$", RegexOption.IGNORE_CASE),
-            Regex("^Could not connect to", RegexOption.IGNORE_CASE),
-            Regex("has no internet access$", RegexOption.IGNORE_CASE),
-            Regex("has limited connectivity$", RegexOption.IGNORE_CASE),
-            Regex("^Upcoming alarm$", RegexOption.IGNORE_CASE),
-            Regex("^Your bedtime starts at", RegexOption.IGNORE_CASE),
-            Regex("^Alarm volume", RegexOption.IGNORE_CASE),
-        )
-
-        fun isSystemNoise(title: String): Boolean =
-            NOISE_PATTERNS.any { it.containsMatchIn(title) }
     }
 }

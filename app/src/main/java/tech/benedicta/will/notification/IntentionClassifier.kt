@@ -53,7 +53,8 @@ class PatternIntentionClassifier(
             'í' to 'i',
             'ó' to 'o', 'õ' to 'o', 'ô' to 'o',
             'ú' to 'u',
-            'ç' to 'c'
+            'ç' to 'c',
+            'ñ' to 'n'
         )
 
         fun String.foldAccents(): String =
@@ -67,6 +68,7 @@ class PatternIntentionClassifier(
             noise("^WhatsApp$"),
             noise("^Charging complete$"),
             noise("^Update complete$"),
+            noise("^Backup complete$"),
             noise("^Could not connect to"),
             noise("has no internet access$"),
             noise("has limited connectivity$"),
@@ -84,7 +86,22 @@ class PatternIntentionClassifier(
             noise("^Proximo alarme$"),
             noise("^Alarme proximo$"),
             noise("^Sua hora de dormir comeca"),
-            noise("^Volume do alarme")
+            noise("^Volume do alarme"),
+            noise("^Backup concluido$"),
+            // Spanish, matched against the accent-folded title
+            noise("^Descargando (\\d+ )?(video|archivo|imagen|foto)"),
+            noise("^Carga completa(da)?$"),
+            noise("^Bateria cargada$"),
+            noise("^Actualizacion completada$"),
+            noise("^Copia de seguridad completada$"),
+            noise("^No se pudo conectar"),
+            noise("sin acceso a internet$"),
+            noise("no tiene acceso a internet$"),
+            noise("conectividad limitada$"),
+            noise("^Proxima alarma$"),
+            noise("^Alarma proxima$"),
+            noise("^(Tu|La) hora de dormir empieza"),
+            noise("^Volumen de la alarma")
         )
     }
 }

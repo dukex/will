@@ -104,7 +104,7 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `infrastructure/SharedPrefsPinnedAppsRepository.kt` | PinnedAppsRepository impl backed by SharedPreferences (`pinned_apps` prefs file, pipe-separated package list) |
 | **Notification** | |
 | `notification/NotificationProcessor.kt` | structural mapping only: blank checks, conversation key, flags. Does **not** judge whether content is worth showing |
-| `notification/IntentionClassifier.kt` | `fun interface` deciding intention vs noise, plus `PatternIntentionClassifier`, the default and fallback: English and Portuguese housekeeping patterns, accent-folded, biased toward keeping |
+| `notification/IntentionClassifier.kt` | `fun interface` deciding intention vs noise, plus `PatternIntentionClassifier`, the default and fallback: English, Portuguese and Spanish housekeeping patterns, accent-folded, biased toward keeping. A phone set to a language the list does not cover keeps everything, which is the safe direction but means its feed is as noisy as before |
 | `notification/NotificationActionStore.kt` | holds PendingIntents keyed by notification key (in-memory) |
 | `notification/NotificationKeyTracker.kt` | **deprecated** — dedup now via Room unique index on `conversationKey` |
 | `notification/WillNotificationListenerService.kt` | intercepts notifications; inserts Tasks; fires PendingIntent on tap |

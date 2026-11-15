@@ -134,4 +134,73 @@ class PatternIntentionClassifierTest {
         assertFalse(judge("baixando VÍDEO"))
         assertFalse(judge("charging COMPLETE"))
     }
+
+    // --- Spanish noise, which the English and Portuguese list let through ---
+
+    @Test
+    fun `download progress in Spanish is noise`() = runTest {
+        listOf(
+            "Descargando vídeo",
+            "Descargando 2 vídeos",
+            "Descargando archivo",
+            "Descargando imagen",
+            "Descargando foto"
+        ).forEach { assertFalse(it, judge(it)) }
+    }
+
+    @Test
+    fun `charging and update housekeeping in Spanish is noise`() = runTest {
+        listOf(
+            "Carga completa",
+            "Carga completada",
+            "Batería cargada",
+            "Actualización completada",
+            "Copia de seguridad completada"
+        ).forEach { assertFalse(it, judge(it)) }
+    }
+
+    @Test
+    fun `connectivity chatter in Spanish is noise`() = runTest {
+        listOf(
+            "No se pudo conectar a la red",
+            "La red no tiene acceso a Internet",
+            "La red tiene conectividad limitada"
+        ).forEach { assertFalse(it, judge(it)) }
+    }
+
+    @Test
+    fun `alarm and bedtime chatter in Spanish is noise`() = runTest {
+        listOf(
+            "Próxima alarma",
+            "Alarma próxima",
+            "Tu hora de dormir empieza a las 23:00",
+            "Volumen de la alarma"
+        ).forEach { assertFalse(it, judge(it)) }
+    }
+
+    // --- the bias that matters: Spanish that is a person, not housekeeping ---
+
+    @Test
+    fun `a message in Spanish is an intention`() = runTest {
+        assertTrue(judge("María", "¿me mandas el contrato?"))
+        assertTrue(judge("Papá", "llámame cuando puedas"))
+        assertTrue(judge("Banco Santander", "tu recibo vence mañana"))
+    }
+
+    @Test
+    fun `a Spanish title that merely mentions a housekeeping word is kept`() = runTest {
+        assertTrue(judge("Carlos", "la descarga que te mandé falló"))
+        assertTrue(judge("Ana", "se completó la actualización que pediste?"))
+        assertTrue(
+            "a person talking about an alarm is not an alarm notification",
+            judge("Tom", "la alarma no sonó, voy con retraso")
+        )
+    }
+
+    @Test
+    fun `Spanish accents and the enye do not defeat the patterns`() = runTest {
+        assertFalse(judge("ACTUALIZACIÓN COMPLETADA"))
+        assertFalse(judge("actualizacion completada"))
+        assertTrue("an enye must fold without turning a name into noise", judge("Begoña", "hola"))
+    }
 }

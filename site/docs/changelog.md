@@ -3,6 +3,8 @@
 ## [unreleased]
 
 ### added
+- a typed task in Spanish lands where it should — "llamar a Quezia" opens the dialer on her name, "enviar un correo a Joaquim" opens your mail app, "ir al mercado" opens the map. Will reads the verb you wrote and nothing more: "ir a comprar pan" is you planning to buy bread, not a place called "comprar pan", so it stays an ordinary task
+- the drawer finds apps by what they are for in Spanish too — "juego" finds your games, "trabajo" your work apps, "cancion" your music, the way "jogo" and "trabalho" already did
 - search by meaning, if you want it — turn it on in settings and typing "banco" finds your bank even though the word is nowhere in its name. It runs Google's model on your phone, only when searching by name finds nothing, and your searches still go nowhere. Off until you ask for it, and settings says plainly what turning it on brings. When your phone cannot run the model, settings says so; when it could not even find out, it says that instead of blaming your phone, and names the one thing worth trying
 - a task opens the screen, not just the app — "ligar para Miguel" opens the dialer with Miguel ready, "ir para Pocrane" opens the map, a link opens the browser. Will never places the call itself, it just gets you there
 - search finds your tasks too — the search box in the app drawer now looks through what you still have to do as well as your apps, with the tasks first

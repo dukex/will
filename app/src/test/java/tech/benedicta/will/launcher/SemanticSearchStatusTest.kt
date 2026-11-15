@@ -1,6 +1,7 @@
 package tech.benedicta.will.launcher
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class SemanticSearchStatusTest {
@@ -91,5 +92,39 @@ class SemanticSearchStatusTest {
             SemanticSearchStatus.DOWNLOADING,
             SemanticSearchStatus.UNSUPPORTED
         ).forEach { assertEquals(it.name, false, it.isSearching) }
+    }
+
+    @Test
+    fun `a check that failed is not the same answer as a phone that cannot`() {
+        assertEquals(
+            SemanticSearchStatus.UNKNOWN,
+            state(enabled = false, availability = ModelAvailability.UNKNOWN)
+        )
+        assertEquals(
+            SemanticSearchStatus.UNKNOWN,
+            state(enabled = true, availability = ModelAvailability.UNKNOWN)
+        )
+    }
+
+    @Test
+    fun `only the system saying so reports the phone as unsupported`() {
+        assertEquals(
+            SemanticSearchStatus.UNSUPPORTED,
+            state(enabled = false, availability = ModelAvailability.UNAVAILABLE)
+        )
+        assertNotEquals(
+            "a failed check must never claim the phone cannot run the model",
+            SemanticSearchStatus.UNSUPPORTED,
+            state(enabled = false, availability = ModelAvailability.UNKNOWN)
+        )
+    }
+
+    @Test
+    fun `neither unknown nor unsupported offers a switch or a download`() {
+        listOf(SemanticSearchStatus.UNKNOWN, SemanticSearchStatus.UNSUPPORTED).forEach { status ->
+            assertEquals("$status should not offer a switch", false, status.canToggle)
+            assertEquals("$status should not offer a download", false, status.canStartDownload)
+            assertEquals("$status should not claim to be searching", false, status.isSearching)
+        }
     }
 }

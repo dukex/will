@@ -96,7 +96,7 @@ class DemoSeederTest {
     }
 
     @Test
-    fun `seed is idempotent — running twice leaves the same final state`() = runTest {
+    fun `seed is idempotent, running twice leaves the same final state`() = runTest {
         seeder.seed()
         val firstTasks = taskRepo.getAllTasks().first()
         val firstPins = pinnedRepo.getPinnedPackages().first()

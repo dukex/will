@@ -337,6 +337,37 @@ The failures say what is missing. Out of fold the model scored `Tom: alarm did n
 
 **What would unblock it** is data, and Will is sitting on the source. The launcher already sees every notification, and `TaskEvent` already records what the user does with each task. An opt-in, on-device record of titles against keep-or-dismiss gives a training set that is both larger and drawn from the user's own stream rather than from someone's guesses. That is the prerequisite, and it is a user story of its own before any model is worth adding.
 
+## Task providers: Todoist and Google Tasks
+
+Decided after a Motorola Edge 60 Fusion answered `FeatureStatus.UNAVAILABLE`: every model-backed feature is inert on the primary user's phone, and the user's tasks already live in Todoist. Two-way, both providers, which is the full scope and therefore a stack rather than one change.
+
+**The shape is local-first.** The feed reads the local store and never waits on a network, exactly as `ModelReviewPass` only ever catches up. A provider mirrors into Room and local changes queue for push. The home screen is not allowed to block, hang or crash because a sync failed.
+
+**Will has no `INTERNET` permission today.** That is the real structural change, not the HTTP.
+
+| | | |
+|-|-|-|
+| PT-04 | the provider seam | `ProviderSharing` (done), the `TaskProvider` port, `TaskOrigin.PROVIDER`, and the `providerId` / `remoteId` / sync-state columns with their migration. No network |
+| PT-05 | the launcher gains a network | `INTERNET`, an HTTP client, token storage, and the rule that nothing on the home screen awaits a response |
+| US-27 | Todoist, read | tasks appear in the feed beside Will's own |
+| US-28 | Todoist, complete | the checkbox completes it there too, which is the smallest version that does not lie |
+| US-29 | Todoist, create and edit | a typed task reaches Todoist; edits follow |
+| US-30 | conflict and offline | what wins, what queues, what retries. The hard one, and the reason the others stay small |
+| US-31 | Google Tasks | the second implementation, which is what proves the seam. Needs full OAuth: there is no personal-token route as there is for Todoist |
+
+**Auth differs by provider and that sets the order.** Todoist accepts a personal API token as a bearer, which is the simple route for one account; OAuth is for when other people install the app. Google Tasks has no equivalent. So Todoist is first on cost as well as on usefulness, and OAuth arrives with US-31 behind the same port.
+
+### PT-04: the provider seam ⬜ in progress
+
+**So that a task can come from somewhere other than this phone, the feed stops assuming Room is the only source.**
+
+Subtasks:
+- [x] `ProviderSharing`: what may leave the device and what may not, as a function rather than a paragraph. See the architecture note in `CLAUDE.md`
+- [ ] `TaskProvider` port, with the local store as the first implementation and no behaviour change
+- [ ] `TaskOrigin.PROVIDER`, which `fromStored` already tolerates, so an older build renders a newer row rather than throwing
+- [ ] `providerId`, `remoteId` and a sync state on `Task`, with the Room migration
+- [ ] No network in this task at all
+
 ### US-14: AppFunctions surface ⬜ deferred
 **As a user, I want an assistant or agent on my phone to be able to put work on my home screen and see what I am holding, without anything leaving the device.**
 

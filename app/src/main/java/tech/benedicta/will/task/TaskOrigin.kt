@@ -18,7 +18,13 @@ enum class TaskOrigin {
     SHARED,
 
     /** Written by an agent calling Will, not by the user. */
-    AGENT;
+    AGENT,
+
+    /**
+     * Mirrored from an external task provider the user connected, such as
+     * Todoist. The user wrote it, just not here.
+     */
+    PROVIDER;
 
     companion object {
         const val MANUAL_SOURCE_PACKAGE = "manual"

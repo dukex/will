@@ -63,6 +63,16 @@ kotlin {
     }
 }
 
+ksp {
+    // Exported so WillDatabaseMigrationTest can replay a real upgrade, and so
+    // a migration can be written from the schema rather than from memory.
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+android {
+    sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -89,6 +99,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // On-device semantic search, Gemini Nano through AICore. Opt-in at
+    // runtime and absent from every device that cannot serve it.
+    implementation(libs.mlkit.genai.prompt)
+
     // Room
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
@@ -99,6 +113,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

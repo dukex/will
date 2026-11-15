@@ -98,7 +98,7 @@ Subtasks:
 - [x] Lifecycle-based ordering (active → pending → done-today)
 - [x] Implement deep linking to jump directly to relevant app screens (PendingIntent + `notificationKey` fallback)
 - [ ] Provide visual feedback when deep linking is attempted (toast/state when PendingIntent is fired)
-- [ ] Implement search/filter functionality within the task feed
+- [x] Implement search/filter functionality within the task feed — done in US-24, through the drawer's search box rather than new chrome on the home screen
 - [ ] ~~Priority-based ordering (urgent/today/scheduled)~~ → not in current scope; lifecycle ordering replaces it
 - [ ] ~~App Actions integration~~ → out of MVP per scope.md
 - [ ] ~~Clipboard monitoring~~ → out of MVP per scope.md
@@ -309,7 +309,74 @@ Subtasks:
 - [x] Failures are swallowed: no launcher should crash because a system surface refused a shortcut
 - [x] No new dependency; `androidx.core` was already here
 
-- [ ] Verify on a device that the shortcut appears and opens the right task. The rules have tests; `ShortcutManagerCompat` itself cannot be exercised in a JVM test, and this container has no emulator.
+- [x] Written down as instrumented tests (`DeviceOnlyFeaturesTest`): the shortcut reaches the system, carries the right task id, and goes away when the task does. `./gradlew connectedDebugAndroidTest` runs them; this container has no emulator, so they have not been executed here.
+
+### US-22: An intention opens the screen, not the app ✅
+**As a user, when a task says "ligar para Miguel" I want the tap to open the dialer with Miguel in it, not the phone app's front door.**
+
+`01-IDEA.md` asks for deep links. US-17 got the task as far as the right app; this gets it to the right screen for the part Android standardises, where the user's own verb names the action.
+
+Subtasks:
+- [x] `IntentionActionResolver`, pure, reading the verb that starts the intention (15 unit tests)
+- [x] Calling, writing, going somewhere and opening a link map to `ACTION_DIAL`, `ACTION_SENDTO`, a `geo:` link and `ACTION_VIEW`
+- [x] Portuguese and English verbs, accent- and case-insensitive
+- [x] The verb has to start the intention: "a ligação com o Miguel caiu" is about a call, not an instruction to make one
+- [x] English trailing particles handled, so "call Sarah back" is about Sarah
+- [x] A link anywhere in the text wins, because a URL is unambiguous
+- [x] `ACTION_DIAL`, never `ACTION_CALL`: the dialer opens with the number ready and the user presses call. Will does not place calls on anyone's behalf, and needs no permission
+- [x] `IntentionActionLauncher` falls back to opening the app when nothing on the phone handles the action
+
+- [ ] Resolving an intention to a screen *inside a third-party app*, which would mean reading each app's declared intent filters and knowing what they mean. Not attempted.
+
+### US-23: Searching by what an app is for ✅
+**As a user, I want to type "musica" and find Spotify, without knowing what I installed.**
+
+Android attaches a category to each app, so this is searching by meaning without anyone guessing what a word implies.
+
+Subtasks:
+- [x] `AppCategory` on `LauncherApp`, read from `ApplicationInfo.category` (API 26+, `UNKNOWN` below that)
+- [x] Portuguese and English words per category in `AppMatcher`
+- [x] A name match always beats a category match
+- [x] An app with no declared category is not found this way
+
+The limit is Android's list, and it is worth stating: there is no category for money, so "banco" finds nothing. That gap is what embeddings would close, and they are still blocked under US-15.
+
+### US-24: One search box over tasks and apps ✅
+**As a user, I want the search I already use for apps to find the task I am looking for too.**
+
+Closes the feed-search item that US-06 had left open, without putting a search field on the home screen: the drawer is already a search surface, and the home screen stays free of app chrome as the brand requires.
+
+Subtasks:
+- [x] `TaskMatcher` sharing the drawer's rules through `SearchText`, so one box behaves one way (9 unit tests)
+- [x] Matching tasks appear above the apps, because a task is more specific than the app it lives in
+- [x] Finished tasks are left out; they have their own screen
+- [x] An empty query finds no tasks: the feed is already on screen
+- [x] Capped at five results so the search never buries the apps
+- [x] Rendered and checked before handover (`AppGridWithTaskResultsPreview`)
+- [x] Fixed on the way: `AppItem` was the one text in the launcher that inherited its colour instead of stating it, which made it invisible outside a `Surface`
+
+### US-25: Search by meaning ✅ (shipped, inference unverified on device)
+**As a user, I want to type "banco" and find Itaú, even though the word is nowhere in the name.**
+
+The last item of the direction document's layer 3, and the one `AppMatcher` could never reach: no amount of string comparison connects "banco" to "Itaú". This is the piece that needs a model, and the route was the one already agreed: accept Google's on-device model in the Play Store build, opt-in at runtime.
+
+Subtasks:
+- [x] `com.google.mlkit:genai-prompt` (Gemini Nano through AICore). `+2.3 MB` on the APK
+- [x] `tools:overrideLibrary` in both manifests: the library declares minSdk 26, Will stays installable on 24
+- [x] `SemanticSearchPrompt`, pure: numbers the apps, asks for numbers back, reads the reply (13 unit tests)
+- [x] The answer can only ever name an app that was offered. Prose, invented names, out-of-range numbers and a model that lists everything all yield nothing or a bounded subset
+- [x] `SearchWithMeaning`: the name match runs first and the model is asked only when it found nothing (8 unit tests)
+- [x] The model cannot remove a result the matcher found, cannot name an app that is not installed, and when it is off, unavailable, slow or broken the search behaves exactly as before
+- [x] Two-second timeout: a search box that waits longer has already failed
+- [x] Never downloads the model on its own. Megabytes over someone's connection is not a search box's decision
+- [x] Off until asked for, with a row in settings saying plainly that turning it on brings Google's libraries
+- [x] `data & privacy` says the same, and still says searches go nowhere
+- [x] Rendered and checked before handover (`SettingsSemanticSearchOffPreview`, `...OnPreview`)
+
+- [x] Offer the model download from settings when the status is DOWNLOADABLE. `SemanticSearchStatus` keeps the five states apart (9 unit tests) so settings can never show "on" while nothing happens, and the download only ever starts because the user tapped it.
+- [x] Written down as instrumented tests (`DeviceOnlyFeaturesTest`), so checking the model on a real phone is `./gradlew connectedDebugAndroidTest` rather than someone remembering to look. They cannot run in this container, which has no emulator and no device.
+
+**Fixed on the way, and worth its own line:** the entire settings screen lived inside the branch that renders when at least one app has sent a notification. On a fresh install, `data & privacy`, `re-run onboarding` and `lifecycle tracking` were all unreachable. The apps section now carries its own empty state and the rest of the screen is always there.
 
 ### US-15: On-device notification triage ⬜ blocked on data, not on code
 **As a user, I want Will to recognise housekeeping notifications it has never seen before, so the feed stays clean without me maintaining a list of patterns.**
@@ -361,7 +428,9 @@ Built once and reverted (`961682c`, reverted). It worked: four functions, 16 uni
 - lint fails on the generated service without `tools:targetApi="36"`, since its platform superclass only exists there
 - verify registration with `adb shell cmd app_function list-app-functions`
 
-When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whichever comes first. Open question to settle before then: whether `PrivacySettings` should list which callers are allowed, which is the US-07 question this raises.
+When to pick it up: AppFunctions reaches stable, or Gemini's side opens up, whichever comes first.
+
+**Settled (2026-11): `PrivacySettings` should not grow a second permission surface.** Will already has one, the per-app filter in `SettingsScreen` that decides which apps may create tasks from notifications. When AppFunctions returns, a calling app goes through that same list rather than a parallel allowlist invented for it: two places to say "not this app" is one too many, and the second is the one nobody finds. The caller is already identifiable in the data, because `TaskOrigin.AGENT` records that a task was not the user's and `sourcePackage` records who sent it. What an agent can reach is narrow by construction and stays that way: tasks, never notifications, never the task log, never anything about which apps the user opens.
 
 ## Technical Debt and Improvement Tasks
 

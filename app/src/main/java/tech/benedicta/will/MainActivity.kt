@@ -50,6 +50,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import tech.benedicta.will.launcher.AppLaunchAction
 import tech.benedicta.will.launcher.AppLaunchGate
 import tech.benedicta.will.launcher.AppMentionResolver
+import tech.benedicta.will.launcher.ModelAvailability
+import tech.benedicta.will.launcher.SemanticSearchStatus
+import tech.benedicta.will.launcher.IntentionActionLauncher
+import tech.benedicta.will.launcher.IntentionActionResolver
 import tech.benedicta.will.launcher.LauncherApp
 import tech.benedicta.will.launcher.LauncherViewModel
 import tech.benedicta.will.launcher.PinnedAppsViewModel
@@ -60,6 +64,7 @@ import tech.benedicta.will.onboarding.OnboardingViewModel
 import tech.benedicta.will.overlay.ActiveTaskOverlayService
 import tech.benedicta.will.task.FocusDashboardViewModel
 import tech.benedicta.will.task.Task
+import tech.benedicta.will.task.TaskMatcher
 import tech.benedicta.will.task.TaskOrigin
 import tech.benedicta.will.task.TaskViewModel
 import tech.benedicta.will.task.TaskStatus
@@ -156,7 +161,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 val launcherVm: LauncherViewModel = viewModel(
-                    factory = LauncherViewModel.factory(appRepository)
+                    factory = LauncherViewModel.factory(appRepository, app.appSearch)
                 )
                 this@MainActivity.launcherVm = launcherVm
                 taskVm = viewModel(
@@ -259,6 +264,12 @@ class MainActivity : ComponentActivity() {
 }
 
 private fun launchTask(context: android.content.Context, task: Task) {
+    // The intention's own verb names a screen more precisely than the app
+    // does: "ligar para Miguel" wants the dialer with Miguel in it, not the
+    // phone app's front door. Falls through to the app when nothing matches.
+    IntentionActionResolver().resolve(task.title)?.let { resolved ->
+        if (IntentionActionLauncher(context).launch(resolved)) return
+    }
     if (task.shortcutId != null && launchShortcut(context, task.sourcePackage, task.shortcutId)) return
     launchAppByPackage(context, task.sourcePackage)
 }
@@ -290,7 +301,9 @@ private fun AppDrawerOverlay(
     onQueryChange: (String) -> Unit,
     onLaunchApp: (LauncherApp) -> Unit,
     onDismiss: () -> Unit,
-    onLongPressApp: (LauncherApp) -> Unit = {}
+    onLongPressApp: (LauncherApp) -> Unit = {},
+    matchingTasks: List<Task> = emptyList(),
+    onTapTask: (Task) -> Unit = {}
 ) {
     var overscrollAccumulator by remember { mutableFloatStateOf(0f) }
     val nestedScrollConnection = remember {
@@ -327,6 +340,8 @@ private fun AppDrawerOverlay(
             onLaunchApp = onLaunchApp,
             onDismiss = onDismiss,
             onLongPressApp = onLongPressApp,
+            matchingTasks = matchingTasks,
+            onTapTask = onTapTask,
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
@@ -361,6 +376,10 @@ private fun WillScreen(
     var appDrawerOpen by remember { mutableStateOf(false) }
     var showIntentInputSheet by remember { mutableStateOf(false) }
     val appMentionResolver = remember { AppMentionResolver(context.packageName) }
+    val taskMatcher = remember { TaskMatcher() }
+    val matchingTasks = remember(tasks, appSearchQuery) {
+        taskMatcher.filter(tasks, appSearchQuery)
+    }
 
     val onLongPressApp: (LauncherApp) -> Unit = { app ->
         scope.launch {
@@ -403,8 +422,35 @@ private fun WillScreen(
 
     when (currentScreen) {
         Screen.Settings -> {
+            val application = context.applicationContext as WillApplication
+            val semanticSearchEnabled by application.semanticSearchPreference
+                .isEnabled().collectAsState(initial = false)
+            var modelAvailability by remember { mutableStateOf(ModelAvailability.UNAVAILABLE) }
+            var availabilityRevision by remember { mutableIntStateOf(0) }
+            LaunchedEffect(availabilityRevision, semanticSearchEnabled) {
+                modelAvailability = application.semanticSearchModel.availability()
+            }
             SettingsScreen(
                 onBack = { currentScreen = Screen.Home },
+                semanticSearchEnabled = semanticSearchEnabled,
+                onSemanticSearchChange = { enabled ->
+                    scope.launch {
+                        application.semanticSearchPreference.setEnabled(enabled)
+                        availabilityRevision++
+                    }
+                },
+                semanticSearchStatus = SemanticSearchStatus.of(
+                    enabled = semanticSearchEnabled,
+                    availability = modelAvailability
+                ),
+                onDownloadSemanticModel = {
+                    scope.launch {
+                        // Reflect the download starting, then the result.
+                        modelAvailability = ModelAvailability.DOWNLOADING
+                        application.semanticSearchModel.download()
+                        availabilityRevision++
+                    }
+                },
                 onNavigateToPrivacy = { currentScreen = Screen.PrivacySettings },
                 onRerunOnboarding = onRerunOnboarding,
                 accessibilityServiceGranted = accessibilityServiceGranted,
@@ -515,7 +561,13 @@ private fun WillScreen(
                     onQueryChange = onAppSearchQueryChange,
                     onLaunchApp = onLaunchApp,
                     onDismiss = { appDrawerOpen = false },
-                    onLongPressApp = onLongPressApp
+                    onLongPressApp = onLongPressApp,
+                    matchingTasks = matchingTasks,
+                    onTapTask = { task ->
+                        onSetPendingActiveTask(task)
+                        taskVm.setActiveTask(task)
+                        launchTask(context, task)
+                    }
                 )
 
                 SnackbarHost(

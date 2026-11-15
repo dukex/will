@@ -33,6 +33,10 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 
 # Install on connected device
 ./gradlew installDebug
+
+# The checks that need a real device: Room migrations replayed from version 7,
+# the active-task shortcut, and whether this phone can serve the on-device model
+./gradlew connectedDebugAndroidTest
 ```
 
 ## Index
@@ -66,7 +70,11 @@ Always update the CLAUDE.md every new discovery. The CLAUDE.md is a index to doc
 | US-18: Search survives Portuguese | ✅ done | `AppMatcher` replaces `contains(ignoreCase)` in the drawer: accents folded, initials and subsequence, ranked. Fixes "itau" never finding Itaú. Feed search still open under US-06 |
 | US-19: Notification becomes an intention | ✅ done | `IntentionExtractor` + `NotificationToTask`: a message reads "responder Maria", a missed call "ligar de volta para Miguel". Category-driven, no model. `Task.rawTitle` keeps the original; migration 9→10 |
 | US-20: Will learns what you throw away | ✅ done | `LearnedNoiseRepository` + `LearnedIntentionClassifier`: three dismissals of the same app and title silence it, one completion undoes it. Taught by actions the user already performs. Listed and reversible in `data & privacy` |
-| US-21: Active task as a shortcut | 🟡 done, unverified on device | `ActiveTaskShortcut` (pure rules, 11 tests) + `ActiveTaskShortcutPublisher`; a long press on the icon offers the task in progress. `ShortcutManagerCompat` cannot be exercised in a JVM test |
+| US-21: Active task as a shortcut | ✅ done; covered by `connectedDebugAndroidTest` | `ActiveTaskShortcut` (pure rules, 11 tests) + `ActiveTaskShortcutPublisher`; a long press on the icon offers the task in progress. `ShortcutManagerCompat` cannot be exercised in a JVM test |
+| US-22: Intention opens a screen | ✅ done | `IntentionActionResolver` + `IntentionActionLauncher`: "ligar para Miguel" opens the dialer with Miguel. `ACTION_DIAL`, never `ACTION_CALL`. Falls back to the app |
+| US-23: Search by what an app is for | ✅ done | `AppCategory` from `ApplicationInfo.category`, matched by Portuguese and English words in `AppMatcher`. No category for money, so "banco" finds nothing |
+| US-24: One search box over tasks and apps | ✅ done | `TaskMatcher` shares `SearchText` with the drawer; matching tasks sit above the apps. Closes US-06's feed search without home-screen chrome |
+| US-25: Search by meaning | ✅ done; exercised on a device | `genai-prompt` (Gemini Nano via AICore), opt-in and off by default, `+2.3 MB`. Name match first; the model only when that finds nothing, behind a 2s timeout. Prompt and parse tested. Run on a Motorola Edge 60 Fusion (Android 16): `checkStatus()` answers without throwing and returns `UNAVAILABLE`, so the row reads `unsupported` and that is the truth. A mid-range phone is simply not a Gemini Nano device, and `DeviceOnlyFeaturesTest` is how to tell that apart from a check that failed |
 | US-15: On-device triage model | ⬜ blocked on data | the `IntentionClassifier` seam and the pattern implementation are shipped and in use. ML Kit, MediaPipe, LiteRT and a pure-Kotlin linear model were each measured; none earns its place yet, and the linear one was built and cross-validated here. Numbers and the reason in `./docs/99-TASKS.md` |
 | US-14: AppFunctions surface | ⬜ deferred | built and reverted: the cost (`compileSdk 37`, ~1.8 MB of transitive deps, beta API, Gemini side in private preview) does not pay off yet. What the beta01 processor actually requires is recorded in `./docs/99-TASKS.md` so the next attempt does not rediscover it. `will://task` (US-11) covers agent writes meanwhile |
 | US-10: First-run Onboarding | ✅ done (core) | guided flow over default launcher + overlay + notification listener; persisted completion flag, re-run from settings, lifecycle-aware auto-advance; instrumented e2e test deferred |
@@ -85,6 +93,16 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/AppRepository.kt` | interface for app list source |
 | `launcher/SystemAppRepository.kt` | PackageManager impl, sorted by name |
 | `launcher/LauncherViewModel.kt` | StateFlow<List<LauncherApp>>, IO dispatcher; filters through `AppMatcher`, never `contains` |
+| `launcher/SemanticAppSearch.kt` | the port, with an `Unavailable` default that every device gets when the model is off |
+| `launcher/SemanticSearchPrompt.kt` | pure: numbers the apps, asks for numbers, reads the reply; the answer can only name an app that was offered |
+| `launcher/SearchWithMeaning.kt` | exact first, meaning only when that finds nothing; the model can never remove a result or invent one |
+| `launcher/GeminiNanoAppSearch.kt` | the Gemini Nano half: availability-gated, 2s timeout, never downloads the model itself |
+| `launcher/SemanticSearchStatus.kt` | the five states settings can show, plus `UNKNOWN` for a check that failed; `of` is pure and the only place the mapping lives |
+| `launcher/SemanticSearchPreference.kt` | the opt-in, off by default |
+| `launcher/SearchText.kt` | folding and scoring shared by the app and task search, so one box behaves one way |
+| `launcher/IntentionActionResolver.kt` | pure: the verb starting an intention mapped to a standard Android action |
+| `launcher/IntentionActionLauncher.kt` | the Android half; returns false when nothing handles it so the caller falls back |
+| `task/TaskMatcher.kt` | finds open tasks for the drawer's search box; capped, finished tasks excluded |
 | `launcher/ActiveTaskShortcut.kt` | pure rules for the active-task shortcut: when to publish, how to label it |
 | `launcher/ActiveTaskShortcutPublisher.kt` | the Android half; pushes and removes, swallowing failures |
 | `launcher/AppMatcher.kt` | drawer search: folds accents, accepts initials and subsequences, ranks results. Pure |
@@ -148,6 +166,8 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `ui/NotificationPermissionPrompt.kt` | banner shown when listener permission not granted |
 | `ui/ThemePreference.kt` | persisted theme preference (light/dark/system) |
 | `ui/TaskMetadataFormatter.kt` | pure builder for the metadata line under a task title; drops empty segments, and keeps NOTIFICATION / MANUAL silent so only origins the user did not author are named |
+| `app/src/androidTest/.../WillDatabaseMigrationTest.kt` | replays an upgrade from version 7; Room validates every migrated table on open |
+| `app/src/androidTest/.../DeviceOnlyFeaturesTest.kt` | the shortcut really reaching the system, and what this phone says about the model |
 | `app/src/screenshotTest/.../TaskFeedScreenshotTest.kt` | `@PreviewTest` previews rendered to PNGs under `app/src/screenshotTestDebug/reference/`; add one whenever a UI change needs looking at |
 | **Tests** | |
 | `test/.../task/TaskRepositoryTest.kt` | TaskRepository contract tests against MemoryTaskRepository |
@@ -206,7 +226,7 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 
 - **The task log is the record; the scalars are a view** — `startedAt`, `pausedAt`, `completedAt` and `contextSwitchCount` on `Task` answer what the state is now. `TaskEvent` answers how it got there, and is append-only. Both are written together by `TaskLifecycleApplier` and `TaskViewModel`. Never derive one from the other at read time; keep writing both.
 - **No `DELETED` event** — deleting a task deletes its events (US-07). A tombstone would point at a row nothing can resolve. `TaskEventRecorder.forgot` wipes, it does not append.
-- **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. To add one, flip `exportSchema = true` plus `ksp { arg("room.schemaLocation", ...) }` temporarily, read `createSql` from the generated JSON, then revert.
+- **Room migration SQL is copied from Room's exported schema**, not hand-written: Room validates the table against the entity on open, and a near-miss fails at runtime. Schemas are exported to `app/schemas` and committed, so a new migration is written from `createSql` in the generated JSON. `WillDatabaseMigrationTest` replays an upgrade from version 7 on a real device; opening the database is the assertion, because Room throws when a migrated table does not match its entity.
 - **UI changes are rendered before they are handed over** — `./gradlew updateDebugScreenshotTest` renders the `@PreviewTest` previews in `app/src/screenshotTest/` through layoutlib on the JVM, so there is no emulator or device in the loop. The reference PNGs are committed; `validateDebugScreenshotTest` fails when the UI drifts from them. Enabling it needs the flag in **both** places: `android.experimental.enableScreenshotTest=true` in `gradle.properties` (so the plugin applies) and `experimentalProperties["android.experimental.enableScreenshotTest"] = true` in the module's `android` block (so the source set exists). `@PreviewTest` comes from `com.android.tools.screenshot:screenshot-validation-api`, which the plugin does not add for you; without it the task fails with "did not discover any tests".
 - **The `"manual"` source package never reaches the screen** — it is the sentinel for a task with no app to open, not a name to read. `TaskFeed` maps it to a null app label and `taskMetadataLine` drops the segment.
 - **Triage is a seam, not a regex buried in the processor** — `NotificationProcessor` answers structural questions; `IntentionClassifier` answers "is this an intention or noise". The pattern implementation is the default and the fallback on every device. It is biased toward keeping: a false keep costs one dismissable row, a false drop means a message the user never sees and the feed cannot tell them about.
@@ -214,6 +234,10 @@ Will is a **launcher**, not a regular app. These rules apply to every layout dec
 - **Kotlin 2.4 removed the `kotlinOptions` DSL** — the JVM target is set through `kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_11 } }` at the top level of `app/build.gradle.kts`, not inside the `android` block. On 2.4 the old form is a build error, not a warning.
 - **What Will learns to hide has to be visible and undoable** — `LearnedNoiseRepository` silences a notification after three dismissals, so `data & privacy` lists every silenced title with a way back, and "delete all task history" forgets the lot. Hiding something the user never asked to hide is only acceptable while they can see it and undo it. Only notification tasks teach it, and only when deleted unfinished: tidying the done screen is not a complaint.
 - **A derived title never loses the original** — `IntentionExtractor` rewrites a conversation notification's title into what to do about it, and `Task.rawTitle` keeps what arrived. The conversation key still follows the original, so deriving a title cannot split one conversation into two tasks, and triage judges the original, because the noise patterns are written against vendor wording. Typed intentions are never derived: `01-IDEA.md` promises those are kept exactly as written.
+- **The model is never the only thing between the user and their apps** — `SearchWithMeaning` runs `AppMatcher` first and asks `SemanticAppSearch` only when that finds nothing. The model cannot remove a result the matcher found, cannot name an app that is not installed (it answers with numbers from a list Will gave it), and when it is off, unavailable, slow or broken the search behaves exactly as it did before. It is off until the user turns it on, and `GeminiNanoAppSearch` never downloads the model on its own.
+- **"I could not ask" is not "your phone cannot"** — `GeminiNanoAppSearch.availability()` reaches AICore through two calls that can throw, and it used to fold every failure into `UNAVAILABLE`, which settings rendered as "this phone cannot run the on-device model": a definitive claim about someone's hardware that nothing had established. `ModelAvailability` now has `UNKNOWN`, only `FeatureStatus.UNAVAILABLE` produces `UNSUPPORTED`, and the row says it could not check and names what to try. This is the third time in this feature that a catch-all made a recoverable condition indistinguishable from a permanent one; the other two were `BACKGROUND_USE_BLOCKED`. When a fail-safe swallows a cause, keep the cause.
+- **A tap follows the intention's own verb** — `launchTask` asks `IntentionActionResolver` first, so "ligar para Miguel" opens the dialer rather than the phone app's front door, and falls back to the task's app when no verb matches. Always `ACTION_DIAL`, never `ACTION_CALL`: Will does not place a call on anyone's behalf, and needs no permission to do it this way.
+- **Every text states its colour** — on true black an inherited `LocalContentColor` disappears outside a `Surface`. `AppItem` was the one place that relied on it, which only showed up when a preview rendered it without one.
 - **Resolution is literal, never a guess** — `AppMentionResolver` targets a task at an app the user actually named. It does not infer that "pagar boleto" means a bank: being wrong opens the wrong app, and the cost of that is higher than the cost of leaving the task untargeted, which is what every typed task used to be.
 - **Inference suggests, the user completes** — `CompletionInference` reads the task log and marks a task as probably handled; nothing writes `completedAt` on its own. A task that was never started is never suggested, whatever its age, so an unread notification cannot be buried by a guess. It reads timestamps, event types and package names only, which is the same surface the accessibility service already exposed.
 - **Domain/Infrastructure separation** — `task/Task.kt` is a pure Kotlin data class with zero Android deps. `infrastructure/room/TaskEntity.kt` mirrors it with Room annotations and provides `toTask()` / `Task.toEntity()` mappers. Never add Android/Room imports to domain classes.

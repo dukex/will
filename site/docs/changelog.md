@@ -3,6 +3,10 @@
 ## [unreleased]
 
 ### added
+- search by meaning, if you want it — turn it on in settings and typing "banco" finds your bank even though the word is nowhere in its name. It runs Google's model on your phone, only when searching by name finds nothing, and your searches still go nowhere. Off until you ask for it, and settings says plainly what turning it on brings. When your phone cannot run the model, settings says so; when it could not even find out, it says that instead of blaming your phone, and names the one thing worth trying
+- a task opens the screen, not just the app — "ligar para Miguel" opens the dialer with Miguel ready, "ir para Pocrane" opens the map, a link opens the browser. Will never places the call itself, it just gets you there
+- search finds your tasks too — the search box in the app drawer now looks through what you still have to do as well as your apps, with the tasks first
+- find an app by what it is for — type "musica" and get your music apps, "mapa" and get your maps, even when you cannot remember what the app is called
 - a long press on the Will icon offers the task you are in the middle of, so what you are working on is one gesture away from anywhere
 - Will stops showing the notification you keep throwing away — delete the same one three times and it stops reaching your feed. Finish one and it comes back, because acting on it proves it mattered. You can see everything it silenced, and undo any of it, under data & privacy. It only learns from notifications you deleted without finishing, never from tasks you typed yourself
 - Will now speaks Portuguese — the texts the launcher itself writes follow your phone's language, including the new task titles it derives from your notifications
@@ -28,6 +32,7 @@
 - pinned apps and the task feed now share one scroll area — the pinned row no longer holds a fixed slice at the top of the home screen, so the feed reclaims the space when you have messages waiting and pinned apps stay reachable by scrolling up
 
 ### fixed
+- settings is reachable on a fresh install — data & privacy, re-run onboarding and lifecycle tracking used to be hidden until some app had sent you a notification
 - searching the app drawer now works in Portuguese — typing "itau" finds Itaú and "configuracoes" finds Configurações. Accents used to make the app invisible to its own name. You can also type initials ("gd" for Google Drive) or just the consonants ("tlgrm" for Telegram), and the closest match comes first
 - only the task you are working on is highlighted as active — every other started-but-not-finished task now shows as paused, with its own muted dot, so the home screen reflects what you are actually doing right now
 - uninstalled apps no longer linger in the pinned row — the launcher refreshes its app list every time you return home, so pins for apps you removed disappear automatically

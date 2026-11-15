@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import tech.benedicta.will.notification.AppFilterViewModel
 import tech.benedicta.will.ui.theme.Spacing
+import tech.benedicta.will.launcher.SemanticSearchStatus
 import tech.benedicta.will.ui.theme.WillAccent
 import tech.benedicta.will.ui.theme.WillBorder
 import tech.benedicta.will.ui.theme.WillTextPrimary
@@ -51,6 +52,10 @@ fun SettingsScreen(
     onRerunOnboarding: () -> Unit = {},
     accessibilityServiceGranted: Boolean = false,
     onOpenAccessibilitySettings: () -> Unit = {},
+    semanticSearchEnabled: Boolean = false,
+    onSemanticSearchChange: (Boolean) -> Unit = {},
+    semanticSearchStatus: SemanticSearchStatus = SemanticSearchStatus.OFF,
+    onDownloadSemanticModel: () -> Unit = {},
     viewModel: AppFilterViewModel
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -69,33 +74,25 @@ fun SettingsScreen(
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
 
-        if (filters.isEmpty()) {
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = "no apps yet",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+        LazyColumn(Modifier.weight(1f)) {
+            item {
+                SectionHeader("apps that create tasks")
+                HorizontalDivider(color = WillBorder, thickness = 1.dp)
+            }
+            if (filters.isEmpty()) {
+                item {
                     Text(
                         text = "apps will appear here once they send notifications",
                         style = MaterialTheme.typography.labelSmall,
                         color = WillTextTertiary,
-                        modifier = Modifier.padding(top = Spacing.xs)
+                        modifier = Modifier.padding(
+                            horizontal = Spacing.xl,
+                            vertical = Spacing.md
+                        )
                     )
-                }
-            }
-        } else {
-            LazyColumn(Modifier.weight(1f)) {
-                item {
-                    SectionHeader("apps that create tasks")
                     HorizontalDivider(color = WillBorder, thickness = 1.dp)
                 }
+            }
                 items(filters, key = { it.packageName }) { filter ->
                     AppToggleRow(
                         appName = filter.appName,
@@ -196,7 +193,88 @@ fun SettingsScreen(
                         )
                     }
                 }
-            }
+                item {
+                    val statusLabel = when (semanticSearchStatus) {
+                        SemanticSearchStatus.OFF -> "off"
+                        SemanticSearchStatus.ON -> "on"
+                        SemanticSearchStatus.NEEDS_DOWNLOAD -> "download"
+                        SemanticSearchStatus.DOWNLOADING -> "downloading"
+                        SemanticSearchStatus.UNSUPPORTED -> "unsupported"
+                        SemanticSearchStatus.UNKNOWN -> "no answer"
+                    }
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = semanticSearchStatus.canToggle) {
+                                if (semanticSearchStatus.canStartDownload) {
+                                    onDownloadSemanticModel()
+                                } else {
+                                    onSemanticSearchChange(!semanticSearchEnabled)
+                                }
+                            }
+                            .padding(horizontal = Spacing.xl, vertical = Spacing.md)
+                            .semantics {
+                                role = Role.Switch
+                                contentDescription = when (semanticSearchStatus) {
+                                    SemanticSearchStatus.NEEDS_DOWNLOAD ->
+                                        "search by meaning needs its model; tap to download it"
+                                    SemanticSearchStatus.DOWNLOADING ->
+                                        "search by meaning is downloading its model"
+                                    SemanticSearchStatus.UNSUPPORTED ->
+                                        "search by meaning is not supported on this phone"
+                                    SemanticSearchStatus.UNKNOWN ->
+                                        "search by meaning could not be checked on this phone"
+                                    SemanticSearchStatus.ON -> "search by meaning is on; tap to turn it off"
+                                    SemanticSearchStatus.OFF -> "search by meaning is off; tap to turn it on"
+                                }
+                            },
+                        // Top, not centre: the explanation runs to three lines
+                        // and the status belongs beside the name it describes.
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = "search by meaning",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = WillTextTertiary
+                            )
+                            Text(
+                                text = when (semanticSearchStatus) {
+                                    SemanticSearchStatus.ON ->
+                                        "on — finds apps by what they are for, using Google's " +
+                                            "on-device model. only when the name search finds nothing"
+                                    SemanticSearchStatus.NEEDS_DOWNLOAD ->
+                                        "the model is not on this phone yet. tap to download it, " +
+                                            "which uses your connection once"
+                                    SemanticSearchStatus.DOWNLOADING ->
+                                        "downloading the model. search keeps working by name " +
+                                            "while it arrives"
+                                    SemanticSearchStatus.UNSUPPORTED ->
+                                        "this phone cannot run the on-device model. search by " +
+                                            "name works as it always has"
+                                    SemanticSearchStatus.UNKNOWN ->
+                                        "asking the system about the model failed, so there is " +
+                                            "nothing to report. if this phone supports it, " +
+                                            "updating Android System Intelligence from Play is " +
+                                            "what makes it appear. search by name is unaffected"
+                                    SemanticSearchStatus.OFF ->
+                                        "off — turning it on uses Google's on-device model, which " +
+                                            "ships with its own libraries. nothing is sent anywhere"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WillTextTertiary,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                        Text(
+                            text = statusLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (semanticSearchStatus.canStartDownload ||
+                                semanticSearchStatus == SemanticSearchStatus.ON
+                            ) WillAccent else WillTextTertiary
+                        )
+                    }
+                }
         }
     }
 }

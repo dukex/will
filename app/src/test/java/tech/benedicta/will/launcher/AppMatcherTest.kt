@@ -159,4 +159,19 @@ class AppMatcherTest {
     fun `a category word nobody uses matches nothing rather than everything`() {
         assertTrue(matcher.filter(categorised, "banco").isEmpty())
     }
+
+    @Test
+    fun `the category words work in Spanish too`() {
+        assertEquals(listOf("Spotify"), matcher.filter(categorised, "cancion").map { it.name })
+        assertEquals(listOf("Notion"), matcher.filter(categorised, "trabajo").map { it.name })
+        assertEquals(listOf("Maps"), matcher.filter(categorised, "navegacion").map { it.name })
+    }
+
+    @Test
+    fun `juego finds a game the way jogo does`() {
+        val apps = listOf(LauncherApp("com.game", "Threes", AppCategory.GAME))
+
+        assertEquals(listOf("Threes"), matcher.filter(apps, "juego").map { it.name })
+        assertEquals(listOf("Threes"), matcher.filter(apps, "jogo").map { it.name })
+    }
 }

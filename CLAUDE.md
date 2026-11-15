@@ -99,12 +99,12 @@ All source under `app/src/main/java/tech/benedicta/will/`.
 | `launcher/GeminiNanoAppSearch.kt` | the Gemini Nano half: availability-gated, 2s timeout, never downloads the model itself |
 | `launcher/SemanticSearchPreference.kt` | the opt-in, off by default |
 | `launcher/SearchText.kt` | folding and scoring shared by the app and task search, so one box behaves one way |
-| `launcher/IntentionActionResolver.kt` | pure: the verb starting an intention mapped to a standard Android action |
+| `launcher/IntentionActionResolver.kt` | pure: the verb starting an intention mapped to a standard Android action; Portuguese, Spanish and English verbs, and after a bare "ir a" only a name counts as a destination, because that is also how Spanish says it is about to do something |
 | `launcher/IntentionActionLauncher.kt` | the Android half; returns false when nothing handles it so the caller falls back |
 | `task/TaskMatcher.kt` | finds open tasks for the drawer's search box; capped, finished tasks excluded |
 | `launcher/ActiveTaskShortcut.kt` | pure rules for the active-task shortcut: when to publish, how to label it |
 | `launcher/ActiveTaskShortcutPublisher.kt` | the Android half; pushes and removes, swallowing failures |
-| `launcher/AppMatcher.kt` | drawer search: folds accents, accepts initials and subsequences, ranks results. Pure |
+| `launcher/AppMatcher.kt` | drawer search: folds accents, accepts initials and subsequences, ranks results. Pure; the category words cover Portuguese, Spanish and English |
 | `launcher/AppMentionResolver.kt` | finds the installed app named in a typed intention; accent-folded, whole words, never the launcher itself; null when unsure |
 | `launcher/PinnedAppsRepository.kt` | interface for pinned apps storage; `MAX_PINNED = 5` |
 | `launcher/PinnedAppsViewModel.kt` | combines pinned packageNames + installed apps → StateFlow<List<LauncherApp>> in pin order; `canPinMore`, `togglePin`, `pin`, `unpin` |

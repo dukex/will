@@ -84,15 +84,28 @@ class AppMatcher {
         const val CATEGORY = 5
 
         val CATEGORY_WORDS: Map<AppCategory, List<String>> = mapOf(
-            AppCategory.GAME to listOf("jogo", "jogos", "game", "games"),
-            AppCategory.AUDIO to listOf("musica", "musicas", "audio", "music", "podcast"),
-            AppCategory.VIDEO to listOf("video", "videos", "filme", "filmes", "movie"),
-            AppCategory.IMAGE to listOf("foto", "fotos", "imagem", "photo", "photos", "image"),
-            AppCategory.SOCIAL to listOf("social", "rede social", "redes"),
-            AppCategory.NEWS to listOf("noticia", "noticias", "news", "jornal"),
-            AppCategory.MAPS to listOf("mapa", "mapas", "map", "maps", "navegacao"),
-            AppCategory.PRODUCTIVITY to listOf("trabalho", "produtividade", "work", "productivity"),
-            AppCategory.ACCESSIBILITY to listOf("acessibilidade", "accessibility")
+            AppCategory.GAME to listOf("jogo", "jogos", "juego", "juegos", "game", "games"),
+            AppCategory.AUDIO to listOf(
+                "musica", "musicas", "cancion", "canciones", "audio", "music", "podcast"
+            ),
+            AppCategory.VIDEO to listOf(
+                "video", "videos", "filme", "filmes", "pelicula", "peliculas", "movie"
+            ),
+            AppCategory.IMAGE to listOf(
+                "foto", "fotos", "imagem", "imagen", "imagenes", "photo", "photos", "image"
+            ),
+            AppCategory.SOCIAL to listOf("social", "rede social", "red social", "redes"),
+            AppCategory.NEWS to listOf(
+                "noticia", "noticias", "periodico", "prensa", "news", "jornal"
+            ),
+            AppCategory.MAPS to listOf(
+                "mapa", "mapas", "map", "maps", "navegacao", "navegacion"
+            ),
+            AppCategory.PRODUCTIVITY to listOf(
+                "trabalho", "produtividade", "trabajo", "productividad",
+                "work", "productivity"
+            ),
+            AppCategory.ACCESSIBILITY to listOf("acessibilidade", "accesibilidad", "accessibility")
         )
 
         val ACCENTS = mapOf(

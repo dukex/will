@@ -118,4 +118,53 @@ class IntentionActionResolverTest {
 
         assertEquals(IntentionAction.BROWSE, action?.action)
     }
+
+    // --- Spanish ---
+
+    @Test
+    fun `llamar a alguien opens the dialer with the name`() {
+        val action = resolve("llamar a Quezia")
+
+        assertEquals(IntentionAction.DIAL, action?.action)
+        assertEquals("Quezia", action?.argument)
+    }
+
+    @Test
+    fun `devolver la llamada names the person, not the call`() {
+        val action = resolve("devolver la llamada a Miguel")
+
+        assertEquals(IntentionAction.DIAL, action?.action)
+        assertEquals("Miguel", action?.argument)
+    }
+
+    @Test
+    fun `enviar un correo opens email`() {
+        val action = resolve("enviar un correo a Joaquim")
+
+        assertEquals(IntentionAction.EMAIL, action?.action)
+        assertEquals("Joaquim", action?.argument)
+    }
+
+    @Test
+    fun `going somewhere in Spanish opens the map`() {
+        assertEquals(IntentionAction.MAP, resolve("ir al mercado")?.action)
+        assertEquals("mercado", resolve("ir al mercado")?.argument)
+        assertEquals("playa", resolve("ir a la playa")?.argument)
+        assertEquals(IntentionAction.MAP, resolve("como llegar a Toledo")?.action)
+        assertEquals("Toledo", resolve("cómo llegar a Toledo")?.argument)
+    }
+
+    @Test
+    fun `ir a plus an infinitive is an intention, not a destination`() {
+        assertNull(resolve("ir a comprar pan"))
+        assertNull(resolve("ir a buscar a los niños"))
+        assertNull(resolve("ir a ver el partido"))
+        assertNull(resolve("ir a recoger el paquete"))
+    }
+
+    @Test
+    fun `ir a a place is still a destination`() {
+        assertEquals("Madrid", resolve("ir a Madrid")?.argument)
+        assertEquals(IntentionAction.MAP, resolve("ir a Madrid")?.action)
+    }
 }

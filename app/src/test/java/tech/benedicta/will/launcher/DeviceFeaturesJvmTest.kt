@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -29,6 +30,20 @@ class DeviceFeaturesJvmTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    private fun publishedIds() = ShortcutManagerCompat.getDynamicShortcuts(context).map { it.id }
+
+    /**
+     * `ShadowShortcutManager` keeps its shortcuts in a **static** map and
+     * restores it through an `@Resetter` between tests. That is one more thing
+     * to go wrong than a plain field, so each test states that it started from
+     * nothing. A leak then fails here, naming what leaked, instead of
+     * surfacing later as a count nobody can explain.
+     */
+    @Before
+    fun startFromNothing() {
+        assertEquals("the shadow should have been reset", emptyList<String>(), publishedIds())
+    }
+
     private fun activeTask() = Task(
         id = 7L,
         title = "responder Maria",
@@ -46,10 +61,9 @@ class DeviceFeaturesJvmTest {
 
         publisher.publish(activeTask())
 
-        val published = ShortcutManagerCompat.getDynamicShortcuts(context)
         assertTrue(
-            "expected the active task shortcut, got ${published.map { it.id }}",
-            published.any { it.id == ActiveTaskShortcut.ID }
+            "expected the active task shortcut, got ${publishedIds()}",
+            publishedIds().contains(ActiveTaskShortcut.ID)
         )
     }
 
@@ -76,8 +90,8 @@ class DeviceFeaturesJvmTest {
         publisher.publish(null)
 
         assertTrue(
-            ShortcutManagerCompat.getDynamicShortcuts(context)
-                .none { it.id == ActiveTaskShortcut.ID }
+            "the shortcut should be gone, got ${publishedIds()}",
+            publishedIds().none { it == ActiveTaskShortcut.ID }
         )
     }
 
@@ -89,14 +103,21 @@ class DeviceFeaturesJvmTest {
         publisher.publish(activeTask())
 
         assertEquals(
+            "a stable id replaces rather than piles up, got ${publishedIds()}",
             1,
-            ShortcutManagerCompat.getDynamicShortcuts(context)
-                .count { it.id == ActiveTaskShortcut.ID }
+            publishedIds().count { it == ActiveTaskShortcut.ID }
         )
     }
 
     // --- the on-device model, on a machine that has no AICore ---
 
+    /**
+     * This JVM has no AICore, so the call throws, which is the one case the
+     * whole distinction exists for: a question that failed is not the system
+     * answering that the device cannot serve the model. Asserting
+     * [ModelAvailability.UNAVAILABLE] here is what let settings tell someone
+     * their phone could not run it when nothing had established that.
+     */
     @Test
     fun `asking the model whether it is here answers instead of throwing`() {
         val model = GeminiNanoAppSearch(enabled = { true })
@@ -104,8 +125,9 @@ class DeviceFeaturesJvmTest {
         val availability = runBlocking { model.availability() }
 
         assertEquals(
-            "with no AICore there is no model, and that is an answer",
-            ModelAvailability.UNAVAILABLE,
+            "with no AICore the question cannot be asked, which is not the same " +
+                "as the system saying the device is unsupported",
+            ModelAvailability.UNKNOWN,
             availability
         )
     }
@@ -139,7 +161,8 @@ class DeviceFeaturesJvmTest {
         runBlocking { model.download() }
 
         assertEquals(
-            ModelAvailability.UNAVAILABLE,
+            "a download that could not even start leaves the question unanswered",
+            ModelAvailability.UNKNOWN,
             runBlocking { model.availability() }
         )
     }

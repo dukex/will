@@ -6,7 +6,9 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
+import com.google.mlkit.genai.prompt.Generation
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
@@ -90,6 +92,38 @@ class DeviceOnlyFeaturesTest {
         assertTrue(
             "every value is a legitimate answer; throwing is not",
             availability in ModelAvailability.entries
+        )
+    }
+
+    /**
+     * The previous test passes whatever this phone answers, which is right for
+     * it and useless for working out why settings shows what it shows. This one
+     * names the phone, the raw `FeatureStatus` and the exception if there was
+     * one, and fails only when the question itself could not be asked, because
+     * that is the state settings cannot report honestly.
+     */
+    @Test
+    fun this_phone_says_plainly_whether_it_can_serve_the_model() {
+        assumeTrue("needs API 26", Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+
+        val raw = runCatching { runBlocking { Generation.getClient().checkStatus() } }
+        val availability = runBlocking { GeminiNanoAppSearch(enabled = { true }).availability() }
+
+        val report = buildString {
+            append("${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE}")
+            append(" (API ${Build.VERSION.SDK_INT}); ")
+            raw.fold(
+                onSuccess = { append("checkStatus() returned $it") },
+                onFailure = { append("checkStatus() threw ${it.javaClass.name}: ${it.message}") }
+            )
+            append("; settings would show $availability")
+        }
+
+        assertNotEquals(
+            "the model could not be asked at all, so nothing is known about this " +
+                "phone and settings can only say so. $report",
+            ModelAvailability.UNKNOWN,
+            availability
         )
     }
 

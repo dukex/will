@@ -187,3 +187,32 @@ private fun SettingsModelTriageOnPreview() {
         )
     }
 }
+
+/**
+ * The state that used to be shown as "unsupported". Asking the system failed,
+ * which says nothing about the phone, so the row says that and names the one
+ * thing worth trying. `modelOnThisPhone` is false here for the same reason:
+ * nothing was established.
+ */
+@PreviewTest
+@Preview(name = "settings when the model could not be checked", widthDp = 412, heightDp = 860, showBackground = true)
+@Composable
+private fun SettingsSemanticSearchUnknownPreview() {
+    val viewModel: AppFilterViewModel = viewModel(
+        factory = AppFilterViewModel.Factory(
+            filtersFor("com.whatsapp" to "WhatsApp", "com.slack" to "Slack")
+        )
+    )
+    WillTheme {
+        SettingsScreen(
+            onBack = {},
+            onNavigateToPrivacy = {},
+            accessibilityServiceGranted = true,
+            semanticSearchEnabled = false,
+            semanticSearchStatus = SemanticSearchStatus.UNKNOWN,
+            derivedIntentionsEnabled = false,
+            modelOnThisPhone = false,
+            viewModel = viewModel
+        )
+    }
+}

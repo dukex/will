@@ -205,6 +205,7 @@ fun SettingsScreen(
                         SemanticSearchStatus.NEEDS_DOWNLOAD -> "download"
                         SemanticSearchStatus.DOWNLOADING -> "downloading"
                         SemanticSearchStatus.UNSUPPORTED -> "unsupported"
+                        SemanticSearchStatus.UNKNOWN -> "no answer"
                     }
                     Row(
                         Modifier
@@ -226,6 +227,8 @@ fun SettingsScreen(
                                         "search by meaning is downloading its model"
                                     SemanticSearchStatus.UNSUPPORTED ->
                                         "search by meaning is not supported on this phone"
+                                    SemanticSearchStatus.UNKNOWN ->
+                                        "search by meaning could not be checked on this phone"
                                     SemanticSearchStatus.ON -> "search by meaning is on; tap to turn it off"
                                     SemanticSearchStatus.OFF -> "search by meaning is off; tap to turn it on"
                                 }
@@ -256,6 +259,11 @@ fun SettingsScreen(
                                     SemanticSearchStatus.UNSUPPORTED ->
                                         "this phone cannot run the on-device model. search by " +
                                             "name works as it always has"
+                                    SemanticSearchStatus.UNKNOWN ->
+                                        "asking the system about the model failed, so there is " +
+                                            "nothing to report. if this phone supports it, " +
+                                            "updating Android System Intelligence from Play is " +
+                                            "what makes it appear. search by name is unaffected"
                                     SemanticSearchStatus.OFF ->
                                         "off — turning it on uses Google's on-device model, which " +
                                             "ships with its own libraries. nothing is sent anywhere"
